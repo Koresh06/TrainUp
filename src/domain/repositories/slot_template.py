@@ -1,3 +1,4 @@
+from datetime import time
 from typing import Protocol
 
 from src.domain.entities.slot_template import SlotTemplate
@@ -11,4 +12,7 @@ class SlotTemplateRepository(Protocol):
         ...
 
     async def delete(self, slot_template: SlotTemplate) -> None:
+        ...
+
+    async def get_distinct_start_times(self, trainer_id: int) -> list[time]:
         ...

@@ -6,8 +6,8 @@ from src.domain.exception.client import AssigningClientToAnotherTrainerError
 
 @dataclass(kw_only=True)
 class Client(Entity):
-    trainer_id: int
     tg_id: int
+    trainer_id: int
     first_name: str
     last_name: str | None = None
     username: str | None = None
@@ -17,6 +17,7 @@ class Client(Entity):
     health_notes: str | None = None
     injuries: str | None = None
     is_registered: bool = False
+    is_active: bool = True
 
     def is_first_time(self) -> bool:
         return not self.is_registered

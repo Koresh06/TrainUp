@@ -7,5 +7,5 @@ from src.domain.entities.base import Entity
 class FaqItem(Entity):
     question: str
     answer: str
-    order: int = 0
+    order: int = 0 # поле для сортировки
     is_active: bool = True

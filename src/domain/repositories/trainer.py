@@ -4,6 +4,9 @@ from src.domain.entities.trainer import Trainer
 
 
 class TrainerRepository(Protocol):
+    async def get_all(self) -> list[Trainer]:
+        ...
+        
     async def get_by_id(self, trainer_id: int) -> Trainer | None:
         ...
 

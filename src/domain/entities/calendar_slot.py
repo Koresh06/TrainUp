@@ -8,11 +8,12 @@ from src.domain.enums.slot import SlotSource, SlotStatus
 @dataclass(kw_only=True)
 class CalendarSlot(Entity):
     trainer_id: int
-    date: date
+    slot_date: date
     start_time: time
     end_time: time
     status: SlotStatus = SlotStatus.FREE
     source: SlotSource = SlotSource.TEMPLATE
+    is_active: bool = True
 
     def is_available(self) -> bool:
         return self.status == SlotStatus.FREE
@@ -25,7 +26,7 @@ class CalendarSlot(Entity):
 
     def release(self) -> None:
         self.status = SlotStatus.FREE
-
+        self.touch()
 
     def block(self) -> None:
         self.status = SlotStatus.BLOCKED

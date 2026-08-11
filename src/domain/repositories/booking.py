@@ -4,6 +4,9 @@ from src.domain.entities.booking import Booking
 
 
 class BookingRepository(Protocol):
+    async def get_all(self) -> list[Booking]:
+        ...
+
     async def get_by_id(self, booking_id: int) -> Booking | None:
         ...
 
@@ -11,4 +14,7 @@ class BookingRepository(Protocol):
         ...
 
     async def save(self, booking: Booking) -> Booking:
+        ...
+
+    async def delete(self, booking_id: int) -> None:
         ...

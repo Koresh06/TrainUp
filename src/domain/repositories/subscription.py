@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from src.domain.entities.subscription import TrainerSubscription
+from src.domain.entities.trainer_subscription import TrainerSubscription
 
 
 class TrainerSubscriptionRepository(Protocol):

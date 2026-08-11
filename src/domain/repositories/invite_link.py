@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from src.domain.entities.invite_link import TrainerInviteLink
+from src.domain.entities.trainer_invite_link import TrainerInviteLink
 
 
 class TrainerInviteLinkRepository(Protocol):
