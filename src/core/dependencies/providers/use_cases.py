@@ -1,5 +1,15 @@
 from dishka import Provider, provide, Scope
 
+from src.application.use_cases.booking.cancel import CancelBookingUseCase
+from src.application.use_cases.booking.confirm import ConfirmBookingUseCase
+from src.domain.repositories.booking import BookingRepository
+from src.domain.repositories.calendar_slot import CalendarSlotRepository
+from src.domain.repositories.client import ClientRepository
+from src.domain.repositories.invite_link import TrainerInviteLinkRepository
+from src.domain.repositories.slot_template import SlotTemplateRepository
+from src.domain.repositories.trainer import TrainerRepository
+from src.domain.services.calendar_service import CalendarService
+
 from src.application.use_cases.booking.create import CreateBookingUseCase
 from src.application.use_cases.calendar.get_available_slots import (
     GetAvailableSlotsUseCase,
@@ -16,16 +26,10 @@ from src.application.use_cases.calendar.maintain_calendar_buffer import (
 from src.application.use_cases.calendar.get_slot_by_id import GetSlotByIdUseCase
 from src.application.use_cases.client.register import RegisterClientUseCase
 from src.application.use_cases.client.get_by_tg_id import GetClientByTgIdUseCase
-
 from src.application.use_cases.invite_link.resolve import ResolveInviteLinkUseCase
 from src.application.use_cases.trainer.get_by_id import GetTrainerByIdUseCase
-from src.domain.repositories.booking import BookingRepository
-from src.domain.repositories.calendar_slot import CalendarSlotRepository
-from src.domain.repositories.client import ClientRepository
-from src.domain.repositories.invite_link import TrainerInviteLinkRepository
-from src.domain.repositories.slot_template import SlotTemplateRepository
-from src.domain.repositories.trainer import TrainerRepository
-from src.domain.services.calendar_service import CalendarService
+from src.application.interfaces.notification_service import NotificationService
+
 from src.infrastructure.database.transaction_manager.base import TransactionManager
 
 
@@ -102,11 +106,17 @@ class UseCasesProvider(Provider):
         self,
         calendar_service: CalendarService,
         booking_repo: BookingRepository,
+        trainer_repo: TrainerRepository,
+        client_repo: ClientRepository,
+        notification_service: NotificationService,
         transaction_manager: TransactionManager,
     ) -> CreateBookingUseCase:
         return CreateBookingUseCase(
             calendar_service=calendar_service,
             booking_repo=booking_repo,
+            trainer_repo=trainer_repo,
+            client_repo=client_repo,
+            notification_service=notification_service,
             transaction_manager=transaction_manager,
         )
 
@@ -126,4 +136,36 @@ class UseCasesProvider(Provider):
     ) -> ResolveInviteLinkUseCase:
         return ResolveInviteLinkUseCase(
             invite_link_repo=invite_link_repo,
+        )
+
+    @provide
+    def confirm_booking_use_case(
+        self,
+        booking_repo: BookingRepository,
+        client_repo: ClientRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> ConfirmBookingUseCase:
+        return ConfirmBookingUseCase(
+            booking_repo=booking_repo,
+            client_repo=client_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def cancel_booking_use_case(
+        self,
+        booking_repo: BookingRepository,
+        client_repo: ClientRepository,
+        calendar_service: CalendarService,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> CancelBookingUseCase:
+        return CancelBookingUseCase(
+            booking_repo=booking_repo,
+            client_repo=client_repo,
+            calendar_service=calendar_service,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
         )

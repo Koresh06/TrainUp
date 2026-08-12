@@ -1,6 +1,8 @@
 from dishka import Provider, provide, Scope
 
 from src.application.mediator import Mediator
+from src.application.use_cases.booking.cancel import CancelBookingRequest, CancelBookingUseCase
+from src.application.use_cases.booking.confirm import ConfirmBookingRequest, ConfirmBookingUseCase
 from src.application.use_cases.booking.create import CreateBookingUseCase, CreateBookingRequest
 from src.application.use_cases.calendar.get_available_slots import GetAvailableSlotsRequest, GetAvailableSlotsUseCase
 from src.application.use_cases.calendar.get_day_availability_map import GetDayAvailabilityMapRequest, GetDayAvailabilityMapUseCase
@@ -33,6 +35,8 @@ class MediatorProvider(Provider):
         create_booking_use_case: CreateBookingUseCase,
         get_trainer_by_id_use_case: GetTrainerByIdUseCase,
         resolve_invite_link_use_case: ResolveInviteLinkUseCase,
+        confirm_booking_use_case: ConfirmBookingUseCase,
+        cancel_booking_use_case: CancelBookingUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -48,6 +52,8 @@ class MediatorProvider(Provider):
         mediator.register(CreateBookingRequest, create_booking_use_case)
         mediator.register(GetTrainerByIdRequest, get_trainer_by_id_use_case)
         mediator.register(ResolveInviteLinkRequest, resolve_invite_link_use_case)
+        mediator.register(ConfirmBookingRequest, confirm_booking_use_case)
+        mediator.register(CancelBookingRequest, cancel_booking_use_case)
 
         return mediator
 
