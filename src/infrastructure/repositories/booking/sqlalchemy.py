@@ -40,6 +40,21 @@ class SQLAlchemyBookingRepo(BookingRepository):
         result = await self._session.execute(query)
         return [model.to_entity() for model in result.scalars().all()]
 
+    async def get_upcoming_by_trainer(self, trainer_id: int) -> list[Booking]:
+        today = get_datetime_utc_now().date()
+        query = (
+            select(BookingModel)
+            .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
+            .where(
+                BookingModel.trainer_id == trainer_id,
+                BookingModel.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED]),
+                CalendarSlotModel.slot_date >= today,
+            )
+            .order_by(CalendarSlotModel.slot_date, CalendarSlotModel.start_time)
+        )
+        result = await self._session.execute(query)
+        return [model.to_entity() for model in result.scalars().all()]
+
     async def save(self, booking: Booking) -> Booking:
         if booking.id == 0:
             model = BookingModel.from_entity(booking)

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, time
 
 from sqlalchemy import exists, select
 from sqlalchemy.exc import IntegrityError
@@ -44,12 +44,20 @@ class SQLAlchemyCalendarSlotRepo(CalendarSlotRepository):
         result = await self._session.execute(query)
         return [model.to_entity() for model in result.scalars().all()]
 
-    async def exists_for_date(self, trainer_id: int, date: date) -> bool:
-        query = select(
-            exists().where(
+    async def exists_for_datetime(
+        self,
+        trainer_id: int,
+        slot_date: date,
+        start_time: time,
+    ) -> bool:
+        query = (
+            exists()
+            .where(
                 CalendarSlotModel.trainer_id == trainer_id,
-                CalendarSlotModel.slot_date == date,
+                CalendarSlotModel.slot_date == slot_date,
+                CalendarSlotModel.start_time == start_time,
             )
+            .select()
         )
         result = await self._session.execute(query)
         return result.scalar()

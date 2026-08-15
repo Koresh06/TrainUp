@@ -10,6 +10,7 @@ from .program_request import ProgramRequestModel
 from .consultation_request import ConsultationRequestModel
 from .feedback import FeedbackMessageModel
 from .faq import FaqItemModel
+from .subscription_price_plan import SubscriptionPricePlanModel
 
 
 __all__ = [
@@ -25,4 +26,5 @@ __all__ = [
     "ConsultationRequestModel",
     "FeedbackMessageModel",
     "FaqItemModel",
+    "SubscriptionPricePlanModel",
 ]

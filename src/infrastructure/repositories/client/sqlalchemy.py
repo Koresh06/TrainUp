@@ -29,6 +29,11 @@ class SQLAlchemyClientRepo(ClientRepository):
         model = result.scalar_one_or_none()
         return model.to_entity() if model is not None else None
 
+    async def get_by_trainer_id(self, trainer_id: int) -> list[Client]:
+        query = select(ClientModel).where(ClientModel.trainer_id == trainer_id)
+        result = await self._session.execute(query)
+        return [model.to_entity() for model in result.scalars().all()]
+
     async def save(self, client: Client) -> Client:
         if client.id == 0:
             model = ClientModel.from_entity(client)

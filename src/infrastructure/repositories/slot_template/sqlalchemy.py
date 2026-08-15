@@ -21,6 +21,20 @@ class SQLAlchemySlotTemplateRepo(SlotTemplateRepository):
         result = await self._session.execute(query)
         return [model.to_entity() for model in result.scalars().all()]
 
+    async def get_by_id(self, slot_template_id: int) -> SlotTemplate | None:
+        query = select(SlotTemplateModel).where(SlotTemplateModel.id == slot_template_id)
+        result = await self._session.execute(query)
+        model = result.scalar_one_or_none()
+        return model.to_entity() if model is not None else None
+
+    async def get_by_trainer_and_weekday(self, trainer_id: int, weekday: int) -> list   [SlotTemplate]:
+        query = select(SlotTemplateModel).where(
+            SlotTemplateModel.trainer_id == trainer_id,
+            SlotTemplateModel.weekday == weekday,
+        )
+        result = await self._session.execute(query)
+        return [m.to_entity() for m in result.scalars().all()]
+
     async def save(self, slot_template: SlotTemplate) -> SlotTemplate:
         if slot_template.id == 0:
             model = SlotTemplateModel.from_entity(slot_template)

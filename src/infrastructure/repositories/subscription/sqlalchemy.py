@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,13 +14,27 @@ class SQLAlchemyTrainerSubscriptionRepo(TrainerSubscriptionRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get_active_by_trainer_id(self, trainer_id: int) -> list[TrainerSubscription]:
-        query = select(TrainerSubscriptionModel).where(
-            TrainerSubscriptionModel.trainer_id == trainer_id,
-            TrainerSubscriptionModel.status == SubscriptionStatus.ACTIVE,
+    async def get_active_by_trainer_id(self, trainer_id: int) -> TrainerSubscription | None:
+        query = (
+            select(TrainerSubscriptionModel)
+            .where(
+                TrainerSubscriptionModel.trainer_id == trainer_id,
+                TrainerSubscriptionModel.status == SubscriptionStatus.ACTIVE,
+                TrainerSubscriptionModel.expired_at > datetime.now(timezone.utc),
+            )
+            .limit(1)
         )
         result = await self._session.execute(query)
-        return [model.to_entity() for model in result.scalars().all()]
+        model = result.scalar_one_or_none()
+        return model.to_entity() if model is not None else None
+
+    async def get_by_id(self, subscription_id: int) -> TrainerSubscription | None:
+        query = select(TrainerSubscriptionModel).where(
+            TrainerSubscriptionModel.id == subscription_id
+        )
+        result = await self._session.execute(query)
+        model = result.scalar_one_or_none()
+        return model.to_entity() if model is not None else None
 
     async def save(self, subscription: TrainerSubscription) -> TrainerSubscription:
         if subscription.id == 0:

@@ -1,8 +1,8 @@
-"""init tables
+"""init_tables
 
-Revision ID: 650c1eb40bd1
+Revision ID: ad1dd4c1f656
 Revises: 
-Create Date: 2026-08-11 21:48:56.766810
+Create Date: 2026-08-14 00:10:36.860007
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '650c1eb40bd1'
+revision: str = 'ad1dd4c1f656'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -30,6 +30,17 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk__faq_items'))
+    )
+    op.create_table('subscription_price_plans',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('plan', sa.Enum('ONE_MONTH', 'THREE_MONTHS', 'SIX_MONTHS', 'TWELVE_MONTHS', 'INFINITE', name='subscriptionplan'), nullable=False),
+    sa.Column('months', sa.Integer(), nullable=False),
+    sa.Column('price', sa.Numeric(precision=12, scale=2), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk__subscription_price_plans')),
+    sa.UniqueConstraint('plan', name=op.f('uq__subscription_price_plans__plan'))
     )
     op.create_table('trainers',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -110,7 +121,7 @@ def upgrade() -> None:
     op.create_table('trainer_subscriptions',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('trainer_id', sa.Integer(), nullable=False),
-    sa.Column('plan', sa.Enum('TRIAL', 'BASIC', 'PREMIUM', name='subscriptionplan'), nullable=False),
+    sa.Column('plan', sa.Enum('ONE_MONTH', 'THREE_MONTHS', 'SIX_MONTHS', 'TWELVE_MONTHS', 'INFINITE', name='subscriptionplan'), nullable=False),
     sa.Column('amount', sa.Numeric(precision=12, scale=2), nullable=False),
     sa.Column('status', sa.Enum('ACTIVE', 'EXPIRED', 'CANCELLED', name='subscriptionstatus'), nullable=False),
     sa.Column('started_at', sa.DateTime(timezone=True), nullable=False),
@@ -217,5 +228,6 @@ def downgrade() -> None:
     op.drop_table('calendar_slots')
     op.drop_index(op.f('ix__trainers_tg_id'), table_name='trainers')
     op.drop_table('trainers')
+    op.drop_table('subscription_price_plans')
     op.drop_table('faq_items')
     # ### end Alembic commands ###
