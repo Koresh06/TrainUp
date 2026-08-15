@@ -13,6 +13,9 @@ class BookingRepository(Protocol):
     async def get_upcoming_by_client(self, client_id: int) -> list[Booking]:
         ...
 
+    async def get_upcoming_by_trainer(self, trainer_id: int) -> list[Booking]:
+        ...
+
     async def save(self, booking: Booking) -> Booking:
         ...
 

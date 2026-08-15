@@ -2,9 +2,11 @@ from enum import Enum
 
 
 class SubscriptionPlan(Enum):
-    TRIAL = "trial"
-    BASIC = "basic"
-    PREMIUM = "premium"
+    ONE_MONTH = "one_month"
+    THREE_MONTHS = "three_months"
+    SIX_MONTHS = "six_months"
+    TWELVE_MONTHS = "twelve_months"
+    INFINITE = "infinite"
 
 
 class SubscriptionStatus(Enum):

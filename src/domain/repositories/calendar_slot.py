@@ -1,5 +1,5 @@
 from typing import Protocol
-from datetime import date
+from datetime import date, time
 
 from src.domain.entities.calendar_slot import CalendarSlot
 
@@ -14,7 +14,12 @@ class CalendarSlotRepository(Protocol):
         date_to: date,
     ) -> list[CalendarSlot]: ...
 
-    async def exists_for_date(self, trainer_id: int, date: date) -> bool: ...
+    async def exists_for_datetime(
+        self,
+        trainer_id: int,
+        slot_date: date,
+        start_time: time,
+    ) -> bool: ...
 
     async def save(self, slot: CalendarSlot) -> CalendarSlot: ...
 
