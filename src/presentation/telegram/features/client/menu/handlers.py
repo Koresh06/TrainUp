@@ -10,7 +10,6 @@ async def on_booking_click(
     button: Button,
     dialog_manager: DialogManager,
 ) -> None:
-    print(dialog_manager.start_data)
     trainer_id: int = dialog_manager.start_data["trainer_id"]
     await dialog_manager.start(
         state=BookingSG.select_day,

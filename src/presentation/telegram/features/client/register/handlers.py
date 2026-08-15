@@ -90,6 +90,7 @@ async def on_health_skip(
     dialog_manager.dialog_data["health_notes"] = None
     await dialog_manager.switch_to(ClientRegisterSG.injuries)
 
+
 async def on_injuries_entered(
     message: Message,
     widget: ManagedTextInput,
@@ -150,4 +151,8 @@ async def on_register_confirm(
         )
         return
 
-    await dialog_manager.start(ClientMenuSG.main, mode=StartMode.RESET_STACK)
+    await dialog_manager.start(
+        ClientMenuSG.main,
+        mode=StartMode.RESET_STACK,
+        data={"trainer_id": trainer_id},
+    )
