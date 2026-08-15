@@ -2,6 +2,7 @@ from dishka import Provider, provide, Scope
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.repositories.client import ClientRepository
+from src.domain.repositories.subscription_price_plan import SubscriptionPricePlanRepository
 from src.domain.repositories.trainer import TrainerRepository
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.program import ProgramRequestRepository
@@ -13,6 +14,7 @@ from src.domain.repositories.feedback import FeedbackRepository
 from src.domain.repositories.faq import FaqRepository
 from src.domain.repositories.slot_template import SlotTemplateRepository
 from src.infrastructure.repositories.client.sqlalchemy import SQLAlchemyClientRepo
+from src.infrastructure.repositories.subscription_price_plan.sqlalchemy import SQLAlchemySubscriptionPricePlanRepo
 from src.infrastructure.repositories.trainer.sqlalchemy import SQLAlchemyTrainerRepo
 from src.infrastructure.repositories.booking.sqlalchemy import SQLAlchemyBookingRepo
 from src.infrastructure.repositories.program.sqlalchemy import SQLAlchemyProgramRequestRepo
@@ -69,4 +71,7 @@ class RepositoriesProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_slot_template_repository(self, session: AsyncSession) -> SlotTemplateRepository:
         return SQLAlchemySlotTemplateRepo(session=session)
-    
+
+    @provide(scope=Scope.REQUEST)
+    def get_subcriiption_price_plan_repository(self, session: AsyncSession) -> SubscriptionPricePlanRepository:
+        return SQLAlchemySubscriptionPricePlanRepo(session=session)
