@@ -31,9 +31,7 @@ services:
       retries: 5
 
   migrate:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/koresh06/trainup:latest
     container_name: trainup_migrate
     command: alembic -c alembic.ini upgrade head
     env_file:
@@ -44,9 +42,7 @@ services:
     restart: "no"
 
   bot:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/koresh06/trainup:latest
     container_name: trainup_bot
     command: python -m src.presentation.telegram.app
     env_file:
@@ -61,9 +57,7 @@ services:
     restart: always
 
   worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/koresh06/trainup:latest
     container_name: trainup_worker
     command: taskiq worker src.worker:broker
     env_file:
@@ -78,9 +72,7 @@ services:
     restart: always
 
   scheduler:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/koresh06/trainup:latest
     container_name: trainup_scheduler
     command: taskiq scheduler src.scheduler:scheduler
     env_file:
