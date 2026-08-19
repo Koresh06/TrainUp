@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from src.domain.entities.base import Entity
+from src.domain.enums.training import SportExperience
 from src.domain.exception.client import AssigningClientToAnotherTrainerError
 
 
@@ -16,11 +17,10 @@ class Client(Entity):
     goals: list[str]
     health_notes: str | None = None
     injuries: str | None = None
-    is_registered: bool = False
+    sport_experience: SportExperience
+    health_conditions: list[str]  # HealthCondition.value
+    health_conditions_other: str | None = None
     is_active: bool = True
-
-    def is_first_time(self) -> bool:
-        return not self.is_registered
 
     def assingn_trainer(self, other_trainer_id: int) -> None:
         if self.trainer_id != other_trainer_id:

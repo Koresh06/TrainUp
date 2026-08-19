@@ -1,8 +1,8 @@
-"""init_tables
+"""initial schema
 
-Revision ID: ad1dd4c1f656
+Revision ID: 08b8a34ec518
 Revises: 
-Create Date: 2026-08-14 00:10:36.860007
+Create Date: 2026-08-19 21:14:19.927340
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'ad1dd4c1f656'
+revision: str = '08b8a34ec518'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -81,10 +81,12 @@ def upgrade() -> None:
     sa.Column('username', sa.VARCHAR(length=255), nullable=True),
     sa.Column('phone', sa.VARCHAR(length=255), nullable=False),
     sa.Column('age', sa.Integer(), nullable=False),
+    sa.Column('sport_experience', sa.Enum('NONE', 'UP_TO_3_MONTHS', 'UP_TO_6_MONTHS', 'MORE_THAN_YEAR', name='sport_experience'), nullable=False),
+    sa.Column('health_conditions', postgresql.ARRAY(sa.VARCHAR(length=255)), nullable=False),
+    sa.Column('health_conditions_other', sa.String(length=1000), nullable=True),
     sa.Column('goals', postgresql.ARRAY(sa.VARCHAR(length=255)), nullable=False),
-    sa.Column('health_notes', sa.VARCHAR(length=255), nullable=True),
-    sa.Column('injuries', sa.VARCHAR(length=255), nullable=True),
-    sa.Column('is_registered', sa.Boolean(), nullable=False),
+    sa.Column('health_notes', sa.String(length=1000), nullable=True),
+    sa.Column('injuries', sa.String(length=1000), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),

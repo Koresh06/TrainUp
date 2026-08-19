@@ -3,6 +3,7 @@ import logging
 
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.domain.entities.client import Client
+from src.domain.enums.training import SportExperience
 from src.domain.repositories.client import ClientRepository
 from src.infrastructure.database.transaction_manager.base import TransactionManager
 
@@ -19,6 +20,9 @@ class RegisterClientRequest(UseCaseRequest):
     username: str | None
     phone: str
     age: int
+    sport_experience: str
+    health_conditions: list[str]
+    health_conditions_other: str | None
     goals: list[str]
     health_notes: str | None
     injuries: str | None
@@ -48,10 +52,12 @@ class RegisterClientUseCase(UseCase[RegisterClientRequest, Client]):
             username=command.username,
             phone=command.phone,
             age=command.age,
+            sport_experience=SportExperience(command.sport_experience),
+            health_conditions=command.health_conditions,
+            health_conditions_other=command.health_conditions_other,
             goals=command.goals,
             health_notes=command.health_notes,
             injuries=command.injuries,
-            is_registered=True,
         )
         saved = await self.client_repo.save(client)
         await self.transaction_manager.commit()
