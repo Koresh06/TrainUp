@@ -5,7 +5,8 @@ from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.slot_template import SlotTemplate
 from src.domain.enums.slot import SlotSource, SlotStatus
 from src.domain.exception.booking import SlotAlreadyBookedException
-from src.domain.exception.calendar_slot import CalendarSlotNotFoundException
+from src.domain.exception.calendar_slot import CalendarSlotNotFoundException, SlotFullException
+from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.slot_template import SlotTemplateRepository
 
@@ -14,6 +15,7 @@ from src.domain.repositories.slot_template import SlotTemplateRepository
 class CalendarService:
     slot_repo: CalendarSlotRepository
     template_repo: SlotTemplateRepository
+    booking_repo: BookingRepository
 
     async def generate_slots_for_period(
         self, trainer_id: int, days_ahead: int
@@ -47,6 +49,7 @@ class CalendarService:
                         end_time=template.end_time,
                         status=SlotStatus.FREE,
                         source=SlotSource.TEMPLATE,
+                        capacity=template.capacity,
                     )
                 )
 
@@ -62,23 +65,37 @@ class CalendarService:
         return await self.slot_repo.get_free_slots(trainer_id, today, date_to)
 
     async def book_slot(self, slot_id: int) -> CalendarSlot:
-        slot = await self.slot_repo.get_by_id(slot_id)
+        slot = await self.slot_repo.get_by_id_for_update(slot_id)
         if slot is None:
             raise CalendarSlotNotFoundException(slot_id)
-
-        if not slot.is_available():
+    
+        if slot.status == SlotStatus.BLOCKED:
             raise SlotAlreadyBookedException(slot_id)
-
-        slot.book()
-        return await self.slot_repo.save(slot)
+    
+        active_count = await self.booking_repo.count_active_by_slot_id(slot_id)
+        if active_count >= slot.capacity:
+            raise SlotFullException(slot_id)
+    
+        # status больше не переключаем в BOOKED — capacity важнее бинарного статуса;
+        # BOOKED теперь смысловое значение теряет для capacity>1, оставляем FREE
+        # если ещё есть места, либо явно помечаем занятым только когда мест не осталось
+        if active_count + 1 >= slot.capacity:
+            slot.status = SlotStatus.BOOKED
+            slot.touch()
+            await self.slot_repo.save(slot)
+    
+        return slot
 
     async def release_slot(self, slot_id: int) -> CalendarSlot:
         slot = await self.slot_repo.get_by_id(slot_id)
         if slot is None:
             raise CalendarSlotNotFoundException(slot_id)
-
-        slot.release()
-        return await self.slot_repo.save(slot)
+    
+        if slot.status != SlotStatus.BLOCKED:
+            slot.release()
+            await self.slot_repo.save(slot)
+    
+        return slot
 
     async def block_slot(self, slot_id: int) -> CalendarSlot:
         slot = await self.slot_repo.get_by_id(slot_id)

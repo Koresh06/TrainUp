@@ -25,3 +25,12 @@ class CalendarSlotAlreadyExistsException(DomainError):
             f"Слот тренера с id {self.trainer_id} на {self.slot_date} "
             f"{self.start_time} уже существует"
         )
+
+
+@dataclass
+class SlotFullException(DomainError):
+    slot_id: int
+
+    @property
+    def message(self) -> str:
+        return f"Слот с id {self.slot_id} полностью заполнен"

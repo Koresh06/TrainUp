@@ -13,6 +13,7 @@ class CalendarSlot(Entity):
     end_time: time
     status: SlotStatus = SlotStatus.FREE
     source: SlotSource = SlotSource.TEMPLATE
+    capacity: int = 1
     is_active: bool = True
 
     def is_available(self) -> bool:

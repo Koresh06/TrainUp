@@ -7,6 +7,9 @@ from src.domain.entities.calendar_slot import CalendarSlot
 class CalendarSlotRepository(Protocol):
     async def get_by_id(self, slot_id: int) -> CalendarSlot | None: ...
 
+    async def get_by_id_for_update(self, slot_id: int) -> CalendarSlot | None:
+        ...
+
     async def get_free_slots(
         self,
         trainer_id: int,

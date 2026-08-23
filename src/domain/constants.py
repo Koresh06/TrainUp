@@ -24,3 +24,7 @@ def generate_time_options() -> list[time]:
 def add_minutes(t: time, minutes: int) -> time:
     dt = datetime.combine(date.today(), t) + timedelta(minutes=minutes)
     return dt.timetz() 
+
+
+DEFAULT_CALENDAR_HORIZON_DAYS = 14
+DEFAULT_MAX_ACTIVE_BOOKINGS = 1

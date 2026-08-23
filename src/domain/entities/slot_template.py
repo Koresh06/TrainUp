@@ -10,4 +10,5 @@ class SlotTemplate(Entity):
     weekday: int
     start_time: time
     end_time: time
+    capacity: int = 1
     is_active: bool = True
