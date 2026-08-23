@@ -11,7 +11,9 @@ from sqlalchemy import (
 )
 
 from src.domain.entities.trainer import Trainer
-from src.infrastructure.database.models.trainer_invite_link import TrainerInviteLinkModel
+from src.infrastructure.database.models.trainer_invite_link import (
+    TrainerInviteLinkModel,
+)
 from .base import BaseModel, CreatedAtMixin, UpdatedAtMixin
 
 if TYPE_CHECKING:
@@ -23,6 +25,7 @@ if TYPE_CHECKING:
         SlotTemplateModel,
         TrainerInviteLinkModel,
         ProgramRequestModel,
+        TrainerBookingSettingsModel,
     )
 
 
@@ -64,7 +67,11 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         "ProgramRequestModel",
         back_populates="trainer",
     )
-
+    booking_settings: Mapped["TrainerBookingSettingsModel | None"] = relationship(
+        "TrainerBookingSettingsModel",
+        back_populates="trainer",
+        uselist=False,
+    )
 
     @classmethod
     def from_entity(cls, entity: "Trainer") -> "TrainerModel":

@@ -2,7 +2,9 @@ from dishka import Provider, provide, Scope
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.repositories.client import ClientRepository
-from src.domain.repositories.subscription_price_plan import SubscriptionPricePlanRepository
+from src.domain.repositories.subscription_price_plan import (
+    SubscriptionPricePlanRepository,
+)
 from src.domain.repositories.trainer import TrainerRepository
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.program import ProgramRequestRepository
@@ -13,18 +15,38 @@ from src.domain.repositories.invite_link import TrainerInviteLinkRepository
 from src.domain.repositories.feedback import FeedbackRepository
 from src.domain.repositories.faq import FaqRepository
 from src.domain.repositories.slot_template import SlotTemplateRepository
+from src.domain.repositories.trainer_booking_settings import (
+    TrainerBookingSettingsRepository,
+)
 from src.infrastructure.repositories.client.sqlalchemy import SQLAlchemyClientRepo
-from src.infrastructure.repositories.subscription_price_plan.sqlalchemy import SQLAlchemySubscriptionPricePlanRepo
+from src.infrastructure.repositories.subscription_price_plan.sqlalchemy import (
+    SQLAlchemySubscriptionPricePlanRepo,
+)
 from src.infrastructure.repositories.trainer.sqlalchemy import SQLAlchemyTrainerRepo
 from src.infrastructure.repositories.booking.sqlalchemy import SQLAlchemyBookingRepo
-from src.infrastructure.repositories.program.sqlalchemy import SQLAlchemyProgramRequestRepo
-from src.infrastructure.repositories.subscription.sqlalchemy import SQLAlchemyTrainerSubscriptionRepo
-from src.infrastructure.repositories.calendar_slot.sqlalchemy import SQLAlchemyCalendarSlotRepo
-from src.infrastructure.repositories.consultation.sqlalchemy import SQLAlchemyConsultationRequestRepo
-from src.infrastructure.repositories.invite_link.sqlalchemy import SQLAlchemyTrainerInviteLinkRepo
+from src.infrastructure.repositories.program.sqlalchemy import (
+    SQLAlchemyProgramRequestRepo,
+)
+from src.infrastructure.repositories.subscription.sqlalchemy import (
+    SQLAlchemyTrainerSubscriptionRepo,
+)
+from src.infrastructure.repositories.calendar_slot.sqlalchemy import (
+    SQLAlchemyCalendarSlotRepo,
+)
+from src.infrastructure.repositories.consultation.sqlalchemy import (
+    SQLAlchemyConsultationRequestRepo,
+)
+from src.infrastructure.repositories.invite_link.sqlalchemy import (
+    SQLAlchemyTrainerInviteLinkRepo,
+)
 from src.infrastructure.repositories.feedback.sqlalchemy import SQLAlchemyFeedbackRepo
 from src.infrastructure.repositories.faq.sqlalchemy import SQLAlchemyFaqRepo
-from src.infrastructure.repositories.slot_template.sqlalchemy import SQLAlchemySlotTemplateRepo
+from src.infrastructure.repositories.slot_template.sqlalchemy import (
+    SQLAlchemySlotTemplateRepo,
+)
+from src.infrastructure.repositories.trainer_booking_settings.sqlalchemy import (
+    SQLAlchemyTrainerBookingSettingsRepo,
+)
 
 
 class RepositoriesProvider(Provider):
@@ -41,23 +63,33 @@ class RepositoriesProvider(Provider):
         return SQLAlchemyBookingRepo(session=session)
 
     @provide(scope=Scope.REQUEST)
-    def get_program_request_repository(self, session: AsyncSession) -> ProgramRequestRepository:
+    def get_program_request_repository(
+        self, session: AsyncSession
+    ) -> ProgramRequestRepository:
         return SQLAlchemyProgramRequestRepo(session=session)
 
     @provide(scope=Scope.REQUEST)
-    def get_trainer_subscription_repository(self, session: AsyncSession) -> TrainerSubscriptionRepository:
+    def get_trainer_subscription_repository(
+        self, session: AsyncSession
+    ) -> TrainerSubscriptionRepository:
         return SQLAlchemyTrainerSubscriptionRepo(session=session)
 
     @provide(scope=Scope.REQUEST)
-    def get_calendar_slot_repository(self, session: AsyncSession) -> CalendarSlotRepository:
+    def get_calendar_slot_repository(
+        self, session: AsyncSession
+    ) -> CalendarSlotRepository:
         return SQLAlchemyCalendarSlotRepo(session=session)
 
     @provide(scope=Scope.REQUEST)
-    def get_consultation_request_repository(self, session: AsyncSession) -> ConsultationRequestRepository:
+    def get_consultation_request_repository(
+        self, session: AsyncSession
+    ) -> ConsultationRequestRepository:
         return SQLAlchemyConsultationRequestRepo(session=session)
 
     @provide(scope=Scope.REQUEST)
-    def get_trainer_invite_link_repository(self, session: AsyncSession) -> TrainerInviteLinkRepository:
+    def get_trainer_invite_link_repository(
+        self, session: AsyncSession
+    ) -> TrainerInviteLinkRepository:
         return SQLAlchemyTrainerInviteLinkRepo(session=session)
 
     @provide(scope=Scope.REQUEST)
@@ -69,9 +101,19 @@ class RepositoriesProvider(Provider):
         return SQLAlchemyFaqRepo(session=session)
 
     @provide(scope=Scope.REQUEST)
-    def get_slot_template_repository(self, session: AsyncSession) -> SlotTemplateRepository:
+    def get_slot_template_repository(
+        self, session: AsyncSession
+    ) -> SlotTemplateRepository:
         return SQLAlchemySlotTemplateRepo(session=session)
 
     @provide(scope=Scope.REQUEST)
-    def get_subcriiption_price_plan_repository(self, session: AsyncSession) -> SubscriptionPricePlanRepository:
+    def get_subcriiption_price_plan_repository(
+        self, session: AsyncSession
+    ) -> SubscriptionPricePlanRepository:
         return SQLAlchemySubscriptionPricePlanRepo(session=session)
+
+    @provide(scope=Scope.REQUEST)
+    def get_trainer_booking_settings_repository(
+        self, session: AsyncSession
+    ) -> TrainerBookingSettingsRepository:
+        return SQLAlchemyTrainerBookingSettingsRepo(session=session)

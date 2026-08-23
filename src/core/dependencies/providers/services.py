@@ -2,6 +2,7 @@ from aiogram import Bot
 from dishka import Provider, Scope, provide
 
 from src.application.interfaces.notification_service import NotificationService
+from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.slot_template import SlotTemplateRepository
 from src.domain.services.calendar_service import CalendarService
@@ -14,10 +15,12 @@ class ServicesProvider(Provider):
         self,
         slot_repo: CalendarSlotRepository,
         template_repo: SlotTemplateRepository,
+        booking_repo: BookingRepository,
     ) -> CalendarService:
         return CalendarService(
             slot_repo=slot_repo,
             template_repo=template_repo,
+            booking_repo=booking_repo,
         )
 
     @provide(scope=Scope.REQUEST)

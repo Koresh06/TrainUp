@@ -1,8 +1,8 @@
-"""initial schema
+"""init tables
 
-Revision ID: 08b8a34ec518
+Revision ID: e9bde64b910b
 Revises: 
-Create Date: 2026-08-19 21:14:19.927340
+Create Date: 2026-08-23 20:18:10.329672
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '08b8a34ec518'
+revision: str = 'e9bde64b910b'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -62,6 +62,7 @@ def upgrade() -> None:
     sa.Column('end_time', sa.Time(timezone=True), nullable=False),
     sa.Column('status', sa.Enum('FREE', 'BOOKED', 'BLOCKED', name='slotstatus'), nullable=False),
     sa.Column('source', sa.Enum('TEMPLATE', 'MANUAL', name='slotsource'), nullable=False),
+    sa.Column('capacity', sa.Integer(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -101,6 +102,7 @@ def upgrade() -> None:
     sa.Column('weekday', sa.Integer(), nullable=False),
     sa.Column('start_time', sa.Time(timezone=True), nullable=False),
     sa.Column('end_time', sa.Time(timezone=True), nullable=False),
+    sa.Column('capacity', sa.Integer(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -109,6 +111,17 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix__slot_templates_trainer_id'), 'slot_templates', ['trainer_id'], unique=False)
     op.create_index(op.f('ix__slot_templates_weekday'), 'slot_templates', ['weekday'], unique=False)
+    op.create_table('trainer_booking_settings',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('trainer_id', sa.Integer(), nullable=False),
+    sa.Column('calendar_horizon_days', sa.Integer(), nullable=False),
+    sa.Column('max_active_bookings_per_client', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['trainer_id'], ['trainers.id'], name=op.f('trainer_booking_settings_trainer_id_fkey'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk__trainer_booking_settings'))
+    )
+    op.create_index(op.f('ix__trainer_booking_settings_trainer_id'), 'trainer_booking_settings', ['trainer_id'], unique=True)
     op.create_table('trainer_invite_links',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('trainer_id', sa.Integer(), nullable=False),
@@ -147,8 +160,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['client_id'], ['clients.id'], name=op.f('bookings_client_id_fkey'), ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['slot_id'], ['calendar_slots.id'], name=op.f('bookings_slot_id_fkey'), ondelete='RESTRICT'),
     sa.ForeignKeyConstraint(['trainer_id'], ['trainers.id'], name=op.f('bookings_trainer_id_fkey'), ondelete='RESTRICT'),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk__bookings')),
-    sa.UniqueConstraint('slot_id', name=op.f('uq__bookings__slot_id'))
+    sa.PrimaryKeyConstraint('id', name=op.f('pk__bookings'))
     )
     op.create_index(op.f('ix__bookings_client_id'), 'bookings', ['client_id'], unique=False)
     op.create_index(op.f('ix__bookings_trainer_id'), 'bookings', ['trainer_id'], unique=False)
@@ -218,6 +230,8 @@ def downgrade() -> None:
     op.drop_table('trainer_subscriptions')
     op.drop_index(op.f('ix__trainer_invite_links_token'), table_name='trainer_invite_links')
     op.drop_table('trainer_invite_links')
+    op.drop_index(op.f('ix__trainer_booking_settings_trainer_id'), table_name='trainer_booking_settings')
+    op.drop_table('trainer_booking_settings')
     op.drop_index(op.f('ix__slot_templates_weekday'), table_name='slot_templates')
     op.drop_index(op.f('ix__slot_templates_trainer_id'), table_name='slot_templates')
     op.drop_table('slot_templates')

@@ -20,6 +20,7 @@ from src.infrastructure.database.models import (
     ProgramRequestModel,
     FeedbackMessageModel,
     SubscriptionPricePlanModel,
+    TrainerBookingSettingsModel,
 ) # noqa
 
 

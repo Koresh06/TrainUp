@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import exists, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -54,6 +54,39 @@ class SQLAlchemyBookingRepo(BookingRepository):
         )
         result = await self._session.execute(query)
         return [model.to_entity() for model in result.scalars().all()]
+
+    async def count_active_by_slot_id(self, slot_id: int) -> int:
+        query = select(func.count(BookingModel.id)).where(
+            BookingModel.slot_id == slot_id,
+            BookingModel.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED]),
+        )
+        result = await self._session.execute(query)
+        return result.scalar_one()
+    
+    async def count_active_by_slot_ids(self, slot_ids: list[int]) -> dict[int, int]:
+        if not slot_ids:
+            return {}
+        query = (
+            select(BookingModel.slot_id, func.count(BookingModel.id))
+            .where(
+                BookingModel.slot_id.in_(slot_ids),
+                BookingModel.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED]),
+            )
+            .group_by(BookingModel.slot_id)
+        )
+        result = await self._session.execute(query)
+        return dict(result.all())
+
+    async def exists_active_by_client_and_slot(self, client_id: int, slot_id: int) -> bool:
+        query = select(
+            exists().where(
+                BookingModel.client_id == client_id,
+                BookingModel.slot_id == slot_id,
+                BookingModel.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED]),
+            )
+        )
+        result = await self._session.execute(query)
+        return result.scalar()
 
     async def save(self, booking: Booking) -> Booking:
         if booking.id == 0:

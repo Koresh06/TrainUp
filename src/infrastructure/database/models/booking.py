@@ -41,7 +41,6 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     )
     slot_id: Mapped[int] = mapped_column(
         ForeignKey("calendar_slots.id", ondelete="RESTRICT"),
-        unique=True,
     )
     status: Mapped[BookingStatus] = mapped_column(SqlEnum(BookingStatus))
     reminder_job_id: Mapped[str | None] = mapped_column(VARCHAR(255), nullable=True)

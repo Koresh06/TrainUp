@@ -3,6 +3,7 @@ from dishka import Provider, provide, Scope
 from src.application.mediator import Mediator
 from src.application.use_cases.booking.cancel import CancelBookingRequest, CancelBookingUseCase
 from src.application.use_cases.booking.confirm import ConfirmBookingRequest, ConfirmBookingUseCase
+from src.application.use_cases.booking.count_active_by_slot_ids import CountActiveBookingsBySlotIdsRequest, CountActiveBookingsBySlotIdsUseCase
 from src.application.use_cases.booking.create import CreateBookingUseCase, CreateBookingRequest
 from src.application.use_cases.calendar.get_available_slots import GetAvailableSlotsRequest, GetAvailableSlotsUseCase
 from src.application.use_cases.calendar.get_day_availability_map import GetDayAvailabilityMapRequest, GetDayAvailabilityMapUseCase
@@ -28,6 +29,8 @@ from src.application.use_cases.trainer.get_by_tg_id import GetTrainerByTgIdReque
 from src.application.use_cases.trainer.get_clients_by_trainer import GetClientsByTrainerRequest, GetClientsByTrainerUseCase
 from src.application.use_cases.trainer.get_upcoming_bookings_by_trainer import GetUpcomingBookingsByTrainerRequest, GetUpcomingBookingsByTrainerUseCase
 from src.application.use_cases.trainer.register import RegisterTrainerRequest, RegisterTrainerUseCase
+from src.application.use_cases.trainer_booking_settings.get_by_id import GetTrainerBookingSettingsRequest, GetTrainerBookingSettingsUseCase
+from src.application.use_cases.trainer_booking_settings.update import UpdateTrainerBookingSettingsRequest, UpdateTrainerBookingSettingsUseCase
 
 
 class MediatorProvider(Provider):
@@ -62,7 +65,10 @@ class MediatorProvider(Provider):
         get_active_subscription_use_case: GetActiveSubscriptionUseCase,
         register_trainer_use_case: RegisterTrainerUseCase,
         create_trainer_invite_link_use_case: CreateTrainerInviteLinkUseCase,
-        sync_weekday_slot_tamplate_use_case: SyncWeekdaySlotTemplatesUseCase
+        sync_weekday_slot_tamplate_use_case: SyncWeekdaySlotTemplatesUseCase,
+        get_trainer_booking_settings_use_case: GetTrainerBookingSettingsUseCase,
+        update_trainer_booking_settings_use_case: UpdateTrainerBookingSettingsUseCase,
+        count_active_booking_by_slot_ids_use_case: CountActiveBookingsBySlotIdsUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -93,6 +99,9 @@ class MediatorProvider(Provider):
         mediator.register(RegisterTrainerRequest, register_trainer_use_case)
         mediator.register(CreateTrainerInviteLinkRequest, create_trainer_invite_link_use_case)
         mediator.register(SyncWeekdaySlotTemplatesRequest, sync_weekday_slot_tamplate_use_case)
+        mediator.register(GetTrainerBookingSettingsRequest, get_trainer_booking_settings_use_case)
+        mediator.register(UpdateTrainerBookingSettingsRequest, update_trainer_booking_settings_use_case)
+        mediator.register(CountActiveBookingsBySlotIdsRequest, count_active_booking_by_slot_ids_use_case)
 
         return mediator
 

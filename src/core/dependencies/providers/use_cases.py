@@ -2,6 +2,9 @@ from dishka import Provider, provide, Scope
 
 from src.application.use_cases.booking.cancel import CancelBookingUseCase
 from src.application.use_cases.booking.confirm import ConfirmBookingUseCase
+from src.application.use_cases.booking.count_active_by_slot_ids import (
+    CountActiveBookingsBySlotIdsUseCase,
+)
 from src.application.use_cases.invite_link.create import CreateTrainerInviteLinkUseCase
 from src.application.use_cases.invite_link.get_active import GetActiveInviteLinkUseCase
 from src.application.use_cases.slot_template.create import CreateSlotTemplateUseCase
@@ -11,9 +14,15 @@ from src.application.use_cases.slot_template.deactivate import (
 from src.application.use_cases.slot_template.get_active import (
     GetActiveSlotTemplatesUseCase,
 )
-from src.application.use_cases.slot_template.sync_weekday import SyncWeekdaySlotTemplatesUseCase
-from src.application.use_cases.subscription.get_active import GetActiveSubscriptionUseCase
-from src.application.use_cases.subscription.get_active_price_plans import GetActivePricePlansUseCase
+from src.application.use_cases.slot_template.sync_weekday import (
+    SyncWeekdaySlotTemplatesUseCase,
+)
+from src.application.use_cases.subscription.get_active import (
+    GetActiveSubscriptionUseCase,
+)
+from src.application.use_cases.subscription.get_active_price_plans import (
+    GetActivePricePlansUseCase,
+)
 from src.application.use_cases.subscription.purchse import PurchaseSubscriptionUseCase
 from src.application.use_cases.trainer.get_by_tg_id import GetTrainerByTgIdUseCase
 from src.application.use_cases.trainer.get_clients_by_trainer import (
@@ -23,14 +32,25 @@ from src.application.use_cases.trainer.get_upcoming_bookings_by_trainer import (
     GetUpcomingBookingsByTrainerUseCase,
 )
 from src.application.use_cases.trainer.register import RegisterTrainerUseCase
+from src.application.use_cases.trainer_booking_settings.get_by_id import (
+    GetTrainerBookingSettingsUseCase,
+)
+from src.application.use_cases.trainer_booking_settings.update import (
+    UpdateTrainerBookingSettingsUseCase,
+)
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.invite_link import TrainerInviteLinkRepository
 from src.domain.repositories.slot_template import SlotTemplateRepository
 from src.domain.repositories.subscription import TrainerSubscriptionRepository
-from src.domain.repositories.subscription_price_plan import SubscriptionPricePlanRepository
+from src.domain.repositories.subscription_price_plan import (
+    SubscriptionPricePlanRepository,
+)
 from src.domain.repositories.trainer import TrainerRepository
+from src.domain.repositories.trainer_booking_settings import (
+    TrainerBookingSettingsRepository,
+)
 from src.domain.services.calendar_service import CalendarService
 
 from src.application.use_cases.booking.create import CreateBookingUseCase
@@ -100,9 +120,14 @@ class UseCasesProvider(Provider):
 
     @provide
     def get_day_availability_map_use_case(
-        self, calendar_service: CalendarService
+        self,
+        calendar_service: CalendarService,
+        booking_repo: BookingRepository,
     ) -> GetDayAvailabilityMapUseCase:
-        return GetDayAvailabilityMapUseCase(calendar_service=calendar_service)
+        return GetDayAvailabilityMapUseCase(
+            calendar_service=calendar_service,
+            booking_repo=booking_repo,
+        )
 
     @provide
     def get_slot_by_id_use_case(
@@ -296,11 +321,13 @@ class UseCasesProvider(Provider):
         self,
         trainer_repo: TrainerRepository,
         invite_link_repo: TrainerInviteLinkRepository,
+        booking_settings_repo: TrainerBookingSettingsRepository,
         transaction_manager: TransactionManager,
     ) -> RegisterTrainerUseCase:
         return RegisterTrainerUseCase(
             trainer_repo=trainer_repo,
             invite_link_repo=invite_link_repo,
+            booking_settings_repo=booking_settings_repo,
             transaction_manager=transaction_manager,
         )
 
@@ -321,11 +348,42 @@ class UseCasesProvider(Provider):
         template_repo: SlotTemplateRepository,
         slot_repo: CalendarSlotRepository,
         calendar_service: CalendarService,
+        booking_settings_repo: TrainerBookingSettingsRepository,
         transaction_manager: TransactionManager,
     ) -> SyncWeekdaySlotTemplatesUseCase:
         return SyncWeekdaySlotTemplatesUseCase(
             template_repo=template_repo,
             slot_repo=slot_repo,
             calendar_service=calendar_service,
+            booking_settings_repo=booking_settings_repo,
             transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_trainer_booking_settings_use_case(
+        self,
+        settings_repo: TrainerBookingSettingsRepository,
+    ) -> GetTrainerBookingSettingsUseCase:
+        return GetTrainerBookingSettingsUseCase(
+            settings_repo=settings_repo,
+        )
+
+    @provide
+    def update_trainer_booking_settings_use_case(
+        self,
+        settings_repo: TrainerBookingSettingsRepository,
+        transaction_manager: TransactionManager,
+    ) -> UpdateTrainerBookingSettingsUseCase:
+        return UpdateTrainerBookingSettingsUseCase(
+            settings_repo=settings_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def count_active_booking_by_slot_ids_use_case(
+        self,
+        booking_repo: BookingRepository,
+    ) -> CountActiveBookingsBySlotIdsUseCase:
+        return CountActiveBookingsBySlotIdsUseCase(
+            booking_repo=booking_repo,
         )

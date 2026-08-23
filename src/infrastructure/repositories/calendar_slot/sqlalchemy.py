@@ -24,6 +24,16 @@ class SQLAlchemyCalendarSlotRepo(CalendarSlotRepository):
         model = result.scalar_one_or_none()
         return model.to_entity() if model is not None else None
 
+    async def get_by_id_for_update(self, slot_id: int) -> CalendarSlot | None:
+        query = (
+            select(CalendarSlotModel)
+            .where(CalendarSlotModel.id == slot_id)
+            .with_for_update()
+        )
+        result = await self._session.execute(query)
+        model = result.scalar_one_or_none()
+        return model.to_entity() if model is not None else None
+
     async def get_free_slots(
         self,
         trainer_id: int,

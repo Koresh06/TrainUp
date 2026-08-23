@@ -32,6 +32,7 @@ class SlotTemplateModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     weekday: Mapped[int] = mapped_column(Integer, index=True)
     start_time: Mapped[time] = mapped_column(Time(timezone=True))
     end_time: Mapped[time] = mapped_column(Time(timezone=True))
+    capacity: Mapped[int] = mapped_column(Integer, default=1)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     trainer: Mapped["TrainerModel"] = relationship(
@@ -47,6 +48,7 @@ class SlotTemplateModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             weekday=entity.weekday,
             start_time=entity.start_time,
             end_time=entity.end_time,
+            capacity=entity.capacity,
             is_active=entity.is_active,
         )
 
@@ -57,6 +59,7 @@ class SlotTemplateModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             weekday=self.weekday,
             start_time=self.start_time,
             end_time=self.end_time,
+            capacity=self.capacity,
             is_active=self.is_active,
         )
     
@@ -65,5 +68,6 @@ class SlotTemplateModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.weekday = entity.weekday
         self.start_time = entity.start_time
         self.end_time = entity.end_time
+        self.capacity = entity.capacity
         self.is_active = entity.is_active
 

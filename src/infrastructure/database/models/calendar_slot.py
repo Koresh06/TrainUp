@@ -48,6 +48,7 @@ class CalendarSlotModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         index=True,
     )
     source: Mapped[SlotSource] = mapped_column(SqlEnum(SlotSource))
+    capacity: Mapped[int] = mapped_column(Integer, default=1)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     trainer: Mapped["TrainerModel"] = relationship(
@@ -69,6 +70,7 @@ class CalendarSlotModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             end_time=entity.end_time,
             status=entity.status,
             source=entity.source,
+            capacity=entity.capacity,
             is_active=entity.is_active,
         )
 
@@ -81,6 +83,7 @@ class CalendarSlotModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             end_time=self.end_time,
             status=self.status,
             source=self.source,
+            capacity=self.capacity,
             is_active=self.is_active,
         )
 
@@ -91,4 +94,5 @@ class CalendarSlotModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.end_time = entity.end_time
         self.status = entity.status
         self.source = entity.source
+        self.capacity = entity.capacity
         self.is_active = entity.is_active

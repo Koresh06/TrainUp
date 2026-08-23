@@ -11,6 +11,7 @@ from .consultation_request import ConsultationRequestModel
 from .feedback import FeedbackMessageModel
 from .faq import FaqItemModel
 from .subscription_price_plan import SubscriptionPricePlanModel
+from .trainer_booking_settings import TrainerBookingSettingsModel
 
 
 __all__ = [
@@ -27,4 +28,5 @@ __all__ = [
     "FeedbackMessageModel",
     "FaqItemModel",
     "SubscriptionPricePlanModel",
+    "TrainerBookingSettingsModel",
 ]
