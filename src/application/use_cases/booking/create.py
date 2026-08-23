@@ -6,6 +6,7 @@ from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.client import Client
 from src.domain.entities.trainer import Trainer
 from src.domain.enums.booking import BookingStatus
+from src.domain.exception.booking import ClientAlreadyBookedThisSlotException
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.trainer import TrainerRepository
@@ -16,7 +17,6 @@ from src.application.interfaces.notification_service import (
     NewBookingNotificationDTO,
 )
 from src.infrastructure.database.transaction_manager.base import TransactionManager
-
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +45,15 @@ class CreateBookingUseCase(UseCase[CreateBookingRequest, Booking]):
             command.slot_id,
         )
 
-        # проверяет доступность и переводит слот в BOOKED;
-        # кидает CalendarSlotNotFoundException / SlotAlreadyBookedException
+        already_booked = await self.booking_repo.exists_active_by_client_and_slot(
+            command.client_id, command.slot_id
+        )
+        if already_booked:
+            raise ClientAlreadyBookedThisSlotException(
+                client_id=command.client_id,
+                slot_id=command.slot_id,
+            )
+
         slot: CalendarSlot = await self.calendar_service.book_slot(command.slot_id)
 
         booking = Booking(

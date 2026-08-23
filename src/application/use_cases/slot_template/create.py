@@ -13,6 +13,7 @@ class CreateSlotTemplateRequest(UseCaseRequest):
     weekday: int
     start_time: time
     end_time: time
+    capacity: int = 1
 
 
 @dataclass(kw_only=True)
@@ -26,6 +27,7 @@ class CreateSlotTemplateUseCase(UseCase[CreateSlotTemplateRequest, SlotTemplate]
             weekday=command.weekday,
             start_time=command.start_time,
             end_time=command.end_time,
+            capacity=command.capacity,
             is_active=True,
         )
         saved = await self.template_repo.save(template)

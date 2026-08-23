@@ -3,10 +3,13 @@ import logging
 import secrets
 
 from src.application.use_cases.base import UseCase, UseCaseRequest
+from src.domain.constants import DEFAULT_CALENDAR_HORIZON_DAYS, DEFAULT_MAX_ACTIVE_BOOKINGS
 from src.domain.entities.trainer import Trainer
+from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
 from src.domain.entities.trainer_invite_link import TrainerInviteLink
 from src.domain.repositories.invite_link import TrainerInviteLinkRepository
 from src.domain.repositories.trainer import TrainerRepository
+from src.domain.repositories.trainer_booking_settings import TrainerBookingSettingsRepository
 from src.infrastructure.database.transaction_manager.base import TransactionManager
 
 logger = logging.getLogger(__name__)
@@ -24,6 +27,7 @@ class RegisterTrainerRequest(UseCaseRequest):
 class RegisterTrainerUseCase(UseCase[RegisterTrainerRequest, Trainer]):
     trainer_repo: TrainerRepository
     invite_link_repo: TrainerInviteLinkRepository
+    booking_settings_repo: TrainerBookingSettingsRepository
     transaction_manager: TransactionManager
 
     async def __call__(self, command: RegisterTrainerRequest) -> Trainer:
@@ -42,6 +46,13 @@ class RegisterTrainerUseCase(UseCase[RegisterTrainerRequest, Trainer]):
             is_active=True,
         )
         await self.invite_link_repo.save(invite_link)
+
+        booking_settings = TrainerBookingSettings(
+            trainer_id=saved_trainer.id,
+            calendar_horizon_days=DEFAULT_CALENDAR_HORIZON_DAYS,
+            max_active_bookings_per_client=DEFAULT_MAX_ACTIVE_BOOKINGS,
+        )
+        await self.booking_settings_repo.save(booking_settings)
 
         await self.transaction_manager.commit()
 
