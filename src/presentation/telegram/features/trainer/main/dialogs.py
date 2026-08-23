@@ -36,6 +36,11 @@ trainer_main_dialog = Dialog(
                 id="clients",
                 on_click=on_menu_item_click,
             ),
+            Button(
+                Const("⚙️ Настройки"),
+                id="settings",
+                on_click=on_menu_item_click,
+            )
         ),
         state=TrainerMainSG.main,
     )

@@ -2,7 +2,9 @@ from dishka.integrations.aiogram_dialog import inject, FromDishka
 from aiogram_dialog import DialogManager
 
 from src.application.mediator import Mediator
-from src.application.use_cases.slot_template.get_active import GetActiveSlotTemplatesRequest
+from src.application.use_cases.slot_template.get_active import (
+    GetActiveSlotTemplatesRequest,
+)
 from src.domain.constants import WEEKDAY_LABELS_FULL, generate_time_options
 from src.domain.entities.slot_template import SlotTemplate
 
@@ -27,6 +29,16 @@ async def weekday_list_getter(
             for i, label in enumerate(WEEKDAY_LABELS_FULL)
         ]
     }
+
+
+async def capacity_getter(dialog_manager: DialogManager, **kwargs) -> dict:
+    weekday: int = dialog_manager.dialog_data["selected_weekday"]
+    current_capacity: int = dialog_manager.dialog_data.get("current_capacity", 1)
+    return {
+        "weekday_label": WEEKDAY_LABELS_FULL[weekday],
+        "current_capacity": current_capacity,
+    }
+
 
 async def weekday_times_getter(dialog_manager: DialogManager, **kwargs) -> dict:
     weekday: int = dialog_manager.dialog_data["selected_weekday"]

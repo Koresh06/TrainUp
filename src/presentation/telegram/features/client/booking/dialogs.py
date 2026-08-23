@@ -26,7 +26,7 @@ booking_dialog = Dialog(
         getter=day_calendar_getter,
     ),
     Window(
-        Format("Свободное время на {selected_day_label}:"),
+        Format("Свободное время на {selected_day_label}:{header_note}"),
         Select(
             Format("{item[label]}"),
             id="time_select",
@@ -40,10 +40,7 @@ booking_dialog = Dialog(
         getter=times_getter,
     ),
     Window(
-        Format(
-            "Проверь данные записи:\n\n"
-            "📅 {date} в {time}\n\n"
-        ),
+        Format("Проверь данные записи:\n\n" "📅 {date} в {time}\n\n"),
         Button(
             Const("✅ Подтвердить"),
             id="confirm_booking",
@@ -54,4 +51,3 @@ booking_dialog = Dialog(
         getter=confirm_booking_getter,
     ),
 )
-

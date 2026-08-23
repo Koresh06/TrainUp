@@ -1,19 +1,28 @@
 from datetime import date
+import logging
 from dishka.integrations.aiogram_dialog import inject, FromDishka
 from aiogram_dialog import DialogManager
 
 
 from src.domain.entities.calendar_slot import CalendarSlot
+from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
 from src.domain.enums.slot import SlotStatus
 from src.application.mediator import Mediator
 from src.application.use_cases.calendar.get_day_availability_map import (
     GetDayAvailabilityMapRequest,
 )
+from src.application.use_cases.trainer_booking_settings.get_by_id import (
+    GetTrainerBookingSettingsRequest,
+)
+from src.application.use_cases.booking.count_active_by_slot_ids import (
+    CountActiveBookingsBySlotIdsRequest,
+)
 from src.application.use_cases.calendar.get_slot_by_id import GetSlotByIdRequest
 from src.application.use_cases.calendar.get_day_slots import GetDaySlotsRequest
+from src.presentation.telegram.widgets.booking_calendar import AVAILABILITY_CACHE_KEY, HORIZON_CACHE_KEY
 
-ROLLING_DAYS_AHEAD = 60
-AVAILABILITY_CACHE_KEY = "day_availability"
+
+logger = logging.getLogger(__name__)
 
 
 @inject
@@ -24,15 +33,22 @@ async def day_calendar_getter(
 ) -> dict:
     trainer_id: int = dialog_manager.start_data["trainer_id"]
 
+    settings: TrainerBookingSettings = await mediator.handle(
+        GetTrainerBookingSettingsRequest(trainer_id=trainer_id)
+    )
+
     availability_map: dict[date, int] = await mediator.handle(
         GetDayAvailabilityMapRequest(
-            trainer_id=trainer_id, days_ahead=ROLLING_DAYS_AHEAD
+            trainer_id=trainer_id,
+            days_ahead=settings.calendar_horizon_days,
         )
     )
 
     dialog_manager.dialog_data[AVAILABILITY_CACHE_KEY] = {
         d.isoformat(): count for d, count in availability_map.items()
     }
+    dialog_manager.dialog_data[HORIZON_CACHE_KEY] = settings.calendar_horizon_days
+
     return {}
 
 
@@ -48,29 +64,45 @@ async def times_getter(
     slots: list[CalendarSlot] = await mediator.handle(
         GetDaySlotsRequest(trainer_id=trainer_id, slot_date=selected_day)
     )
+    logger.info("[DEBUG] times_getter slots=%s selected_day=%s", len(slots), selected_day)
     slots.sort(key=lambda s: s.start_time)
+
+    slot_ids = [s.id for s in slots]
+    booked_counts = await mediator.handle(
+        CountActiveBookingsBySlotIdsRequest(slot_ids=slot_ids)
+    )
 
     times = []
     cache: dict[str, str] = {}
     for slot in slots:
-        is_free = slot.status == SlotStatus.FREE
+        free_spots = slot.capacity - booked_counts.get(slot.id, 0)
+        is_blocked = slot.status == SlotStatus.BLOCKED
+        is_free = not is_blocked and free_spots > 0
+
+        if is_free and slot.capacity > 1:
+            label = f"{slot.start_time.strftime('%H:%M')} ({free_spots})"
+        else:
+            label = slot.start_time.strftime("%H:%M")
+
         kind = "free" if is_free else "locked"
-        times.append(
-            {
-                "value_id": str(slot.id),
-                "label": slot.start_time.strftime("%H:%M"),
-                "kind": kind,
-            }
-        )
+        times.append({"value_id": str(slot.id), "label": label, "kind": kind})
         cache[str(slot.id)] = kind
 
     dialog_manager.dialog_data["time_kind_cache"] = cache
 
+    header_note = (
+        "\n\nℹ️ Число в скобках — сколько мест ещё свободно на групповой слот."
+        if any(s.capacity > 1 for s in slots)
+        else ""
+    )
+
+    logger.info("[DEBUG] times_getter result times=%s", times)
+
     return {
         "times": times,
         "selected_day_label": selected_day.strftime("%d.%m.%Y"),
+        "header_note": header_note,
     }
-
 
 @inject
 async def confirm_booking_getter(

@@ -5,6 +5,7 @@ from src.presentation.telegram.features.trainer.schedule.states import TrainerSc
 from src.presentation.telegram.features.trainer.blocking.states import TrainerBlockingSG
 from src.presentation.telegram.features.trainer.booking.states import TrainerBookingsSG
 from src.presentation.telegram.features.trainer.client.states import TrainerClientsSG
+from src.presentation.telegram.features.trainer.settings.states import TrainerBookingSettingsSG
 
 
 TRAINER_MENU_TARGETS: dict[str, State] = {
@@ -13,4 +14,5 @@ TRAINER_MENU_TARGETS: dict[str, State] = {
     "blocking": TrainerBlockingSG.select_date,
     "bookings": TrainerBookingsSG.list,
     "clients": TrainerClientsSG.list,
+    "settings": TrainerBookingSettingsSG.main,
 }

@@ -10,10 +10,14 @@ from src.domain.entities.client import Client
 from src.application.mediator import Mediator
 from src.application.use_cases.client.get_by_tg_id import GetClientByTgIdRequest
 from src.application.use_cases.booking.create import CreateBookingRequest
+from src.domain.exception.booking import (
+    ClientAlreadyBookedThisSlotException,
+    SlotAlreadyBookedException,
+)
+from src.domain.exception.calendar_slot import SlotFullException
 from src.presentation.telegram.features.client.booking.states import BookingSG
+from src.presentation.telegram.widgets.booking_calendar import AVAILABILITY_CACHE_KEY
 
-
-AVAILABILITY_CACHE_KEY = "day_availability"
 
 async def on_date_clicked(
     callback: ChatEvent,
@@ -22,7 +26,9 @@ async def on_date_clicked(
     clicked_date: date,
     **kwargs,
 ) -> None:
-    availability: dict[str, int] = dialog_manager.dialog_data.get(AVAILABILITY_CACHE_KEY, {})
+    availability: dict[str, int] = dialog_manager.dialog_data.get(
+        AVAILABILITY_CACHE_KEY, {}
+    )
     if availability.get(clicked_date.isoformat(), 0) == 0:
         await callback.answer("На этот день нет свободных слотов", show_alert=True)
         return
@@ -63,14 +69,29 @@ async def on_confirm_booking(
 
     client: Client = await mediator.handle(GetClientByTgIdRequest(tg_id=tg_id))
 
-    await mediator.handle(
-        CreateBookingRequest(
-            client_id=client.id,
-            trainer_id=trainer_id,
-            slot_id=slot_id,
+    try:
+        await mediator.handle(
+            CreateBookingRequest(
+                client_id=client.id,
+                trainer_id=trainer_id,
+                slot_id=slot_id,
+            )
         )
-    )
+    except ClientAlreadyBookedThisSlotException:
+        await callback.answer("Вы уже записаны на этот слот", show_alert=True)
+        return
+    except SlotFullException:
+        await callback.answer(
+            "Мест не осталось — кто-то только что забронировал последнее место",
+            show_alert=True,
+        )
+        return
+    except SlotAlreadyBookedException:
+        await callback.answer("Слот больше недоступен", show_alert=True)
+        return
 
-    await callback.answer()
-    await callback.message.answer("Запись создана! Тренер подтвердит её в ближайшее время.")
+    await callback.answer(
+        "Запись создана! Тренер подтвердит её в ближайшее время.",
+        show_alert=True,
+    )
     await dialog_manager.done()

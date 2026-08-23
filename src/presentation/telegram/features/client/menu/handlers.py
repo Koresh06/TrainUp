@@ -3,6 +3,7 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button
 
 from src.presentation.telegram.features.client.booking.states import BookingSG
+from src.presentation.telegram.features.client.menu.states import ClientMenuSG
 
 
 async def on_booking_click(
@@ -26,3 +27,11 @@ async def on_stub_click(
     await callback.message.answer(
         "🛠 Этот раздел в разработке — появится в одном из следующих спринтов."
     )
+
+
+async def on_trainer_profile_click(
+    callback: CallbackQuery,
+    button: Button,
+    dialog_manager: DialogManager,
+) -> None:
+    await dialog_manager.switch_to(ClientMenuSG.trainer_profile)
