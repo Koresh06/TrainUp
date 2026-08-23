@@ -26,6 +26,7 @@ if TYPE_CHECKING:
         TrainerInviteLinkModel,
         ProgramRequestModel,
         TrainerBookingSettingsModel,
+        TrainerPricingRuleModel,
     )
 
 
@@ -69,6 +70,11 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     )
     booking_settings: Mapped["TrainerBookingSettingsModel | None"] = relationship(
         "TrainerBookingSettingsModel",
+        back_populates="trainer",
+        uselist=False,
+    )
+    pricing_rule: Mapped["TrainerPricingRuleModel | None"] = relationship(
+        "TrainerPricingRuleModel",
         back_populates="trainer",
         uselist=False,
     )

@@ -12,6 +12,7 @@ from .feedback import FeedbackMessageModel
 from .faq import FaqItemModel
 from .subscription_price_plan import SubscriptionPricePlanModel
 from .trainer_booking_settings import TrainerBookingSettingsModel
+from .trainer_pricing_rule import TrainerPricingRuleModel
 
 
 __all__ = [
@@ -29,4 +30,5 @@ __all__ = [
     "FaqItemModel",
     "SubscriptionPricePlanModel",
     "TrainerBookingSettingsModel",
+    "TrainerPricingRuleModel",
 ]
