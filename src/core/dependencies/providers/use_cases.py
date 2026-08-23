@@ -38,6 +38,8 @@ from src.application.use_cases.trainer_booking_settings.get_by_id import (
 from src.application.use_cases.trainer_booking_settings.update import (
     UpdateTrainerBookingSettingsUseCase,
 )
+from src.application.use_cases.trainer_pricing_rule.get_by_id import GetTrainerPricingRuleUseCase
+from src.application.use_cases.trainer_pricing_rule.update import UpdateTrainerPricingRuleUseCase
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.client import ClientRepository
@@ -51,6 +53,7 @@ from src.domain.repositories.trainer import TrainerRepository
 from src.domain.repositories.trainer_booking_settings import (
     TrainerBookingSettingsRepository,
 )
+from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
 from src.domain.services.calendar_service import CalendarService
 
 from src.application.use_cases.booking.create import CreateBookingUseCase
@@ -386,4 +389,24 @@ class UseCasesProvider(Provider):
     ) -> CountActiveBookingsBySlotIdsUseCase:
         return CountActiveBookingsBySlotIdsUseCase(
             booking_repo=booking_repo,
+        )
+
+    @provide
+    def get_trainer_pricing_rule_use_case(
+        self,
+        pricing_repo: TrainerPricingRuleRepository,
+    ) -> GetTrainerPricingRuleUseCase:
+        return GetTrainerPricingRuleUseCase(
+            pricing_repo=pricing_repo,
+        )
+
+    @provide
+    def update_trainer_pricing_rule_use_case(
+        self,
+        pricing_repo: TrainerPricingRuleRepository,
+        transaction_manager: TransactionManager,
+    ) -> UpdateTrainerPricingRuleUseCase:
+        return UpdateTrainerPricingRuleUseCase(
+            pricing_repo=pricing_repo,
+            transaction_manager=transaction_manager,
         )

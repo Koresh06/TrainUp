@@ -31,6 +31,8 @@ from src.application.use_cases.trainer.get_upcoming_bookings_by_trainer import G
 from src.application.use_cases.trainer.register import RegisterTrainerRequest, RegisterTrainerUseCase
 from src.application.use_cases.trainer_booking_settings.get_by_id import GetTrainerBookingSettingsRequest, GetTrainerBookingSettingsUseCase
 from src.application.use_cases.trainer_booking_settings.update import UpdateTrainerBookingSettingsRequest, UpdateTrainerBookingSettingsUseCase
+from src.application.use_cases.trainer_pricing_rule.get_by_id import GetTrainerPricingRuleRequest, GetTrainerPricingRuleUseCase
+from src.application.use_cases.trainer_pricing_rule.update import UpdateTrainerPricingRuleRequest, UpdateTrainerPricingRuleUseCase
 
 
 class MediatorProvider(Provider):
@@ -69,6 +71,8 @@ class MediatorProvider(Provider):
         get_trainer_booking_settings_use_case: GetTrainerBookingSettingsUseCase,
         update_trainer_booking_settings_use_case: UpdateTrainerBookingSettingsUseCase,
         count_active_booking_by_slot_ids_use_case: CountActiveBookingsBySlotIdsUseCase,
+        get_trainer_pricing_rule_use_case: GetTrainerPricingRuleUseCase,
+        update_trainer_pricing_rule_use_case: UpdateTrainerPricingRuleUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -102,6 +106,8 @@ class MediatorProvider(Provider):
         mediator.register(GetTrainerBookingSettingsRequest, get_trainer_booking_settings_use_case)
         mediator.register(UpdateTrainerBookingSettingsRequest, update_trainer_booking_settings_use_case)
         mediator.register(CountActiveBookingsBySlotIdsRequest, count_active_booking_by_slot_ids_use_case)
+        mediator.register(GetTrainerPricingRuleRequest, get_trainer_pricing_rule_use_case)
+        mediator.register(UpdateTrainerPricingRuleRequest, update_trainer_pricing_rule_use_case)
 
         return mediator
 

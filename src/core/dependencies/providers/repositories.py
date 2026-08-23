@@ -18,6 +18,7 @@ from src.domain.repositories.slot_template import SlotTemplateRepository
 from src.domain.repositories.trainer_booking_settings import (
     TrainerBookingSettingsRepository,
 )
+from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
 from src.infrastructure.repositories.client.sqlalchemy import SQLAlchemyClientRepo
 from src.infrastructure.repositories.subscription_price_plan.sqlalchemy import (
     SQLAlchemySubscriptionPricePlanRepo,
@@ -47,6 +48,7 @@ from src.infrastructure.repositories.slot_template.sqlalchemy import (
 from src.infrastructure.repositories.trainer_booking_settings.sqlalchemy import (
     SQLAlchemyTrainerBookingSettingsRepo,
 )
+from src.infrastructure.repositories.trainer_pricing_rule.sqlalchemy import SQLAlchemyTrainerPricingRuleRepo
 
 
 class RepositoriesProvider(Provider):
@@ -117,3 +119,9 @@ class RepositoriesProvider(Provider):
         self, session: AsyncSession
     ) -> TrainerBookingSettingsRepository:
         return SQLAlchemyTrainerBookingSettingsRepo(session=session)
+
+    @provide(scope=Scope.REQUEST)
+    def get_trainer_priving_rule_repository(
+        self, session: AsyncSession
+    ) -> TrainerPricingRuleRepository:
+        return SQLAlchemyTrainerPricingRuleRepo(session=session)
