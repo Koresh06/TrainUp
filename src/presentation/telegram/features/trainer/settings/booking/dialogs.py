@@ -4,7 +4,7 @@ from aiogram_dialog.widgets.kbd import SwitchTo, Back, Cancel
 from aiogram_dialog.widgets.input import TextInput
 
 from src.presentation.telegram.features.error_handler import on_input_error
-from src.presentation.telegram.features.trainer.settings.states import (
+from src.presentation.telegram.features.trainer.settings.booking.states import (
     TrainerBookingSettingsSG,
 )
 
@@ -13,7 +13,7 @@ from .handlers import (
     on_horizon_entered,
     on_max_bookings_entered,
 )
-from .validaters import validate_horizon_days, validate_max_bookings
+from ..validaters import validate_horizon_days, validate_max_bookings
 
 trainer_booking_settings_dialog = Dialog(
     Window(

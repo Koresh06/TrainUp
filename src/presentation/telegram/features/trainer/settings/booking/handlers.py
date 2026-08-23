@@ -11,7 +11,7 @@ from src.application.use_cases.trainer_booking_settings.update import (
     UpdateTrainerBookingSettingsRequest,
 )
 from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
-from src.presentation.telegram.features.trainer.settings.states import (
+from src.presentation.telegram.features.trainer.settings.booking.states import (
     TrainerBookingSettingsSG,
 )
 

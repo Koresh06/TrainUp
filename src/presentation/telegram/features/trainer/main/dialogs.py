@@ -17,16 +17,6 @@ trainer_main_dialog = Dialog(
                 on_click=on_menu_item_click,
             ),
             Button(
-                Const("🗓 Настройка расписания"),
-                id="schedule",
-                on_click=on_menu_item_click,
-            ),
-            Button(
-                Const("🚫 Блокировка дней/слотов"),
-                id="blocking",
-                on_click=on_menu_item_click,
-            ),
-            Button(
                 Const("📋 Бронирования"),
                 id="bookings",
                 on_click=on_menu_item_click,
@@ -40,7 +30,7 @@ trainer_main_dialog = Dialog(
                 Const("⚙️ Настройки"),
                 id="settings",
                 on_click=on_menu_item_click,
-            )
+            ),
         ),
         state=TrainerMainSG.main,
     )
