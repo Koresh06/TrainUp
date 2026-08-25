@@ -9,6 +9,7 @@ from sqlalchemy import (
     VARCHAR,
     Boolean,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 
 from src.domain.entities.trainer import Trainer
 from src.infrastructure.database.models.trainer_invite_link import (
@@ -39,6 +40,8 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     bio: Mapped[str] = mapped_column(VARCHAR(255))
     notification_chat_id: Mapped[int] = mapped_column(BigInteger)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    photo_file_id: Mapped[str | None] = mapped_column(VARCHAR(255), nullable=True)
+    social_links: Mapped[dict[str, str]] = mapped_column(JSONB, default=dict)
 
     clients: Mapped[list["ClientModel"]] = relationship(
         "ClientModel",
@@ -87,6 +90,8 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             bio=entity.bio,
             notification_chat_id=entity.notification_chat_id,
             is_active=entity.is_active,
+            photo_file_id=entity.photo_file_id,
+            social_links=entity.social_links,
         )
 
     def to_entity(self) -> "Trainer":
@@ -97,6 +102,8 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             bio=self.bio,
             notification_chat_id=self.notification_chat_id,
             is_active=self.is_active,
+            photo_file_id=self.photo_file_id,
+            social_links=self.social_links or {},
         )
 
     def update_model(self, entity: "Trainer") -> None:
@@ -105,3 +112,5 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.bio = entity.bio
         self.notification_chat_id = entity.notification_chat_id
         self.is_active = entity.is_active
+        self.photo_file_id = entity.photo_file_id
+        self.social_links = entity.social_links
