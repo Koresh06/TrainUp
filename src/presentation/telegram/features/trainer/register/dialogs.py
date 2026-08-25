@@ -1,18 +1,23 @@
-from aiogram.enums import ContentType
+from aiogram import F
+from aiogram.enums import ButtonStyle, ContentType
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.text import Const, Format
 from aiogram_dialog.widgets.input import TextInput, MessageInput
+from aiogram_dialog.widgets.media import DynamicMedia
+from aiogram_dialog.widgets.style import Style
 from aiogram_dialog.widgets.kbd import Select, Column, Button, Back, Next
 
 from src.presentation.telegram.features.error_handler import on_input_error
 
 from .handlers import (
+    on_delete_photo,
     on_group_message_forwarded,
     on_onboarding_confirm,
+    on_photo_received,
     on_plan_selected,
     on_confirm_purchase,
 )
-from .getters import onboarding_final_getter, select_plan_getter, confirm_plan_getter
+from .getters import getter_media, onboarding_final_getter, select_plan_getter, confirm_plan_getter
 from .validaters import validate_trainer_name, validate_trainer_bio
 from .states import SubscriptionSG, TrainerOnboardingSG
 
@@ -63,6 +68,29 @@ trainer_onboarding_dialog = Dialog(
     ),
     Window(
         Const(
+            "🖼 <b>Фото</b>\n\n" "Отправь фото, которое увидят клиенты в твоём профиле.",
+            when=~F["media"],
+        ),
+        Const("📸 <b>Ваше фото</b>", when="media"),
+        DynamicMedia(selector="media", when="media"),
+        MessageInput(
+            func=on_photo_received,
+            content_types=[ContentType.PHOTO],
+        ),
+        Button(
+            Const("❌ Удалить фото"),
+            id="delete_photo",
+            on_click=on_delete_photo,
+            when="file_id",
+            style=Style(style=ButtonStyle.DANGER),
+        ),
+        Next(Const("➡️ Далее"), when="media"),
+        Back(Const("⬅️ Назад")),
+        state=TrainerOnboardingSG.photo,
+        getter=getter_media,
+    ),
+    Window(
+        Const(
             "🔔 <b>Уведомления</b>\n\n"
             "Последний шаг — куда слать уведомления о новых записях:\n\n"
             "1. Создай группу или канал в Telegram\n"
@@ -84,6 +112,7 @@ trainer_onboarding_dialog = Dialog(
             "🔔 Уведомления: {chat_label}\n\n"
             "Всё верно?"
         ),
+        DynamicMedia(selector="photo"),
         Button(
             Const("✅ Завершить"),
             id="finish_onboarding",

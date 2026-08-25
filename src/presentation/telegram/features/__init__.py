@@ -24,7 +24,7 @@ from src.presentation.telegram.features.trainer.settings.schedule.dialogs import
 from src.presentation.telegram.features.trainer.invite_link.dialogs import (
     trainer_invite_link_dialog,
 )
-from src.presentation.telegram.features.trainer.subscription.dialogs import (
+from src.presentation.telegram.features.trainer.register.dialogs import (
     subscription_dialog,
     trainer_onboarding_dialog,
 )
@@ -36,6 +36,9 @@ from src.presentation.telegram.features.trainer.settings.pricing_rule.dialogs im
 )
 from src.presentation.telegram.features.trainer.settings.menu.dialogs import (
     trainer_settings_dialog,
+)
+from src.presentation.telegram.features.trainer.profile.dialogs import (
+    trainer_profile_dialog,
 )
 
 
@@ -60,4 +63,5 @@ def get_all_dialogs() -> list[Dialog]:
         trainer_booking_settings_dialog,
         pricing_rule_dialog,
         trainer_settings_dialog,
+        trainer_profile_dialog,
     ]

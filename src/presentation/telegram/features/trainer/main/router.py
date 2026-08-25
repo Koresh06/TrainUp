@@ -14,7 +14,7 @@ from src.application.use_cases.trainer.get_by_tg_id import GetTrainerByTgIdReque
 from src.application.use_cases.subscription.get_active import (
     GetActiveSubscriptionRequest,
 )
-from src.presentation.telegram.features.trainer.subscription.states import (
+from src.presentation.telegram.features.trainer.register.states import (
     SubscriptionSG,
     TrainerOnboardingSG,
 )

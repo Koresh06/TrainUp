@@ -1,4 +1,3 @@
-from aiogram import Bot
 from aiogram.exceptions import TelegramAPIError
 from dishka.integrations.aiogram_dialog import inject, FromDishka
 from aiogram.types import CallbackQuery, Message
@@ -14,7 +13,27 @@ from src.application.use_cases.trainer.register import RegisterTrainerRequest
 from src.application.use_cases.subscription.purchse import PurchaseSubscriptionRequest
 from src.presentation.telegram.features.trainer.main.states import TrainerMainSG
 
-from .states import SubscriptionSG, TrainerOnboardingSG
+from .states import SubscriptionSG
+
+
+async def on_photo_received(
+    message: Message,
+    widget: MessageInput,
+    dialog_manager: DialogManager,
+) -> None:
+    dialog_manager.dialog_data["photo_file_id"] = message.photo[-1].file_id
+
+
+async def on_delete_photo(
+    callback: CallbackQuery,
+    widget: Button,
+    dialog_manager: DialogManager,
+) -> None:
+    if "photo_file_id" in dialog_manager.dialog_data:
+        dialog_manager.dialog_data.pop("photo_file_id")
+        await callback.answer("Фото удалено. Отправьте новое.")
+    else:
+        await callback.answer("Фото для удаления не найдено.", show_alert=True)
 
 
 async def on_group_message_forwarded(
@@ -23,9 +42,13 @@ async def on_group_message_forwarded(
     dialog_manager: DialogManager,
 ) -> None:
     if message.forward_from_chat is None or message.forward_from_chat.type not in (
-        "group", "supergroup", "channel",
+        "group",
+        "supergroup",
+        "channel",
     ):
-        await message.answer("Это не похоже на пересланное сообщение из группы/канала. Попробуй ещё раз.")
+        await message.answer(
+            "Это не похоже на пересланное сообщение из группы/канала. Попробуй ещё раз."
+        )
         return
     chat = message.forward_from_chat
     dialog_manager.dialog_data["notification_chat_id"] = chat.id
@@ -58,6 +81,7 @@ async def on_onboarding_confirm(
             name=dialog_manager.find("name").get_value(),
             bio=dialog_manager.find("bio").get_value(),
             notification_chat_id=data["notification_chat_id"],
+            photo_file_id=data.get("photo_file_id"),
         )
     )
 
@@ -67,6 +91,7 @@ async def on_onboarding_confirm(
         mode=StartMode.RESET_STACK,
         data={"trainer_id": trainer.id},
     )
+
 
 async def on_plan_selected(
     callback: CallbackQuery,
@@ -90,10 +115,12 @@ async def on_confirm_purchase(
     price_plan_id: int = dialog_manager.dialog_data["price_plan_id"]
 
     subscription: TrainerSubscription = await mediator.handle(
-        PurchaseSubscriptionRequest(trainer_id=trainer_id, price_plan_id=price_plan_id)
+        PurchaseSubscriptionRequest(
+            trainer_id=trainer_id,
+            price_plan_id=price_plan_id,
+        )
     )
 
-    await callback.answer()
     await callback.answer(
         f"🎉 Готово! Подписка активна до "
         f"{to_moscow(subscription.expired_at).strftime('%d.%m.%Y')}.",

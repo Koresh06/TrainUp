@@ -10,5 +10,6 @@ class TrainerOnboardingSG(StatesGroup):
     welcome = State()
     name = State()
     bio = State()
+    photo = State()
     group = State()
     final = State()
