@@ -30,17 +30,6 @@ services:
       timeout: 3s
       retries: 5
 
-  migrate:
-    image: ghcr.io/koresh06/trainup:latest
-    container_name: trainup_migrate
-    command: alembic -c alembic.ini upgrade head
-    env_file:
-      - .env
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: "no"
-
   bot:
     image: ghcr.io/koresh06/trainup:latest
     container_name: trainup_bot
