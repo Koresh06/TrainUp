@@ -5,6 +5,7 @@ from src.application.use_cases.booking.confirm import ConfirmBookingUseCase
 from src.application.use_cases.booking.count_active_by_slot_ids import (
     CountActiveBookingsBySlotIdsUseCase,
 )
+from src.application.use_cases.client.get_clients_by_trainer import GetClientsByTrainerIdUseCase
 from src.application.use_cases.invite_link.create import CreateTrainerInviteLinkUseCase
 from src.application.use_cases.invite_link.get_active import GetActiveInviteLinkUseCase
 from src.application.use_cases.slot_template.create import CreateSlotTemplateUseCase
@@ -32,6 +33,7 @@ from src.application.use_cases.trainer.get_upcoming_bookings_by_trainer import (
     GetUpcomingBookingsByTrainerUseCase,
 )
 from src.application.use_cases.trainer.register import RegisterTrainerUseCase
+from src.application.use_cases.trainer.update import UpdateTrainerProfileUseCase
 from src.application.use_cases.trainer_booking_settings.get_by_id import (
     GetTrainerBookingSettingsUseCase,
 )
@@ -409,4 +411,24 @@ class UseCasesProvider(Provider):
         return UpdateTrainerPricingRuleUseCase(
             pricing_repo=pricing_repo,
             transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def update_trainer_profile_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+        transaction_manager: TransactionManager,
+    ) -> UpdateTrainerProfileUseCase:
+        return UpdateTrainerProfileUseCase(
+            trainer_repo=trainer_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_clients_by_trainer_id_use_case(
+        self,
+        client_repo: ClientRepository,
+    ) -> GetClientsByTrainerIdUseCase:
+        return GetClientsByTrainerIdUseCase(
+            client_repo=client_repo,
         )

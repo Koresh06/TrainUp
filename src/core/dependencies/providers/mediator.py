@@ -12,6 +12,7 @@ from src.application.use_cases.calendar.get_time_column import GetTimeColumnsUse
 from src.application.use_cases.calendar.get_week_grid import GetWeekGridUseCase, GetWeekGridRequest
 from src.application.use_cases.calendar.maintain_calendar_buffer import MaintainCalendarBufferUseCase, MaintainCalendarBufferRequest
 from src.application.use_cases.calendar.get_slot_by_id import GetSlotByIdUseCase, GetSlotByIdRequest
+from src.application.use_cases.client.get_clients_by_trainer import GetClientsByTrainerIdRequest, GetClientsByTrainerIdUseCase
 from src.application.use_cases.client.register import RegisterClientRequest, RegisterClientUseCase
 from src.application.use_cases.client.get_by_tg_id import GetClientByTgIdUseCase, GetClientByTgIdRequest
 from src.application.use_cases.invite_link.create import CreateTrainerInviteLinkRequest, CreateTrainerInviteLinkUseCase
@@ -29,6 +30,7 @@ from src.application.use_cases.trainer.get_by_tg_id import GetTrainerByTgIdReque
 from src.application.use_cases.trainer.get_clients_by_trainer import GetClientsByTrainerRequest, GetClientsByTrainerUseCase
 from src.application.use_cases.trainer.get_upcoming_bookings_by_trainer import GetUpcomingBookingsByTrainerRequest, GetUpcomingBookingsByTrainerUseCase
 from src.application.use_cases.trainer.register import RegisterTrainerRequest, RegisterTrainerUseCase
+from src.application.use_cases.trainer.update import UpdateTrainerProfileRequest, UpdateTrainerProfileUseCase
 from src.application.use_cases.trainer_booking_settings.get_by_id import GetTrainerBookingSettingsRequest, GetTrainerBookingSettingsUseCase
 from src.application.use_cases.trainer_booking_settings.update import UpdateTrainerBookingSettingsRequest, UpdateTrainerBookingSettingsUseCase
 from src.application.use_cases.trainer_pricing_rule.get_by_id import GetTrainerPricingRuleRequest, GetTrainerPricingRuleUseCase
@@ -73,6 +75,8 @@ class MediatorProvider(Provider):
         count_active_booking_by_slot_ids_use_case: CountActiveBookingsBySlotIdsUseCase,
         get_trainer_pricing_rule_use_case: GetTrainerPricingRuleUseCase,
         update_trainer_pricing_rule_use_case: UpdateTrainerPricingRuleUseCase,
+        update_trainer_profile_use_case: UpdateTrainerProfileUseCase,
+        get_clients_by_trainer_id_use_case: GetClientsByTrainerIdUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -108,6 +112,8 @@ class MediatorProvider(Provider):
         mediator.register(CountActiveBookingsBySlotIdsRequest, count_active_booking_by_slot_ids_use_case)
         mediator.register(GetTrainerPricingRuleRequest, get_trainer_pricing_rule_use_case)
         mediator.register(UpdateTrainerPricingRuleRequest, update_trainer_pricing_rule_use_case)
+        mediator.register(UpdateTrainerProfileRequest, update_trainer_profile_use_case)
+        mediator.register(GetClientsByTrainerIdRequest, get_clients_by_trainer_id_use_case)
 
         return mediator
 
