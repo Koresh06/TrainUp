@@ -10,6 +10,16 @@ class TrainingDirection(str, Enum):
     CUSTOM_GOAL = "custom_goal"
 
 
+class TrainingGoal(str, Enum):
+    COMPLEX = "complex"
+    BASIC = "basic"
+    WEIGHT_LOSS = "weight_loss"
+    WEIGHT_GAIN = "weight_gain"
+    SKILL_DEVELOPMENT = "skill_development"
+    STANDARDS_PREP = "standards_prep"
+    CUSTOM_GOAL = "custom_goal"
+
+
 class SportExperience(str, Enum):
     NONE = "none"
     UP_TO_3_MONTHS = "up_to_3_months"

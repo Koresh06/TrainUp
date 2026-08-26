@@ -7,7 +7,6 @@ from src.domain.enums.training import SportExperience
 from src.domain.repositories.client import ClientRepository
 from src.infrastructure.database.transaction_manager.base import TransactionManager
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -22,10 +21,7 @@ class RegisterClientRequest(UseCaseRequest):
     age: int
     sport_experience: str
     health_conditions: list[str]
-    health_conditions_other: str | None
     goals: list[str]
-    health_notes: str | None
-    injuries: str | None
 
 
 @dataclass(kw_only=True)
@@ -34,7 +30,9 @@ class RegisterClientUseCase(UseCase[RegisterClientRequest, Client]):
     transaction_manager: TransactionManager
 
     async def __call__(self, command: RegisterClientRequest) -> Client:
-        logger.info("[RegisterClient] tg_id=%s trainer_id=%s", command.tg_id, command.trainer_id)
+        logger.info(
+            "[RegisterClient] tg_id=%s trainer_id=%s", command.tg_id, command.trainer_id
+        )
 
         existing = await self.client_repo.get_by_tg_id(command.tg_id)
         if existing is not None:
@@ -54,10 +52,7 @@ class RegisterClientUseCase(UseCase[RegisterClientRequest, Client]):
             age=command.age,
             sport_experience=SportExperience(command.sport_experience),
             health_conditions=command.health_conditions,
-            health_conditions_other=command.health_conditions_other,
             goals=command.goals,
-            health_notes=command.health_notes,
-            injuries=command.injuries,
         )
         saved = await self.client_repo.save(client)
         await self.transaction_manager.commit()

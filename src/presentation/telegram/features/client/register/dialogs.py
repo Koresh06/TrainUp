@@ -17,7 +17,6 @@ from aiogram_dialog.widgets.style import Style
 from src.presentation.telegram.features.error_handler import on_input_error
 from .states import ClientRegisterSG
 from .validator import (
-    bounded_text,
     validate_full_name,
     validate_phone_number,
     validate_age,
@@ -26,11 +25,6 @@ from .handlers import (
     on_full_name_success,
     on_goals_done,
     on_health_conditions_done,
-    on_health_conditions_other_entered,
-    on_health_entered,
-    on_health_skip,
-    on_injuries_entered,
-    on_injuries_skip,
     on_phone_input_success,
     on_phone_received_contact,
     on_age_input_success,
@@ -82,7 +76,8 @@ client_register_dialog = Dialog(
     ),
     Window(
         Const(
-            "📞 <b>Укажите Ваш номер телефона (с 8 или +7, без пробелов и лишних символов):</b>"
+            "📞 <b>Укажите Ваш номер телефона (например, "
+            "+375291234567 или 80291234567):</b>"
         ),
         RequestContact(Const("📞 Отправить номер")),
         MessageInput(
@@ -142,18 +137,9 @@ client_register_dialog = Dialog(
         getter=health_conditions_getter,
     ),
     Window(
-        Const("Уточните, пожалуйста, детали:"),
-        TextInput(
-            id="health_conditions_other_input",
-            type_factory=bounded_text(1000),
-            on_success=on_health_conditions_other_entered,
-            on_error=on_input_error,
+        Const(
+            "🎯 <b>Выберите предпочтения в тренировке:</b>\n(можно выбрать несколько вариантов)"
         ),
-        Back(Const("⬅️ Назад")),
-        state=ClientRegisterSG.health_conditions_other,
-    ),
-    Window(
-        Const("Выбери цели тренировок (можно несколько):"),
         Group(
             Multiselect(
                 Format("✅ {item[label]}"),
@@ -175,40 +161,6 @@ client_register_dialog = Dialog(
         getter=goals_getter,
     ),
     Window(
-        Const("Есть ли особенности здоровья, о которых стоит знать тренеру?"),
-        TextInput(
-            id="health_input",
-            type_factory=bounded_text(1000),
-            on_success=on_health_entered,
-            on_error=on_input_error,
-        ),
-        Button(
-            Const("Пропустить"),
-            id="skip_health",
-            on_click=on_health_skip,
-            style=Style(style=ButtonStyle.PRIMARY),
-        ),
-        Back(Const("⬅️ Назад")),
-        state=ClientRegisterSG.health_notes,
-    ),
-    Window(
-        Const("Есть ли травмы, которые нужно учитывать?"),
-        TextInput(
-            id="injuries_input",
-            type_factory=bounded_text(1000),
-            on_success=on_injuries_entered,
-            on_error=on_input_error,
-        ),
-        Button(
-            Const("Пропустить"),
-            id="skip_injuries",
-            on_click=on_injuries_skip,
-            style=Style(style=ButtonStyle.PRIMARY),
-        ),
-        Back(Const("⬅️ Назад")),
-        state=ClientRegisterSG.injuries,
-    ),
-    Window(
         Format(
             "Проверь данные:\n\n"
             "👤 {full_name}\n"
@@ -216,9 +168,7 @@ client_register_dialog = Dialog(
             "🎂 {age} лет\n"
             "🏋️ Стаж: {sport_experience}\n"
             "❤️ Состояние здоровья: {health_conditions}\n"
-            "🎯 Цели: {goals}\n"
-            "📝 Особенности: {health_notes}\n"
-            "🩹 Травмы: {injuries}"
+            "🎯 Предпочтения: {goals}"
         ),
         Button(
             Const("✅ Всё верно"),

@@ -8,8 +8,5 @@ class ClientRegisterSG(StatesGroup):
     phone = State()
     sport_experience = State()
     health_conditions = State()
-    health_conditions_other = State()
     goals = State()
-    health_notes = State()
-    injuries = State()
     confirm = State()

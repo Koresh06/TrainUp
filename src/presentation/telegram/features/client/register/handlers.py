@@ -6,7 +6,7 @@ from aiogram_dialog.widgets.input import ManagedTextInput, MessageInput
 
 from src.application.mediator import Mediator
 from src.application.use_cases.client.register import RegisterClientRequest
-from src.domain.enums.training import HealthCondition
+from src.domain.enums.training import HealthCondition, TrainingGoal
 from src.domain.exception.client import AssigningClientToAnotherTrainerError
 from src.presentation.telegram.features.client.menu.states import ClientMenuSG
 
@@ -84,21 +84,7 @@ async def on_health_conditions_done(
         return
 
     dialog_manager.dialog_data["health_conditions"] = checked
-
-    if HealthCondition.OTHER.value in checked:
-        await dialog_manager.switch_to(ClientRegisterSG.health_conditions_other)
-    else:
-        await dialog_manager.switch_to(ClientRegisterSG.goals)
-
-
-async def on_health_conditions_other_entered(
-    message: Message,
-    widget: ManagedTextInput,
-    dialog_manager: DialogManager,
-    data: str,
-) -> None:
-    dialog_manager.dialog_data["health_conditions_other_text"] = data
-    await dialog_manager.next()
+    await dialog_manager.switch_to(ClientRegisterSG.goals)
 
 
 async def on_goals_done(
@@ -110,50 +96,11 @@ async def on_goals_done(
     checked: list[str] = multiselect.get_checked()
 
     if not checked:
-        await callback.answer("Выбери хотя бы одну цель", show_alert=True)
+        await callback.answer("Выбери хотя бы один вариант", show_alert=True)
         return
 
     dialog_manager.dialog_data["goals"] = checked
-    await dialog_manager.next()
-
-
-async def on_health_entered(
-    message: Message,
-    widget: ManagedTextInput,
-    dialog_manager: DialogManager,
-    text: str,
-) -> None:
-    dialog_manager.dialog_data["health_notes"] = text
-    await dialog_manager.switch_to(ClientRegisterSG.injuries)
-
-
-async def on_health_skip(
-    callback: CallbackQuery,
-    button: Button,
-    dialog_manager: DialogManager,
-) -> None:
-    dialog_manager.dialog_data["health_notes"] = None
-    await dialog_manager.switch_to(ClientRegisterSG.injuries)
-
-
-async def on_injuries_entered(
-    message: Message,
-    widget: ManagedTextInput,
-    dialog_manager: DialogManager,
-    text: str,
-) -> None:
-    dialog_manager.dialog_data["injuries"] = text
     await dialog_manager.switch_to(ClientRegisterSG.confirm)
-
-
-async def on_injuries_skip(
-    callback: CallbackQuery,
-    button: Button,
-    dialog_manager: DialogManager,
-) -> None:
-    dialog_manager.dialog_data["injuries"] = None
-    await dialog_manager.switch_to(ClientRegisterSG.confirm)
-
 
 @inject
 async def on_register_confirm(
@@ -178,10 +125,7 @@ async def on_register_confirm(
                 age=data["age"],
                 sport_experience=data["sport_experience"],
                 health_conditions=data.get("health_conditions", []),
-                health_conditions_other=data.get("health_conditions_other_text"),
                 goals=data.get("goals", []),
-                health_notes=data.get("health_notes"),
-                injuries=data.get("injuries"),
             )
         )
     except AssigningClientToAnotherTrainerError:

@@ -49,12 +49,7 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         ),
     )
     health_conditions: Mapped[list[str]] = mapped_column(ARRAY(VARCHAR(255)))
-    health_conditions_other: Mapped[str | None] = mapped_column(
-        String(1000), nullable=True
-    )
     goals: Mapped[list[str]] = mapped_column(ARRAY(VARCHAR(255)))
-    health_notes: Mapped[str | None] = mapped_column(String(1000), nullable=True)
-    injuries: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     trainer: Mapped["TrainerModel"] = relationship(
@@ -86,10 +81,7 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             age=entity.age,
             sport_experience=entity.sport_experience,
             health_conditions=entity.health_conditions,
-            health_conditions_other=entity.health_conditions_other,
             goals=entity.goals,
-            health_notes=entity.health_notes,
-            injuries=entity.injuries,
             is_active=entity.is_active,
         )
 
@@ -105,10 +97,7 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             age=self.age,
             sport_experience=self.sport_experience,
             health_conditions=self.health_conditions,
-            health_conditions_other=self.health_conditions_other,
             goals=self.goals,
-            health_notes=self.health_notes,
-            injuries=self.injuries,
             is_active=self.is_active,
         )
 
@@ -122,8 +111,5 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.age = entity.age
         self.sport_experience = entity.sport_experience
         self.health_conditions = entity.health_conditions
-        self.health_conditions_other = entity.health_conditions_other
         self.goals = entity.goals
-        self.health_notes = entity.health_notes
-        self.injuries = entity.injuries
         self.is_active = entity.is_active

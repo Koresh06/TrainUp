@@ -5,7 +5,7 @@ from src.application.mediator import Mediator
 from src.application.use_cases.trainer.get_by_id import GetTrainerByIdRequest
 
 from src.domain.entities.trainer import Trainer
-from src.domain.enums.training import HealthCondition, SportExperience, TrainingDirection
+from src.domain.enums.training import HealthCondition, SportExperience, TrainingDirection, TrainingGoal
 
 
 @inject
@@ -57,14 +57,24 @@ async def health_conditions_getter(dialog_manager: DialogManager, **kwargs) -> d
     }
 
 
-GOAL_LABELS: dict[TrainingDirection, str] = {
-    TrainingDirection.STRENGTH: "Силовые",
-    TrainingDirection.CARDIO: "Кардио",
-    TrainingDirection.ENDURANCE: "Выносливость",
-    TrainingDirection.OFP: "ОФП",
-    TrainingDirection.WEIGHT_LOSS: "Снижение веса",
-    TrainingDirection.CUSTOM_GOAL: "Своя цель",
+GOAL_LABELS: dict[TrainingGoal, str] = {
+    TrainingGoal.COMPLEX: (
+        "Комплексная (Всё тело + развитие навыков: "
+        "сила/выносливость/координация и т.д.)"
+    ),
+    TrainingGoal.BASIC: "Базовая (Всё тело/Отдельные группы мышц)",
+    TrainingGoal.WEIGHT_LOSS: "Похудение (+консультация по питанию)",
+    TrainingGoal.WEIGHT_GAIN: "Набор (+консультация по питанию)",
+    TrainingGoal.SKILL_DEVELOPMENT: (
+        "Обучение/развитие движений (подтягивания, отжимания и т.д.)"
+    ),
+    TrainingGoal.STANDARDS_PREP: (
+        "Подготовка к сдаче спортивных нормативов/экзаменов"
+    ),
+    TrainingGoal.CUSTOM_GOAL: "Другое",
 }
+
+
 
 
 async def goals_getter(dialog_manager: DialogManager, **kwargs) -> dict:
