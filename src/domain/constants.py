@@ -3,9 +3,10 @@ from decimal import Decimal
 
 SLOT_DURATION_MINUTES = 60
 
+MAX_SLOT_CAPACITY = 5
 TIME_SLOTS_START = time(8, 0)
 TIME_SLOTS_END = time(22, 0)
-TIME_SLOTS_STEP_MINUTES = 60
+TIME_SLOTS_STEP_MINUTES = 30
 
 WEEKDAY_LABELS_FULL = [
     "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье",

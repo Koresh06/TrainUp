@@ -11,7 +11,9 @@ from src.domain.entities.slot_template import SlotTemplate
 from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.slot_template import SlotTemplateRepository
-from src.domain.repositories.trainer_booking_settings import TrainerBookingSettingsRepository
+from src.domain.repositories.trainer_booking_settings import (
+    TrainerBookingSettingsRepository,
+)
 from src.domain.services.calendar_service import CalendarService
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.infrastructure.database.transaction_manager.base import TransactionManager
@@ -23,8 +25,8 @@ logger = logging.getLogger(__name__)
 class SyncWeekdaySlotTemplatesRequest(UseCaseRequest):
     trainer_id: int
     weekday: int
-    selected_times: list[time]
-    capacity: int
+    time_capacities: dict[time, int]
+
 
 @dataclass(kw_only=True)
 class SyncWeekdaySlotTemplatesUseCase(UseCase[SyncWeekdaySlotTemplatesRequest, None]):
@@ -39,13 +41,13 @@ class SyncWeekdaySlotTemplatesUseCase(UseCase[SyncWeekdaySlotTemplatesRequest, N
             command.trainer_id, command.weekday
         )
         existing_by_time = {t.start_time: t for t in existing}
-        selected = set(command.selected_times)
+        selected = command.time_capacities  # {start_time: capacity}, все capacity > 0
 
-        for start_time in selected:
+        for start_time, capacity in selected.items():
             template = existing_by_time.get(start_time)
             if template is not None:
                 template.is_active = True
-                template.capacity = command.capacity
+                template.capacity = capacity
                 await self.template_repo.save(template)
             else:
                 new_template = SlotTemplate(
@@ -53,7 +55,7 @@ class SyncWeekdaySlotTemplatesUseCase(UseCase[SyncWeekdaySlotTemplatesRequest, N
                     weekday=command.weekday,
                     start_time=start_time,
                     end_time=add_minutes(start_time, SLOT_DURATION_MINUTES),
-                    capacity=command.capacity,
+                    capacity=capacity,
                     is_active=True,
                 )
                 await self.template_repo.save(new_template)
@@ -82,7 +84,7 @@ class SyncWeekdaySlotTemplatesUseCase(UseCase[SyncWeekdaySlotTemplatesRequest, N
         await self.transaction_manager.commit()
         logger.info("[SyncWeekdaySlotTemplates] new_slots created: %s", len(new_slots))
 
-        # === НОВЫЙ БЛОК — синхронизация capacity на уже существующих слотах ===
+        # синхронизация capacity на уже существующих слотах — теперь по каждому времени своя цифра
         today = date.today()
         all_future_slots = await self.slot_repo.get_slots_for_range(
             command.trainer_id, today, today + timedelta(days=horizon_days)
@@ -91,14 +93,16 @@ class SyncWeekdaySlotTemplatesUseCase(UseCase[SyncWeekdaySlotTemplatesRequest, N
         for slot in all_future_slots:
             if slot.slot_date.weekday() != command.weekday:
                 continue
-            if slot.start_time in selected and slot.capacity != command.capacity:
-                slot.capacity = command.capacity
+            new_capacity = selected.get(slot.start_time)
+            if new_capacity is not None and slot.capacity != new_capacity:
+                slot.capacity = new_capacity
                 await self.slot_repo.save(slot)
                 updated_count += 1
 
         await self.transaction_manager.commit()
-        logger.info("[SyncWeekdaySlotTemplates] capacity synced on %s slots", updated_count)
-        # === КОНЕЦ НОВОГО БЛОКА ===
+        logger.info(
+            "[SyncWeekdaySlotTemplates] capacity synced on %s slots", updated_count
+        )
 
         if deactivated_times:
             free_slots = await self.slot_repo.get_free_slots(
@@ -113,8 +117,8 @@ class SyncWeekdaySlotTemplatesUseCase(UseCase[SyncWeekdaySlotTemplatesRequest, N
             await self.transaction_manager.commit()
 
         logger.info(
-            "[SyncWeekdaySlotTemplates:done] trainer_id=%s weekday=%s capacity=%s",
+            "[SyncWeekdaySlotTemplates:done] trainer_id=%s weekday=%s times=%s",
             command.trainer_id,
             command.weekday,
-            command.capacity,
+            len(selected),
         )

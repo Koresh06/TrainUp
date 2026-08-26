@@ -14,6 +14,7 @@ from src.application.use_cases.slot_template.sync_weekday import (
 from src.application.use_cases.slot_template.get_active import (
     GetActiveSlotTemplatesRequest,
 )
+from src.domain.constants import MAX_SLOT_CAPACITY
 from src.domain.entities.slot_template import SlotTemplate
 from .states import TrainerScheduleSG
 
@@ -24,7 +25,6 @@ async def on_weekday_selected(
     widget: Select[str],
     dialog_manager: DialogManager,
     item_id: str,
-    /,
     mediator: FromDishka[Mediator],
 ) -> None:
     weekday = int(item_id)
@@ -36,33 +36,41 @@ async def on_weekday_selected(
     )
     weekday_templates = [t for t in templates if t.weekday == weekday]
 
-    # текущая вместимость дня — берём у любого существующего шаблона этого дня
-    # (они все должны быть одинаковыми, раз задаются одной цифрой на день)
-    current_capacity = weekday_templates[0].capacity if weekday_templates else 1
-    dialog_manager.dialog_data["current_capacity"] = current_capacity
+    dialog_manager.dialog_data["capacities"] = {
+        t.start_time.strftime("%H:%M"): t.capacity for t in weekday_templates
+    }
 
-    await dialog_manager.switch_to(TrainerScheduleSG.manage_weekday_capacity)
+    await dialog_manager.next()
 
 
-async def on_capacity_entered(
-    message: Message,
-    widget: ManagedTextInput[int],
+async def on_time_selected(
+    callback: CallbackQuery,
+    widget: Select,
     dialog_manager: DialogManager,
-    value: int,
+    item_id: str,
 ) -> None:
-    dialog_manager.dialog_data["capacity"] = value
-    await dialog_manager.switch_to(TrainerScheduleSG.manage_weekday)
+    dialog_manager.dialog_data["editing_time"] = item_id
+    await dialog_manager.switch_to(TrainerScheduleSG.edit_time_capacity)
 
 
-async def on_keep_capacity(
+async def on_capacity_decrement(
     callback: CallbackQuery,
     button: Button,
     dialog_manager: DialogManager,
 ) -> None:
-    dialog_manager.dialog_data["capacity"] = dialog_manager.dialog_data.get(
-        "current_capacity", 1
-    )
-    await dialog_manager.switch_to(TrainerScheduleSG.manage_weekday)
+    time_str: str = dialog_manager.dialog_data["editing_time"]
+    capacities: dict[str, int] = dialog_manager.dialog_data.setdefault("capacities", {})
+    capacities[time_str] = max(0, capacities.get(time_str, 0) - 1)
+
+
+async def on_capacity_increment(
+    callback: CallbackQuery,
+    button: Button,
+    dialog_manager: DialogManager,
+) -> None:
+    time_str: str = dialog_manager.dialog_data["editing_time"]
+    capacities: dict[str, int] = dialog_manager.dialog_data.setdefault("capacities", {})
+    capacities[time_str] = min(MAX_SLOT_CAPACITY, capacities.get(time_str, 0) + 1)
 
 
 @inject
@@ -75,21 +83,21 @@ async def on_weekday_times_confirm(
 ) -> None:
     trainer_id: int = dialog_manager.start_data["trainer_id"]
     weekday: int = dialog_manager.dialog_data["selected_weekday"]
-    capacity: int = dialog_manager.dialog_data["capacity"]
+    capacities: dict[str, int] = dialog_manager.dialog_data.get("capacities", {})
 
-    multiselect = dialog_manager.find("weekday_times_multiselect")
-    selected_ids: list[str] = multiselect.get_checked()
-    selected_times = [
-        datetime.strptime(s, "%H:%M").time().replace(tzinfo=timezone.utc)
-        for s in selected_ids
-    ]
+    time_capacities = {
+        datetime.strptime(time_str, "%H:%M")
+        .time()
+        .replace(tzinfo=timezone.utc): capacity
+        for time_str, capacity in capacities.items()
+        if capacity > 0
+    }
 
     await mediator.handle(
         SyncWeekdaySlotTemplatesRequest(
             trainer_id=trainer_id,
             weekday=weekday,
-            selected_times=selected_times,
-            capacity=capacity,
+            time_capacities=time_capacities,
         )
     )
 

@@ -31,21 +31,29 @@ async def weekday_list_getter(
     }
 
 
-async def capacity_getter(dialog_manager: DialogManager, **kwargs) -> dict:
-    weekday: int = dialog_manager.dialog_data["selected_weekday"]
-    current_capacity: int = dialog_manager.dialog_data.get("current_capacity", 1)
-    return {
-        "weekday_label": WEEKDAY_LABELS_FULL[weekday],
-        "current_capacity": current_capacity,
-    }
-
-
 async def weekday_times_getter(dialog_manager: DialogManager, **kwargs) -> dict:
     weekday: int = dialog_manager.dialog_data["selected_weekday"]
+    capacities: dict[str, int] = dialog_manager.dialog_data.setdefault("capacities", {})
+
+    times = []
+    for t in generate_time_options():
+        time_str = t.strftime("%H:%M")
+        capacity = capacities.get(time_str, 0)
+        label = f"✅ {time_str} ({capacity})" if capacity > 0 else time_str
+        times.append({"id": time_str, "label": label})
+
     return {
         "weekday_label": WEEKDAY_LABELS_FULL[weekday],
-        "times": [
-            {"id": t.strftime("%H:%M"), "label": t.strftime("%H:%M")}
-            for t in generate_time_options()
-        ],
+        "times": times,
+    }
+
+async def edit_time_capacity_getter(dialog_manager: DialogManager, **kwargs) -> dict:
+    time_str: str = dialog_manager.dialog_data["editing_time"]
+    capacities: dict[str, int] = dialog_manager.dialog_data.setdefault("capacities", {})
+    capacity = capacities.get(time_str, 0)
+    status_label = "Слот не активен" if capacity == 0 else f"Количество мест на слот: {capacity}"
+    return {
+        "time_str": time_str,
+        "capacity": capacity,
+        "status_label": status_label,
     }
