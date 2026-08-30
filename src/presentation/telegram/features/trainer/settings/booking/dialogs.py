@@ -58,7 +58,11 @@ trainer_booking_settings_dialog = Dialog(
             on_success=on_max_bookings_entered,
             on_error=on_input_error,
         ),
-        Back(Const("⬅️ Назад")),
+        SwitchTo(
+            Const("⬅️ Назад"),
+            id="back",
+            state=TrainerBookingSettingsSG.main,
+        ),
         state=TrainerBookingSettingsSG.edit_max_bookings,
     ),
 )

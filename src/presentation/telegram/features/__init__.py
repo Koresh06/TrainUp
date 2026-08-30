@@ -40,6 +40,9 @@ from src.presentation.telegram.features.trainer.settings.menu.dialogs import (
 from src.presentation.telegram.features.trainer.profile.dialogs import (
     trainer_profile_dialog,
 )
+from src.presentation.telegram.features.trainer.settings.questions.dialogs import (
+    questions_dialog,
+)
 
 
 def get_all_routers() -> list[Router]:
@@ -64,4 +67,5 @@ def get_all_dialogs() -> list[Dialog]:
         pricing_rule_dialog,
         trainer_settings_dialog,
         trainer_profile_dialog,
+        questions_dialog,
     ]
