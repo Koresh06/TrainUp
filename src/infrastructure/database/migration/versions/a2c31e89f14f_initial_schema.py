@@ -1,8 +1,8 @@
-"""init tables
+"""initial schema
 
-Revision ID: e9bde64b910b
+Revision ID: a2c31e89f14f
 Revises: 
-Create Date: 2026-08-23 20:18:10.329672
+Create Date: 2026-08-30 18:23:43.020467
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'e9bde64b910b'
+revision: str = 'a2c31e89f14f'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -49,6 +49,8 @@ def upgrade() -> None:
     sa.Column('bio', sa.VARCHAR(length=255), nullable=False),
     sa.Column('notification_chat_id', sa.BigInteger(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('photo_file_id', sa.VARCHAR(length=255), nullable=True),
+    sa.Column('social_links', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk__trainers'))
@@ -83,11 +85,6 @@ def upgrade() -> None:
     sa.Column('phone', sa.VARCHAR(length=255), nullable=False),
     sa.Column('age', sa.Integer(), nullable=False),
     sa.Column('sport_experience', sa.Enum('NONE', 'UP_TO_3_MONTHS', 'UP_TO_6_MONTHS', 'MORE_THAN_YEAR', name='sport_experience'), nullable=False),
-    sa.Column('health_conditions', postgresql.ARRAY(sa.VARCHAR(length=255)), nullable=False),
-    sa.Column('health_conditions_other', sa.String(length=1000), nullable=True),
-    sa.Column('goals', postgresql.ARRAY(sa.VARCHAR(length=255)), nullable=False),
-    sa.Column('health_notes', sa.String(length=1000), nullable=True),
-    sa.Column('injuries', sa.String(length=1000), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -96,6 +93,23 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix__clients_tg_id'), 'clients', ['tg_id'], unique=True)
     op.create_index(op.f('ix__clients_trainer_id'), 'clients', ['trainer_id'], unique=False)
+    op.create_table('registration_questions',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('trainer_id', sa.Integer(), nullable=False),
+    sa.Column('question_type', sa.Enum('MULTI_SELECT', 'TEXT', name='question_type'), nullable=False),
+    sa.Column('label', sa.String(length=500), nullable=False),
+    sa.Column('options', sa.ARRAY(sa.VARCHAR(length=255)), nullable=False),
+    sa.Column('is_required', sa.Boolean(), nullable=False),
+    sa.Column('order', sa.Integer(), nullable=False),
+    sa.Column('is_system', sa.Boolean(), nullable=False),
+    sa.Column('system_key', sa.VARCHAR(length=50), nullable=True),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['trainer_id'], ['trainers.id'], name=op.f('registration_questions_trainer_id_fkey'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk__registration_questions'))
+    )
+    op.create_index(op.f('ix__registration_questions_trainer_id'), 'registration_questions', ['trainer_id'], unique=False)
     op.create_table('slot_templates',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('trainer_id', sa.Integer(), nullable=False),
@@ -133,6 +147,18 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk__trainer_invite_links'))
     )
     op.create_index(op.f('ix__trainer_invite_links_token'), 'trainer_invite_links', ['token'], unique=True)
+    op.create_table('trainer_pricing_rules',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('trainer_id', sa.Integer(), nullable=False),
+    sa.Column('boundary_time', sa.Time(timezone=True), nullable=False),
+    sa.Column('price_before', sa.Numeric(precision=12, scale=2), nullable=False),
+    sa.Column('price_after', sa.Numeric(precision=12, scale=2), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['trainer_id'], ['trainers.id'], name=op.f('trainer_pricing_rules_trainer_id_fkey'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk__trainer_pricing_rules'))
+    )
+    op.create_index(op.f('ix__trainer_pricing_rules_trainer_id'), 'trainer_pricing_rules', ['trainer_id'], unique=True)
     op.create_table('trainer_subscriptions',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('trainer_id', sa.Integer(), nullable=False),
@@ -164,6 +190,19 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix__bookings_client_id'), 'bookings', ['client_id'], unique=False)
     op.create_index(op.f('ix__bookings_trainer_id'), 'bookings', ['trainer_id'], unique=False)
+    op.create_table('client_answers',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('client_id', sa.Integer(), nullable=False),
+    sa.Column('question_id', sa.Integer(), nullable=False),
+    sa.Column('value', sa.ARRAY(sa.VARCHAR(length=1000)), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['client_id'], ['clients.id'], name=op.f('client_answers_client_id_fkey'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['question_id'], ['registration_questions.id'], name=op.f('client_answers_question_id_fkey'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk__client_answers'))
+    )
+    op.create_index(op.f('ix__client_answers_client_id'), 'client_answers', ['client_id'], unique=False)
+    op.create_index(op.f('ix__client_answers_question_id'), 'client_answers', ['question_id'], unique=False)
     op.create_table('consultation_requests',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('client_id', sa.Integer(), nullable=False),
@@ -222,12 +261,17 @@ def downgrade() -> None:
     op.drop_index(op.f('ix__consultation_requests_trainer_id'), table_name='consultation_requests')
     op.drop_index(op.f('ix__consultation_requests_client_id'), table_name='consultation_requests')
     op.drop_table('consultation_requests')
+    op.drop_index(op.f('ix__client_answers_question_id'), table_name='client_answers')
+    op.drop_index(op.f('ix__client_answers_client_id'), table_name='client_answers')
+    op.drop_table('client_answers')
     op.drop_index(op.f('ix__bookings_trainer_id'), table_name='bookings')
     op.drop_index(op.f('ix__bookings_client_id'), table_name='bookings')
     op.drop_table('bookings')
     op.drop_index(op.f('ix__trainer_subscriptions_trainer_id'), table_name='trainer_subscriptions')
     op.drop_index(op.f('ix__trainer_subscriptions_status'), table_name='trainer_subscriptions')
     op.drop_table('trainer_subscriptions')
+    op.drop_index(op.f('ix__trainer_pricing_rules_trainer_id'), table_name='trainer_pricing_rules')
+    op.drop_table('trainer_pricing_rules')
     op.drop_index(op.f('ix__trainer_invite_links_token'), table_name='trainer_invite_links')
     op.drop_table('trainer_invite_links')
     op.drop_index(op.f('ix__trainer_booking_settings_trainer_id'), table_name='trainer_booking_settings')
@@ -235,6 +279,8 @@ def downgrade() -> None:
     op.drop_index(op.f('ix__slot_templates_weekday'), table_name='slot_templates')
     op.drop_index(op.f('ix__slot_templates_trainer_id'), table_name='slot_templates')
     op.drop_table('slot_templates')
+    op.drop_index(op.f('ix__registration_questions_trainer_id'), table_name='registration_questions')
+    op.drop_table('registration_questions')
     op.drop_index(op.f('ix__clients_trainer_id'), table_name='clients')
     op.drop_index(op.f('ix__clients_tg_id'), table_name='clients')
     op.drop_table('clients')

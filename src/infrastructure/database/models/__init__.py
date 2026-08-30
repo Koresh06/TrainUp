@@ -13,6 +13,8 @@ from .faq import FaqItemModel
 from .subscription_price_plan import SubscriptionPricePlanModel
 from .trainer_booking_settings import TrainerBookingSettingsModel
 from .trainer_pricing_rule import TrainerPricingRuleModel
+from .registration_question import RegistrationQuestionModel
+from .client_answer import ClientAnswerModel
 
 
 __all__ = [
@@ -31,4 +33,6 @@ __all__ = [
     "SubscriptionPricePlanModel",
     "TrainerBookingSettingsModel",
     "TrainerPricingRuleModel",
+    "RegistrationQuestionModel",
+    "ClientAnswerModel",
 ]

@@ -15,8 +15,6 @@ class TrainingGoal(str, Enum):
     BASIC = "basic"
     WEIGHT_LOSS = "weight_loss"
     WEIGHT_GAIN = "weight_gain"
-    SKILL_DEVELOPMENT = "skill_development"
-    STANDARDS_PREP = "standards_prep"
     CUSTOM_GOAL = "custom_goal"
 
 

@@ -25,7 +25,6 @@ if TYPE_CHECKING:
         FeedbackMessageModel,
     )
 
-
 class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     __tablename__ = "clients"
 
@@ -48,8 +47,6 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             create_type=True,
         ),
     )
-    health_conditions: Mapped[list[str]] = mapped_column(ARRAY(VARCHAR(255)))
-    goals: Mapped[list[str]] = mapped_column(ARRAY(VARCHAR(255)))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     trainer: Mapped["TrainerModel"] = relationship(
@@ -80,8 +77,6 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             phone=entity.phone,
             age=entity.age,
             sport_experience=entity.sport_experience,
-            health_conditions=entity.health_conditions,
-            goals=entity.goals,
             is_active=entity.is_active,
         )
 
@@ -96,8 +91,6 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             phone=self.phone,
             age=self.age,
             sport_experience=self.sport_experience,
-            health_conditions=self.health_conditions,
-            goals=self.goals,
             is_active=self.is_active,
         )
 
@@ -110,6 +103,4 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.phone = entity.phone
         self.age = entity.age
         self.sport_experience = entity.sport_experience
-        self.health_conditions = entity.health_conditions
-        self.goals = entity.goals
         self.is_active = entity.is_active

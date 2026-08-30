@@ -14,9 +14,7 @@ class Client(Entity):
     username: str | None = None
     phone: str
     age: int
-    goals: list[str]
     sport_experience: SportExperience
-    health_conditions: list[str]  # HealthCondition.value
     is_active: bool = True
 
     def assingn_trainer(self, other_trainer_id: int) -> None:

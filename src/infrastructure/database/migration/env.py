@@ -22,6 +22,8 @@ from src.infrastructure.database.models import (
     SubscriptionPricePlanModel,
     TrainerBookingSettingsModel,
     TrainerPricingRuleModel,
+    RegistrationQuestionModel,
+    ClientAnswerModel,
 ) # noqa
 
 
