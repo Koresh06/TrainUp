@@ -1,13 +1,27 @@
 from dishka import Provider, provide, Scope
 
+from src.application.interfaces.booking_scheduler import BookingScheduler
 from src.application.use_cases.booking.cancel import CancelBookingUseCase
 from src.application.use_cases.booking.confirm import ConfirmBookingUseCase
 from src.application.use_cases.booking.count_active_by_slot_ids import (
     CountActiveBookingsBySlotIdsUseCase,
 )
-from src.application.use_cases.client.get_clients_by_trainer import GetClientsByTrainerIdUseCase
+from src.application.use_cases.booking.send_reminder import SendTrainingReminderUseCase
+from src.application.use_cases.registration_questions.add_custom import AddCustomQuestionUseCase
+from src.application.use_cases.registration_questions.delete import DeleteCustomQuestionUseCase
+from src.application.use_cases.registration_questions.get_active import (
+    GetActiveRegistrationQuestionsUseCase,
+)
+from src.application.use_cases.client.get_clients_by_trainer import (
+    GetClientsByTrainerIdUseCase,
+)
 from src.application.use_cases.invite_link.create import CreateTrainerInviteLinkUseCase
 from src.application.use_cases.invite_link.get_active import GetActiveInviteLinkUseCase
+from src.application.use_cases.registration_questions.get_all import GetAllRegistrationQuestionsUseCase
+from src.application.use_cases.registration_questions.update import UpdateQuestionOptionsUseCase
+from src.application.use_cases.registration_questions.get_by_id import (
+    GetRegistrationQuestionByIdUseCase,
+)
 from src.application.use_cases.slot_template.create import CreateSlotTemplateUseCase
 from src.application.use_cases.slot_template.deactivate import (
     DeactivateSlotTemplateUseCase,
@@ -40,12 +54,18 @@ from src.application.use_cases.trainer_booking_settings.get_by_id import (
 from src.application.use_cases.trainer_booking_settings.update import (
     UpdateTrainerBookingSettingsUseCase,
 )
-from src.application.use_cases.trainer_pricing_rule.get_by_id import GetTrainerPricingRuleUseCase
-from src.application.use_cases.trainer_pricing_rule.update import UpdateTrainerPricingRuleUseCase
+from src.application.use_cases.trainer_pricing_rule.get_by_id import (
+    GetTrainerPricingRuleUseCase,
+)
+from src.application.use_cases.trainer_pricing_rule.update import (
+    UpdateTrainerPricingRuleUseCase,
+)
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.client import ClientRepository
+from src.domain.repositories.client_answer import ClientAnswerRepository
 from src.domain.repositories.invite_link import TrainerInviteLinkRepository
+from src.domain.repositories.registration_question import RegistrationQuestionRepository
 from src.domain.repositories.slot_template import SlotTemplateRepository
 from src.domain.repositories.subscription import TrainerSubscriptionRepository
 from src.domain.repositories.subscription_price_plan import (
@@ -142,10 +162,15 @@ class UseCasesProvider(Provider):
 
     @provide
     def register_client_use_case(
-        self, client_repo: ClientRepository, transaction_manager: TransactionManager
+        self,
+        client_repo: ClientRepository,
+        answer_repo: ClientAnswerRepository,
+        transaction_manager: TransactionManager,
     ) -> RegisterClientUseCase:
         return RegisterClientUseCase(
-            client_repo=client_repo, transaction_manager=transaction_manager
+            client_repo=client_repo,
+            answer_repo=answer_repo,
+            transaction_manager=transaction_manager,
         )
 
     @provide
@@ -196,12 +221,16 @@ class UseCasesProvider(Provider):
         self,
         booking_repo: BookingRepository,
         client_repo: ClientRepository,
+        slot_repo: CalendarSlotRepository,
+        booking_scheduler: BookingScheduler,
         notification_service: NotificationService,
         transaction_manager: TransactionManager,
     ) -> ConfirmBookingUseCase:
         return ConfirmBookingUseCase(
             booking_repo=booking_repo,
             client_repo=client_repo,
+            slot_repo=slot_repo,
+            booking_scheduler=booking_scheduler,
             notification_service=notification_service,
             transaction_manager=transaction_manager,
         )
@@ -212,6 +241,7 @@ class UseCasesProvider(Provider):
         booking_repo: BookingRepository,
         client_repo: ClientRepository,
         calendar_service: CalendarService,
+        booking_scheduler: BookingScheduler,
         notification_service: NotificationService,
         transaction_manager: TransactionManager,
     ) -> CancelBookingUseCase:
@@ -219,6 +249,7 @@ class UseCasesProvider(Provider):
             booking_repo=booking_repo,
             client_repo=client_repo,
             calendar_service=calendar_service,
+            booking_scheduler=booking_scheduler,
             notification_service=notification_service,
             transaction_manager=transaction_manager,
         )
@@ -327,12 +358,14 @@ class UseCasesProvider(Provider):
         trainer_repo: TrainerRepository,
         invite_link_repo: TrainerInviteLinkRepository,
         booking_settings_repo: TrainerBookingSettingsRepository,
+        question_repo: RegistrationQuestionRepository,
         transaction_manager: TransactionManager,
     ) -> RegisterTrainerUseCase:
         return RegisterTrainerUseCase(
             trainer_repo=trainer_repo,
             invite_link_repo=invite_link_repo,
             booking_settings_repo=booking_settings_repo,
+            question_repo=question_repo,
             transaction_manager=transaction_manager,
         )
 
@@ -431,4 +464,81 @@ class UseCasesProvider(Provider):
     ) -> GetClientsByTrainerIdUseCase:
         return GetClientsByTrainerIdUseCase(
             client_repo=client_repo,
+        )
+
+    @provide
+    def send_training_reminder_use_case(
+        self,
+        booking_repo: BookingRepository,
+        client_repo: ClientRepository,
+        trainer_repo: TrainerRepository,
+        slot_repo: CalendarSlotRepository,
+        notification_service: NotificationService,
+    ) -> SendTrainingReminderUseCase:
+        return SendTrainingReminderUseCase(
+            booking_repo=booking_repo,
+            client_repo=client_repo,
+            trainer_repo=trainer_repo,
+            slot_repo=slot_repo,
+            notification_service=notification_service,
+        )
+
+    @provide
+    def get_active_registration_questions_use_case(
+        self,
+        question_repo: RegistrationQuestionRepository,
+    ) -> GetActiveRegistrationQuestionsUseCase:
+        return GetActiveRegistrationQuestionsUseCase(
+            question_repo=question_repo,
+        )
+
+    @provide
+    def get_all_registration_question_use_case(
+        self,
+        question_repo: RegistrationQuestionRepository,
+    ) -> GetAllRegistrationQuestionsUseCase:
+        return GetAllRegistrationQuestionsUseCase(
+            question_repo=question_repo,
+        )
+
+    @provide
+    def add_custom_question_use_case(
+        self,
+        question_repo: RegistrationQuestionRepository,
+        transaction_manager: TransactionManager,
+    ) -> AddCustomQuestionUseCase:
+        return AddCustomQuestionUseCase(
+            question_repo=question_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def delete_custom_question_use_case(
+        self,
+        question_repo: RegistrationQuestionRepository,
+        transaction_manager: TransactionManager,
+    ) -> DeleteCustomQuestionUseCase:
+        return DeleteCustomQuestionUseCase(
+            question_repo=question_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def update_question_options_use_case(
+        self,
+        question_repo: RegistrationQuestionRepository,
+        transaction_manager: TransactionManager,
+    ) -> UpdateQuestionOptionsUseCase:
+        return UpdateQuestionOptionsUseCase(
+            question_repo=question_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_registration_question_by_id_use_case(
+        self,
+        question_repo: RegistrationQuestionRepository,
+    ) -> GetRegistrationQuestionByIdUseCase:
+        return GetRegistrationQuestionByIdUseCase(
+            question_repo=question_repo,
         )

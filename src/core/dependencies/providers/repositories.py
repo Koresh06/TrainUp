@@ -2,6 +2,8 @@ from dishka import Provider, provide, Scope
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.repositories.client import ClientRepository
+from src.domain.repositories.client_answer import ClientAnswerRepository
+from src.domain.repositories.registration_question import RegistrationQuestionRepository
 from src.domain.repositories.subscription_price_plan import (
     SubscriptionPricePlanRepository,
 )
@@ -20,6 +22,7 @@ from src.domain.repositories.trainer_booking_settings import (
 )
 from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
 from src.infrastructure.repositories.client.sqlalchemy import SQLAlchemyClientRepo
+from src.infrastructure.repositories.registration_question.sqlalchemy import SQLAlchemyRegistrationQuestionRepo
 from src.infrastructure.repositories.subscription_price_plan.sqlalchemy import (
     SQLAlchemySubscriptionPricePlanRepo,
 )
@@ -49,6 +52,7 @@ from src.infrastructure.repositories.trainer_booking_settings.sqlalchemy import 
     SQLAlchemyTrainerBookingSettingsRepo,
 )
 from src.infrastructure.repositories.trainer_pricing_rule.sqlalchemy import SQLAlchemyTrainerPricingRuleRepo
+from src.infrastructure.repositories.client_answer.sqlalchemy import SQLAlchemyClientAnswerRepo
 
 
 class RepositoriesProvider(Provider):
@@ -125,3 +129,15 @@ class RepositoriesProvider(Provider):
         self, session: AsyncSession
     ) -> TrainerPricingRuleRepository:
         return SQLAlchemyTrainerPricingRuleRepo(session=session)
+
+    @provide(scope=Scope.REQUEST)
+    def get_registration_question_repository(
+        self, session: AsyncSession
+    ) -> RegistrationQuestionRepository:
+        return SQLAlchemyRegistrationQuestionRepo(session=session)
+
+    @provide(scope=Scope.REQUEST)
+    def get_client_answer_repository(
+        self, session: AsyncSession
+    ) -> ClientAnswerRepository:
+        return SQLAlchemyClientAnswerRepo(session=session)

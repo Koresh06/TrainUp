@@ -5,7 +5,11 @@ from src.application.mediator import Mediator
 from src.application.use_cases.trainer.get_by_id import GetTrainerByIdRequest
 
 from src.domain.entities.trainer import Trainer
-from src.domain.enums.training import HealthCondition, SportExperience, TrainingDirection, TrainingGoal
+from src.domain.enums.question_type import QuestionType
+from src.domain.enums.training import (
+    SportExperience,
+)
+from .helpers import _current_question
 
 
 @inject
@@ -37,53 +41,35 @@ async def sport_experience_getter(dialog_manager: DialogManager, **kwargs) -> di
         ]
     }
 
-HEALTH_CONDITION_LABELS: dict[HealthCondition, str] = {
-    HealthCondition.HEALTHY: "Полностью здоров(-а)",
-    HealthCondition.HEART: "Проблемы с сердцем",
-    HealthCondition.BACK: "Проблемы со спиной",
-    HealthCondition.JOINTS: "Проблемы с суставами",
-    HealthCondition.OVERWEIGHT: "Избыточный вес",
-    HealthCondition.UNDERWEIGHT: "Недостаточный вес",
-    HealthCondition.OTHER: "Другое",
-}
 
+async def questions_getter(dialog_manager: DialogManager, **kwargs) -> dict:
+    data = dialog_manager.dialog_data
+    question = _current_question(data)
 
-async def health_conditions_getter(dialog_manager: DialogManager, **kwargs) -> dict:
+    if question is None:
+        return {
+            "question_label": "",
+            "question_type": "",
+            "options": [],
+            "progress_label": "",
+        }
+
+    selected: list[int] = data.get("current_selected", [])
+    options = [
+        {"id": str(i), "label": f"{'✅' if i in selected else '⬜'} {opt}"}
+        for i, opt in enumerate(question["options"])
+    ]
+
     return {
-        "health_conditions_options": [
-            {"id": cond.value, "label": label}
-            for cond, label in HEALTH_CONDITION_LABELS.items()
-        ]
+        "question_label": question["label"],
+        "question_type": question["type"],
+        "options": options,
     }
 
 
-GOAL_LABELS: dict[TrainingGoal, str] = {
-    TrainingGoal.COMPLEX: (
-        "Комплексная (Всё тело + развитие навыков: "
-        "сила/выносливость/координация и т.д.)"
-    ),
-    TrainingGoal.BASIC: "Базовая (Всё тело/Отдельные группы мышц)",
-    TrainingGoal.WEIGHT_LOSS: "Похудение (+консультация по питанию)",
-    TrainingGoal.WEIGHT_GAIN: "Набор (+консультация по питанию)",
-    TrainingGoal.SKILL_DEVELOPMENT: (
-        "Обучение/развитие движений (подтягивания, отжимания и т.д.)"
-    ),
-    TrainingGoal.STANDARDS_PREP: (
-        "Подготовка к сдаче спортивных нормативов/экзаменов"
-    ),
-    TrainingGoal.CUSTOM_GOAL: "Другое",
-}
+def is_multi_select(data: dict, widget, manager: DialogManager) -> bool:
+    return data.get("question_type") == QuestionType.MULTI_SELECT.value
 
-
-
-
-async def goals_getter(dialog_manager: DialogManager, **kwargs) -> dict:
-    return {
-        "goals": [
-            {"id": direction.value, "label": label}
-            for direction, label in GOAL_LABELS.items()
-        ]
-    }
 
 async def register_confirm_getter(dialog_manager: DialogManager, **kwargs) -> dict:
     data = dialog_manager.dialog_data
@@ -93,24 +79,20 @@ async def register_confirm_getter(dialog_manager: DialogManager, **kwargs) -> di
         SportExperience(data.get("sport_experience")), "—"
     )
 
-    health_conditions_labels = ", ".join(
-        HEALTH_CONDITION_LABELS[HealthCondition(c)]
-        for c in data.get("health_conditions", [])
-    )
-    if data.get("health_conditions_other_text"):
-        health_conditions_labels += f" ({data['health_conditions_other_text']})"
+    questions: list[dict] = data.get("questions", [])
+    answers: dict[str, list[str]] = data.get("answers", {})
 
-    goals_labels = ", ".join(
-        GOAL_LABELS[TrainingDirection(g)] for g in data.get("goals", [])
-    )
+    lines = []
+    for q in questions:
+        value = answers.get(str(q["id"]))
+        if value:
+            lines.append(f"{q['label']}: {', '.join(value)}")
+    answers_summary = "\n".join(lines) if lines else "—"
 
     return {
         "full_name": full_name,
         "phone": data.get("phone"),
         "age": data.get("age"),
         "sport_experience": sport_experience_label,
-        "health_conditions": health_conditions_labels or "—",
-        "goals": goals_labels,
-        "health_notes": data.get("health_notes") or "—",
-        "injuries": data.get("injuries") or "—",
+        "answers_summary": answers_summary,
     }

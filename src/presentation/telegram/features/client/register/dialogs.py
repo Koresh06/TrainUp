@@ -1,7 +1,6 @@
 from aiogram.enums import ButtonStyle, ContentType
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.kbd import (
-    Multiselect,
     Button,
     Group,
     Next,
@@ -23,17 +22,19 @@ from .validator import (
 )
 from .handlers import (
     on_full_name_success,
-    on_goals_done,
-    on_health_conditions_done,
+    on_multi_select_next,
+    on_option_toggle,
     on_phone_input_success,
     on_phone_received_contact,
     on_age_input_success,
+    on_question_back,
     on_register_confirm,
     on_sport_experience_selected,
+    on_text_answer,
 )
 from .getters import (
-    goals_getter,
-    health_conditions_getter,
+    is_multi_select,
+    questions_getter,
     sport_experience_getter,
     welcome_getter,
     register_confirm_getter,
@@ -90,6 +91,7 @@ client_register_dialog = Dialog(
             on_success=on_phone_input_success,
             on_error=on_input_error,
         ),
+        Back(Const("⬅️ Назад")),
         markup_factory=ReplyKeyboardFactory(
             one_time_keyboard=True,
             resize_keyboard=True,
@@ -113,52 +115,36 @@ client_register_dialog = Dialog(
         getter=sport_experience_getter,
     ),
     Window(
-        Const(
-            "❤️ <b>Ваше состояние здоровья и тела:</b>\n(можно выбрать несколько вариантов)"
-        ),
+        Format("<b>{question_label}</b>"),
         Group(
-            Multiselect(
-                Format("✅ {item[label]}"),
-                Format("⬜ {item[label]}"),
-                id="health_conditions_multiselect",
+            Select(
+                Format("{item[label]}"),
+                id="question_options_select",
                 item_id_getter=lambda item: item["id"],
-                items="health_conditions_options",
+                items="options",
+                on_click=on_option_toggle,
             ),
             width=1,
+            when=is_multi_select,
+        ),
+        MessageInput(
+            func=on_text_answer,
+            content_types=[ContentType.TEXT],
         ),
         Button(
             Const("Далее ➡️"),
-            id="health_conditions_done",
-            on_click=on_health_conditions_done,
+            id="question_next",
+            on_click=on_multi_select_next,
             style=Style(style=ButtonStyle.SUCCESS),
-        ),
-        Back(Const("⬅️ Назад")),
-        state=ClientRegisterSG.health_conditions,
-        getter=health_conditions_getter,
-    ),
-    Window(
-        Const(
-            "🎯 <b>Выберите предпочтения в тренировке:</b>\n(можно выбрать несколько вариантов)"
-        ),
-        Group(
-            Multiselect(
-                Format("✅ {item[label]}"),
-                Format("⬜ {item[label]}"),
-                id="goals_multiselect",
-                item_id_getter=lambda item: item["id"],
-                items="goals",
-            ),
-            width=1,
+            when=is_multi_select,
         ),
         Button(
-            Const("Далее ➡️"),
-            id="goals_done",
-            on_click=on_goals_done,
-            style=Style(style=ButtonStyle.SUCCESS),
+            Const("⬅️ Назад"),
+            id="question_back",
+            on_click=on_question_back,
         ),
-        Back(Const("⬅️ Назад")),
-        state=ClientRegisterSG.goals,
-        getter=goals_getter,
+        state=ClientRegisterSG.questions,
+        getter=questions_getter,
     ),
     Window(
         Format(
@@ -166,9 +152,8 @@ client_register_dialog = Dialog(
             "👤 {full_name}\n"
             "📞 {phone}\n"
             "🎂 {age} лет\n"
-            "🏋️ Стаж: {sport_experience}\n"
-            "❤️ Состояние здоровья: {health_conditions}\n"
-            "🎯 Предпочтения: {goals}"
+            "🏋️ Стаж: {sport_experience}\n\n"
+            "{answers_summary}"
         ),
         Button(
             Const("✅ Всё верно"),

@@ -5,6 +5,7 @@ from src.application.use_cases.booking.cancel import CancelBookingRequest, Cance
 from src.application.use_cases.booking.confirm import ConfirmBookingRequest, ConfirmBookingUseCase
 from src.application.use_cases.booking.count_active_by_slot_ids import CountActiveBookingsBySlotIdsRequest, CountActiveBookingsBySlotIdsUseCase
 from src.application.use_cases.booking.create import CreateBookingUseCase, CreateBookingRequest
+from src.application.use_cases.booking.send_reminder import SendTrainingReminderRequest, SendTrainingReminderUseCase
 from src.application.use_cases.calendar.get_available_slots import GetAvailableSlotsRequest, GetAvailableSlotsUseCase
 from src.application.use_cases.calendar.get_day_availability_map import GetDayAvailabilityMapRequest, GetDayAvailabilityMapUseCase
 from src.application.use_cases.calendar.get_day_slots import GetDaySlotsRequest, GetDaySlotsUseCase
@@ -12,12 +13,18 @@ from src.application.use_cases.calendar.get_time_column import GetTimeColumnsUse
 from src.application.use_cases.calendar.get_week_grid import GetWeekGridUseCase, GetWeekGridRequest
 from src.application.use_cases.calendar.maintain_calendar_buffer import MaintainCalendarBufferUseCase, MaintainCalendarBufferRequest
 from src.application.use_cases.calendar.get_slot_by_id import GetSlotByIdUseCase, GetSlotByIdRequest
+from src.application.use_cases.registration_questions.add_custom import AddCustomQuestionRequest, AddCustomQuestionUseCase
+from src.application.use_cases.registration_questions.delete import DeleteCustomQuestionRequest, DeleteCustomQuestionUseCase
+from src.application.use_cases.registration_questions.get_active import GetActiveRegistrationQuestionsRequest, GetActiveRegistrationQuestionsUseCase
 from src.application.use_cases.client.get_clients_by_trainer import GetClientsByTrainerIdRequest, GetClientsByTrainerIdUseCase
 from src.application.use_cases.client.register import RegisterClientRequest, RegisterClientUseCase
 from src.application.use_cases.client.get_by_tg_id import GetClientByTgIdUseCase, GetClientByTgIdRequest
 from src.application.use_cases.invite_link.create import CreateTrainerInviteLinkRequest, CreateTrainerInviteLinkUseCase
 from src.application.use_cases.invite_link.get_active import GetActiveInviteLinkRequest, GetActiveInviteLinkUseCase
 from src.application.use_cases.invite_link.resolve import ResolveInviteLinkRequest, ResolveInviteLinkUseCase
+from src.application.use_cases.registration_questions.get_all import GetAllRegistrationQuestionsRequest, GetAllRegistrationQuestionsUseCase
+from src.application.use_cases.registration_questions.update import UpdateQuestionOptionsRequest, UpdateQuestionOptionsUseCase
+from src.application.use_cases.registration_questions.get_by_id import GetRegistrationQuestionByIdRequest, GetRegistrationQuestionByIdUseCase
 from src.application.use_cases.slot_template.create import CreateSlotTemplateRequest, CreateSlotTemplateUseCase
 from src.application.use_cases.slot_template.deactivate import DeactivateSlotTemplateRequest, DeactivateSlotTemplateUseCase
 from src.application.use_cases.slot_template.get_active import GetActiveSlotTemplatesRequest, GetActiveSlotTemplatesUseCase
@@ -77,6 +84,13 @@ class MediatorProvider(Provider):
         update_trainer_pricing_rule_use_case: UpdateTrainerPricingRuleUseCase,
         update_trainer_profile_use_case: UpdateTrainerProfileUseCase,
         get_clients_by_trainer_id_use_case: GetClientsByTrainerIdUseCase,
+        send_training_reminder_use_case: SendTrainingReminderUseCase,
+        get_active_registration_questions_use_case: GetActiveRegistrationQuestionsUseCase,
+        get_all_registration_question_use_case: GetAllRegistrationQuestionsUseCase,
+        add_custom_question_use_case: AddCustomQuestionUseCase,
+        delete_custom_question_use_case: DeleteCustomQuestionUseCase,
+        update_question_options_use_case: UpdateQuestionOptionsUseCase,
+        get_registration_question_by_id_use_case: GetRegistrationQuestionByIdUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -114,6 +128,13 @@ class MediatorProvider(Provider):
         mediator.register(UpdateTrainerPricingRuleRequest, update_trainer_pricing_rule_use_case)
         mediator.register(UpdateTrainerProfileRequest, update_trainer_profile_use_case)
         mediator.register(GetClientsByTrainerIdRequest, get_clients_by_trainer_id_use_case)
+        mediator.register(SendTrainingReminderRequest, send_training_reminder_use_case)
+        mediator.register(GetActiveRegistrationQuestionsRequest, get_active_registration_questions_use_case)
+        mediator.register(GetAllRegistrationQuestionsRequest, get_all_registration_question_use_case)
+        mediator.register(AddCustomQuestionRequest, add_custom_question_use_case)
+        mediator.register(DeleteCustomQuestionRequest, delete_custom_question_use_case)
+        mediator.register(UpdateQuestionOptionsRequest, update_question_options_use_case)
+        mediator.register(GetRegistrationQuestionByIdRequest, get_registration_question_by_id_use_case)
 
         return mediator
 

@@ -29,6 +29,11 @@ trainer_settings_dialog = Dialog(
                 id="booking_settings",
                 on_click=on_settings_item_click,
             ),
+            Button(
+                Const("📋 Вопросы анкеты"),
+                id="questions",
+                on_click=on_settings_item_click,
+            ),
         ),
         Cancel(Const("⬅️ Назад")),
         state=TrainerSettingsSG.main,
