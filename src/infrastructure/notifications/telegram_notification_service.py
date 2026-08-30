@@ -4,6 +4,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from src.application.interfaces.notification_service import (
     NotificationService,
     NewBookingNotificationDTO,
+    TrainingReminderNotificationDTO,
 )
 from src.infrastructure.notifications.booking_callback_data import (
     BookingAction,
@@ -54,3 +55,23 @@ class TelegramNotificationService(NotificationService):
         await self._bot.send_message(
             chat_id=data.chat_id, text=text, reply_markup=kb.as_markup()
         )
+
+
+    async def notify_training_reminder(self, data: TrainingReminderNotificationDTO) -> None:
+        text = (
+            f"⏰ <b>Напоминание о тренировке</b>\n\n"
+            f"Через {data.hours_before} {self.pluralize_hours(data.hours_before)} — "
+            f"тренировка с <b>{data.trainer_name}</b>\n\n"
+            f"📅 {data.date_label}\n"
+            f"🕐 {data.time_label}"
+        )
+        await self._bot.send_message(chat_id=data.chat_id, text=text)
+        
+    @staticmethod
+    def pluralize_hours(n: int) -> str:
+        if n % 10 == 1 and n % 100 != 11:
+            return "час"
+        if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14):
+            return "часа"
+        return "часов"
+        

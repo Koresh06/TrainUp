@@ -15,7 +15,21 @@ class NewBookingNotificationDTO:
     client_age: int
 
 
+@dataclass(frozen=True)
+class TrainingReminderNotificationDTO:
+    chat_id: int
+    date_label: str
+    time_label: str
+    trainer_name: str
+    hours_before: int
+
+
+
 class NotificationService(Protocol):
     async def send(self, *, chat_id: int, text: str) -> None: ...
 
     async def notify_new_booking(self, data: NewBookingNotificationDTO) -> None: ...
+
+    async def notify_training_reminder(
+        self, data: TrainingReminderNotificationDTO
+    ) -> None: ...

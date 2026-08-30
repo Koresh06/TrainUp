@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from src.application.interfaces.booking_scheduler import BookingScheduler
 from src.application.interfaces.notification_service import NotificationService
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.domain.entities.booking import Booking
@@ -21,6 +22,7 @@ class CancelBookingUseCase(UseCase[CancelBookingRequest, Booking]):
     client_repo: ClientRepository
     calendar_service: CalendarService
     notification_service: NotificationService
+    booking_scheduler: BookingScheduler
     transaction_manager: TransactionManager
 
     async def __call__(self, command: CancelBookingRequest) -> Booking:
@@ -32,6 +34,9 @@ class CancelBookingUseCase(UseCase[CancelBookingRequest, Booking]):
         await self.calendar_service.release_slot(booking.slot_id)
         saved = await self.booking_repo.save(booking)
         await self.transaction_manager.commit()
+
+        if booking.reminder_job_id:
+            await self.booking_scheduler.cancel_training_reminder(booking_id=booking.id)
 
         client = await self.client_repo.get_by_id(booking.client_id)
         if client is not None:

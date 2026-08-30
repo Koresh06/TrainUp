@@ -11,7 +11,10 @@ class TaskiqTaskQueue(TaskQueue):
         self._schedule_source = schedule_source
 
     def _get_task(self, task_name: str):
-        for full_name, task in self._broker.get_all_tasks().items():
+        all_tasks = self._broker.get_all_tasks()
+        if task_name in all_tasks:
+            return all_tasks[task_name]
+        for full_name, task in all_tasks.items():
             if full_name.endswith(f":{task_name}"):
                 return task
         raise RuntimeError(f"Task '{task_name}' not found in broker registry.")
