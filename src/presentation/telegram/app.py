@@ -7,10 +7,10 @@ from dishka import make_async_container
 from dishka.integrations.aiogram import AiogramProvider, setup_dishka
 from taskiq_redis import RedisStreamBroker
 
+from src.infrastructure.database.seed import seed_subscription_price_plans
 from src.infrastructure.taskiq.tasks import register_taskiq_tasks
 from src.utils.logging import setup_logging
 from src.core.dependencies.providers import make_base_providers
-# from src.presentation.telegram.middlewares.setup import setup_middlewares
 
 
 # logging.getLogger("aiogram_dialog").setLevel(logging.DEBUG)
@@ -35,6 +35,8 @@ async def create_app():
 
     register_taskiq_tasks(broker, container=container)
     await broker.startup()
+
+    await seed_subscription_price_plans(container)
 
     bot: Bot = await container.get(Bot)
     dp: Dispatcher = await container.get(Dispatcher)
