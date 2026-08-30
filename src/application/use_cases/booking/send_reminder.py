@@ -1,15 +1,17 @@
-
 from dataclasses import dataclass
 import logging
 
-from src.application.interfaces.notification_service import NotificationService, TrainingReminderNotificationDTO
+from src.application.interfaces.notification_service import (
+    NotificationService,
+    TrainingReminderNotificationDTO,
+)
 from src.application.use_cases.base import UseCase, UseCaseRequest
+from src.domain.constants import REMINDER_HOURS_BEFORE_TRAINING
 from src.domain.enums.booking import BookingStatus
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.trainer import TrainerRepository
-
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +55,7 @@ class SendTrainingReminderUseCase(UseCase[SendTrainingReminderRequest, None]):
                 date_label=slot.slot_date.strftime("%d.%m.%Y"),
                 time_label=slot.start_time.strftime("%H:%M"),
                 trainer_name=trainer.name,
+                hours_before=REMINDER_HOURS_BEFORE_TRAINING,
             )
         )
         logger.info("[SendTrainingReminder:done] booking_id=%s", command.booking_id)
