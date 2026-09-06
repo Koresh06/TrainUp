@@ -43,30 +43,6 @@ async def on_age_input_success(
 
 
 @inject
-async def on_phone_received_contact(
-    message: Message,
-    widget: MessageInput,
-    dialog_manager: DialogManager,
-) -> None:
-    new_phone = message.contact.phone_number
-    if not new_phone.startswith("+"):
-        new_phone = f"+{new_phone}"
-    dialog_manager.dialog_data["phone"] = new_phone
-    await dialog_manager.next()
-
-
-@inject
-async def on_phone_input_success(
-    message: Message,
-    widget: ManagedTextInput[str],
-    dialog_manager: DialogManager,
-    value: str,
-) -> None:
-    dialog_manager.dialog_data["phone"] = value.strip()
-    await dialog_manager.next()
-
-
-@inject
 async def on_sport_experience_selected(
     callback: CallbackQuery,
     widget: Select,

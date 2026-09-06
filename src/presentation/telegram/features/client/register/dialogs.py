@@ -14,18 +14,16 @@ from aiogram_dialog.widgets.input import TextInput, MessageInput
 from aiogram_dialog.widgets.style import Style
 
 from src.presentation.telegram.features.error_handler import on_input_error
+from src.presentation.telegram.features.handlers_phone import on_phone_input_success, on_phone_received_contact, validate_phone_number
 from .states import ClientRegisterSG
 from .validator import (
     validate_full_name,
-    validate_phone_number,
     validate_age,
 )
 from .handlers import (
     on_full_name_success,
     on_multi_select_next,
     on_option_toggle,
-    on_phone_input_success,
-    on_phone_received_contact,
     on_age_input_success,
     on_question_back,
     on_register_confirm,

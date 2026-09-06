@@ -12,17 +12,6 @@ def validate_full_name(value: str) -> tuple[str, str | None]:
     return first_name, last_name
 
 
-def validate_phone_number(value: str) -> str:
-    value = value.strip().replace(" ", "")
-    pattern = r"^(?:\+375\d{9}|80\d{9})$"
-    if not re.fullmatch(pattern, value):
-        raise ValueError(
-            "Некорректный номер телефона.\n"
-            "Пример: <code>+375291234567</code> или <code>80291234567</code>"
-        )
-    return value
-
-
 def validate_age(value: str) -> int:
     value = value.strip()
     if not value.isdigit():
