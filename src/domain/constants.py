@@ -40,7 +40,7 @@ DEFAULT_CALENDAR_HORIZON_DAYS = 14
 REMINDER_HOURS_BEFORE_TRAINING = 2
 DEFAULT_MAX_ACTIVE_BOOKINGS = 1
 
-REMINDER_HOURS_BEFORE_TRAINING = 2
+REMINDER_HOURS_BEFORE_TRAINING = 2  # в часах
 
 # ВРЕМЕННО для теста — напоминание придёт через 1 минуту после подтверждения,
 # а не за REMINDER_HOURS_BEFORE_TRAINING до тренировки.

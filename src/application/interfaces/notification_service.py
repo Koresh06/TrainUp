@@ -22,7 +22,7 @@ class TrainingReminderNotificationDTO:
     time_label: str
     trainer_name: str
     hours_before: int
-
+    booking_id: int
 
 
 class NotificationService(Protocol):

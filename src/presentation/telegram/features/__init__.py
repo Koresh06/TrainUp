@@ -8,8 +8,11 @@ from src.presentation.telegram.features.client.register.router import (
 from src.presentation.telegram.features.trainer.main.router import (
     router as trainer_main_router,
 )
-from src.presentation.telegram.features.client.booking.router import (
+from src.presentation.telegram.features.trainer.booking.router import (
     router as trainer_actions_router,
+)
+from src.presentation.telegram.features.client.booking.router import (
+    router as client_actions_router,
 )
 
 from src.presentation.telegram.features.client.register.dialogs import (
@@ -50,6 +53,7 @@ def get_all_routers() -> list[Router]:
         start_router,
         trainer_main_router,
         trainer_actions_router,
+        client_actions_router,
     ]
 
 

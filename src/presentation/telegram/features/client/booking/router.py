@@ -1,36 +1,41 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
-
 from dishka.integrations.aiogram import inject, FromDishka
+
 from src.application.mediator import Mediator
+from src.application.use_cases.booking.cancel import (
+    CancelBookingRequest,
+    CancelInitiator,
+)
+from src.infrastructure.notifications.callback_data.reminder import (
+    ReminderAction,
+    ReminderActionCD,
+)
 
-from src.application.use_cases.booking.cancel import CancelBookingRequest
-from src.application.use_cases.booking.confirm import ConfirmBookingRequest
-from src.infrastructure.notifications.booking_callback_data import BookingAction, BookingActionCD
+router = Router()
 
 
-router = Router(name="trainer_actions")
-
-
-@router.callback_query(BookingActionCD.filter(F.action == BookingAction.CONFIRM))
-@inject
-async def on_confirm_booking_click(
+@router.callback_query(ReminderActionCD.filter(F.action == ReminderAction.CONFIRM))
+async def on_reminder_confirm(
     callback: CallbackQuery,
-    callback_data: BookingActionCD,
+    callback_data: ReminderActionCD,
+) -> None:
+    await callback.answer("Отлично, ждём вас! 👍", show_alert=False)
+    await callback.message.edit_reply_markup(reply_markup=None)
+
+
+@router.callback_query(ReminderActionCD.filter(F.action == ReminderAction.CANCEL))
+@inject
+async def on_reminder_cancel(
+    callback: CallbackQuery,
+    callback_data: ReminderActionCD,
     mediator: FromDishka[Mediator],
 ) -> None:
-    await mediator.handle(ConfirmBookingRequest(booking_id=callback_data.booking_id))
-    await callback.answer("Подтверждено")
-    await callback.message.edit_text(f"{callback.message.text}\n\n✅ Подтверждено")
-
-
-@router.callback_query(BookingActionCD.filter(F.action == BookingAction.CANCEL))
-@inject
-async def on_cancel_booking_click(
-    callback: CallbackQuery,
-    callback_data: BookingActionCD,
-    mediator: FromDishka[Mediator],
-) -> None:
-    await mediator.handle(CancelBookingRequest(booking_id=callback_data.booking_id))
-    await callback.answer("Отменено")
-    await callback.message.edit_text(f"{callback.message.text}\n\n❌ Отменено")
+    await mediator.handle(
+        CancelBookingRequest(
+            booking_id=callback_data.booking_id,
+            initiated_by=CancelInitiator.CLIENT,
+        )
+    )
+    await callback.answer("Запись отменена")
+    await callback.message.edit_text("❌ Запись отменена")

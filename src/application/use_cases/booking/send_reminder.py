@@ -56,6 +56,7 @@ class SendTrainingReminderUseCase(UseCase[SendTrainingReminderRequest, None]):
                 time_label=slot.start_time.strftime("%H:%M"),
                 trainer_name=trainer.name,
                 hours_before=REMINDER_HOURS_BEFORE_TRAINING,
+                booking_id=booking.id,
             )
         )
         logger.info("[SendTrainingReminder:done] booking_id=%s", command.booking_id)

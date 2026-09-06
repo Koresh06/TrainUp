@@ -6,10 +6,11 @@ from src.application.interfaces.notification_service import (
     NewBookingNotificationDTO,
     TrainingReminderNotificationDTO,
 )
-from src.infrastructure.notifications.booking_callback_data import (
+from src.infrastructure.notifications.callback_data.booking import (
     BookingAction,
     BookingActionCD,
 )
+from src.infrastructure.notifications.callback_data.reminder import ReminderAction, ReminderActionCD
 
 
 class TelegramNotificationService(NotificationService):
@@ -58,6 +59,21 @@ class TelegramNotificationService(NotificationService):
 
 
     async def notify_training_reminder(self, data: TrainingReminderNotificationDTO) -> None:
+        kb = InlineKeyboardBuilder()
+        kb.button(
+            text="✅ Подтвердить",
+            callback_data=ReminderActionCD(
+                action=ReminderAction.CONFIRM, booking_id=data.booking_id
+            ).pack(),
+        )
+        kb.button(
+            text="❌ Отменить",
+            callback_data=ReminderActionCD(
+                action=ReminderAction.CANCEL, booking_id=data.booking_id
+            ).pack(),
+        )
+        kb.adjust(1)
+    
         text = (
             f"⏰ <b>Напоминание о тренировке</b>\n\n"
             f"Через {data.hours_before} {self.pluralize_hours(data.hours_before)} — "
@@ -65,7 +81,9 @@ class TelegramNotificationService(NotificationService):
             f"📅 {data.date_label}\n"
             f"🕐 {data.time_label}"
         )
-        await self._bot.send_message(chat_id=data.chat_id, text=text)
+        await self._bot.send_message(
+            chat_id=data.chat_id, text=text, reply_markup=kb.as_markup()
+        )
         
     @staticmethod
     def pluralize_hours(n: int) -> str:

@@ -221,6 +221,7 @@ class UseCasesProvider(Provider):
         self,
         booking_repo: BookingRepository,
         client_repo: ClientRepository,
+        trainer_repo: TrainerRepository,
         slot_repo: CalendarSlotRepository,
         booking_scheduler: BookingScheduler,
         notification_service: NotificationService,
@@ -229,6 +230,7 @@ class UseCasesProvider(Provider):
         return ConfirmBookingUseCase(
             booking_repo=booking_repo,
             client_repo=client_repo,
+            trainer_repo=trainer_repo,
             slot_repo=slot_repo,
             booking_scheduler=booking_scheduler,
             notification_service=notification_service,
@@ -240,6 +242,8 @@ class UseCasesProvider(Provider):
         self,
         booking_repo: BookingRepository,
         client_repo: ClientRepository,
+        trainer_repo: TrainerRepository,
+        slot_repo: CalendarSlotRepository,
         calendar_service: CalendarService,
         booking_scheduler: BookingScheduler,
         notification_service: NotificationService,
@@ -248,6 +252,8 @@ class UseCasesProvider(Provider):
         return CancelBookingUseCase(
             booking_repo=booking_repo,
             client_repo=client_repo,
+            trainer_repo=trainer_repo,
+            slot_repo=slot_repo,
             calendar_service=calendar_service,
             booking_scheduler=booking_scheduler,
             notification_service=notification_service,
