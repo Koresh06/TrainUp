@@ -9,6 +9,7 @@ class SubscriptionSG(StatesGroup):
 class TrainerOnboardingSG(StatesGroup):
     welcome = State()
     name = State()
+    phone = State()
     bio = State()
     photo = State()
     group = State()

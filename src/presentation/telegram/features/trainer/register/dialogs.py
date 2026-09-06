@@ -5,9 +5,22 @@ from aiogram_dialog.widgets.text import Const, Format
 from aiogram_dialog.widgets.input import TextInput, MessageInput
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.style import Style
-from aiogram_dialog.widgets.kbd import Select, Column, Button, Back, Next
+from aiogram_dialog.widgets.kbd import (
+    Select,
+    Column,
+    Button,
+    Back,
+    Next,
+    RequestContact,
+)
+from aiogram_dialog.widgets.markup.reply_keyboard import ReplyKeyboardFactory
 
 from src.presentation.telegram.features.error_handler import on_input_error
+from src.presentation.telegram.features.handlers_phone import (
+    on_phone_input_success,
+    on_phone_received_contact,
+    validate_phone_number,
+)
 
 from .handlers import (
     on_delete_photo,
@@ -17,7 +30,12 @@ from .handlers import (
     on_plan_selected,
     on_confirm_purchase,
 )
-from .getters import getter_media, onboarding_final_getter, select_plan_getter, confirm_plan_getter
+from .getters import (
+    getter_media,
+    onboarding_final_getter,
+    select_plan_getter,
+    confirm_plan_getter,
+)
 from .validaters import validate_trainer_name, validate_trainer_bio
 from .states import SubscriptionSG, TrainerOnboardingSG
 
@@ -50,6 +68,29 @@ trainer_onboarding_dialog = Dialog(
             on_error=on_input_error,
         ),
         state=TrainerOnboardingSG.name,
+    ),
+    Window(
+        Const(
+            "📞 <b>Укажите Ваш номер телефона (например, "
+            "+375291234567 или 80291234567):</b>"
+        ),
+        RequestContact(Const("📞 Отправить номер")),
+        MessageInput(
+            func=on_phone_received_contact,
+            content_types=[ContentType.CONTACT],
+        ),
+        TextInput(
+            id="phone",
+            type_factory=validate_phone_number,
+            on_success=on_phone_input_success,
+            on_error=on_input_error,
+        ),
+        Back(Const("⬅️ Назад")),
+        markup_factory=ReplyKeyboardFactory(
+            one_time_keyboard=True,
+            resize_keyboard=True,
+        ),
+        state=TrainerOnboardingSG.phone,
     ),
     Window(
         Const(
@@ -109,6 +150,7 @@ trainer_onboarding_dialog = Dialog(
             "✅ <b>Проверь данные</b>\n\n"
             "👤 Имя: {name}\n"
             "📝 О себе: {bio}\n"
+            "📞 Телефон: {phone}\n"
             "🔔 Уведомления: {chat_label}\n\n"
             "Всё верно?"
         ),

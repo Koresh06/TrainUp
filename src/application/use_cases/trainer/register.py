@@ -32,6 +32,7 @@ class RegisterTrainerRequest(UseCaseRequest):
     bio: str
     notification_chat_id: int
     photo_file_id: str | None = None
+    phone: str | None = None
 
 
 @dataclass(kw_only=True)
@@ -50,6 +51,7 @@ class RegisterTrainerUseCase(UseCase[RegisterTrainerRequest, Trainer]):
             notification_chat_id=command.notification_chat_id,
             is_active=True,
             photo_file_id=command.photo_file_id,
+            phone=command.phone,
         )
         saved_trainer = await self.trainer_repo.save(trainer)
 

@@ -82,6 +82,7 @@ async def on_onboarding_confirm(
             bio=dialog_manager.find("bio").get_value(),
             notification_chat_id=data["notification_chat_id"],
             photo_file_id=data.get("photo_file_id"),
+            phone=data.get("phone"),
         )
     )
 

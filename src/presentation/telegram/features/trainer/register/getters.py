@@ -87,6 +87,7 @@ async def onboarding_final_getter(dialog_manager: DialogManager, **kwargs) -> di
     return {
         "name": dialog_manager.find("name").get_value(),
         "bio": dialog_manager.find("bio").get_value(),
+        "phone": data.get("phone"),
         "chat_label": chat_label,
         "photo": build_media_attachment(photo_file_id),
     }

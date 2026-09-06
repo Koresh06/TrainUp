@@ -42,6 +42,7 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     photo_file_id: Mapped[str | None] = mapped_column(VARCHAR(255), nullable=True)
     social_links: Mapped[dict[str, str]] = mapped_column(JSONB, default=dict)
+    phone: Mapped[str | None] = mapped_column(VARCHAR(255), nullable=True)
 
     clients: Mapped[list["ClientModel"]] = relationship(
         "ClientModel",
@@ -92,6 +93,7 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             is_active=entity.is_active,
             photo_file_id=entity.photo_file_id,
             social_links=entity.social_links,
+            phone=entity.phone,
         )
 
     def to_entity(self) -> "Trainer":
@@ -104,6 +106,7 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             is_active=self.is_active,
             photo_file_id=self.photo_file_id,
             social_links=self.social_links or {},
+            phone=self.phone,
         )
 
     def update_model(self, entity: "Trainer") -> None:
@@ -114,3 +117,4 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.is_active = entity.is_active
         self.photo_file_id = entity.photo_file_id
         self.social_links = entity.social_links
+        self.phone = entity.phone

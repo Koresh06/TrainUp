@@ -12,3 +12,4 @@ class Trainer(Entity):
     is_active: bool
     photo_file_id: str | None = None
     social_links: dict[str, str] = field(default_factory=dict)
+    phone: str | None = None
