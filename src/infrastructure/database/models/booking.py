@@ -74,6 +74,7 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             slot_id=entity.slot_id,
             status=entity.status,
             reminder_job_id=entity.reminder_job_id,
+            recurring_booking_id=entity.recurring_booking_id,
         )
 
     def to_entity(self):
@@ -84,6 +85,7 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             slot_id=self.slot_id,
             status=self.status,
             reminder_job_id=self.reminder_job_id,
+            recurring_booking_id=self.recurring_booking_id,
         )
 
     def update_model(self, entity: "Booking") -> None:
@@ -92,3 +94,4 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.slot_id = entity.slot_id
         self.status = entity.status
         self.reminder_job_id = entity.reminder_job_id
+        self.recurring_booking_id = entity.recurring_booking_id

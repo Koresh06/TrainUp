@@ -6,10 +6,14 @@ from src.application.use_cases.booking.confirm import ConfirmBookingUseCase
 from src.application.use_cases.booking.count_active_by_slot_ids import (
     CountActiveBookingsBySlotIdsUseCase,
 )
+from src.application.use_cases.booking.get_by_id import GetBookingByIdUseCase
+from src.application.use_cases.booking.reschedule import RescheduleBookingUseCase
 from src.application.use_cases.booking.send_reminder import SendTrainingReminderUseCase
 from src.application.use_cases.calendar.get_day_availability_map_assignment import GetDayAvailabilityMapForAssignmentUseCase
 from src.application.use_cases.client.get_by_id import GetClientByIdUseCase
 from src.application.use_cases.recurring_booking.add import AddRecurringBookingUseCase
+from src.application.use_cases.recurring_booking.deactivate import DeactivateRecurringBookingUseCase
+from src.application.use_cases.recurring_booking.get_by_id import GetRecurringBookingByIdUseCase
 from src.application.use_cases.recurring_booking.maintain import MaintainRecurringBookingsUseCase
 from src.application.use_cases.registration_questions.add_custom import AddCustomQuestionUseCase
 from src.application.use_cases.registration_questions.delete import DeleteCustomQuestionUseCase
@@ -95,6 +99,12 @@ from src.application.use_cases.calendar.get_time_column import GetTimeColumnsUse
 from src.application.use_cases.calendar.get_week_grid import GetWeekGridUseCase
 from src.application.use_cases.calendar.maintain_calendar_buffer import (
     MaintainCalendarBufferUseCase,
+)
+from src.application.use_cases.recurring_booking.change import (
+    ChangeRecurringBookingScheduleUseCase,
+)
+from src.application.use_cases.recurring_booking.get_all_active_by_trainer import (
+    GetActiveRecurringBookingsByTrainerUseCase,
 )
 from src.application.use_cases.calendar.get_slot_by_id import GetSlotByIdUseCase
 from src.application.use_cases.client.register import RegisterClientUseCase
@@ -626,4 +636,82 @@ class UseCasesProvider(Provider):
             notification_service=notification_service,
             booking_scheduler=booking_scheduler,
             transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def reschedule_booking_use_case(
+        self,
+        booking_repo: BookingRepository,
+        client_repo: ClientRepository,
+        trainer_repo: TrainerRepository,
+        slot_repo: CalendarSlotRepository,
+        calendar_service: CalendarService,
+        pricing_rule_repo: TrainerPricingRuleRepository,
+        notification_service: NotificationService,
+        booking_scheduler: BookingScheduler,
+        transaction_manager: TransactionManager,
+    ) -> RescheduleBookingUseCase:
+        return RescheduleBookingUseCase(
+            booking_repo=booking_repo,
+            client_repo=client_repo,
+            trainer_repo=trainer_repo,
+            slot_repo=slot_repo,
+            calendar_service=calendar_service,
+            pricing_rule_repo=pricing_rule_repo,
+            notification_service=notification_service,
+            booking_scheduler=booking_scheduler,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_booking_by_id_use_case(
+        self,
+        booking_repo: BookingRepository,
+    ) -> GetBookingByIdUseCase:
+        return GetBookingByIdUseCase(
+            booking_repo=booking_repo,
+        )
+
+    @provide
+    def change_recurring_booking_schedule_use_case(
+        self,
+        recurring_repo: RecurringBookingRepository,
+        booking_repo: BookingRepository,
+        reschedule_use_case: RescheduleBookingUseCase,
+        transaction_manager: TransactionManager,
+    ) -> ChangeRecurringBookingScheduleUseCase:
+        return ChangeRecurringBookingScheduleUseCase(
+            recurring_repo=recurring_repo,
+            booking_repo=booking_repo,
+            reschedule_use_case=reschedule_use_case,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def deactivate_reccuring_booking_use_case(
+        self,
+        recurring_repo: RecurringBookingRepository,
+        transaction_manager: TransactionManager,
+    ) -> DeactivateRecurringBookingUseCase:
+        return DeactivateRecurringBookingUseCase(
+            recurring_repo=recurring_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_active_recurring_bookings_by_trainer_use_case(
+        self,
+        recurring_repo: RecurringBookingRepository,
+    ) -> GetActiveRecurringBookingsByTrainerUseCase:
+        return GetActiveRecurringBookingsByTrainerUseCase(
+            recurring_repo=recurring_repo,
+        )
+
+    @provide
+    def get_recurring_booking_by_id_use_case(
+        self,
+        recurring_repo: RecurringBookingRepository,
+    ) -> GetRecurringBookingByIdUseCase:
+        return GetRecurringBookingByIdUseCase(
+            recurring_repo=recurring_repo,
         )

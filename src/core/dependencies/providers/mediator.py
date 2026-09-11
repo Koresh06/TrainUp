@@ -5,6 +5,8 @@ from src.application.use_cases.booking.cancel import CancelBookingRequest, Cance
 from src.application.use_cases.booking.confirm import ConfirmBookingRequest, ConfirmBookingUseCase
 from src.application.use_cases.booking.count_active_by_slot_ids import CountActiveBookingsBySlotIdsRequest, CountActiveBookingsBySlotIdsUseCase
 from src.application.use_cases.booking.create import CreateBookingUseCase, CreateBookingRequest
+from src.application.use_cases.booking.get_by_id import GetBookingByIdRequest, GetBookingByIdUseCase
+from src.application.use_cases.booking.reschedule import RescheduleBookingRequest, RescheduleBookingUseCase
 from src.application.use_cases.booking.send_reminder import SendTrainingReminderRequest, SendTrainingReminderUseCase
 from src.application.use_cases.calendar.get_available_slots import GetAvailableSlotsRequest, GetAvailableSlotsUseCase
 from src.application.use_cases.calendar.get_day_availability_map import GetDayAvailabilityMapRequest, GetDayAvailabilityMapUseCase
@@ -16,6 +18,10 @@ from src.application.use_cases.calendar.maintain_calendar_buffer import Maintain
 from src.application.use_cases.calendar.get_slot_by_id import GetSlotByIdUseCase, GetSlotByIdRequest
 from src.application.use_cases.client.get_by_id import GetClientByIdRequest, GetClientByIdUseCase
 from src.application.use_cases.recurring_booking.add import AddRecurringBookingRequest, AddRecurringBookingUseCase
+from src.application.use_cases.recurring_booking.change import ChangeRecurringBookingScheduleRequest, ChangeRecurringBookingScheduleUseCase
+from src.application.use_cases.recurring_booking.deactivate import DeactivateRecurringBookingRequest, DeactivateRecurringBookingUseCase
+from src.application.use_cases.recurring_booking.get_all_active_by_trainer import GetActiveRecurringBookingsByTrainerRequest, GetActiveRecurringBookingsByTrainerUseCase
+from src.application.use_cases.recurring_booking.get_by_id import GetRecurringBookingByIdRequest, GetRecurringBookingByIdUseCase
 from src.application.use_cases.recurring_booking.maintain import MaintainRecurringBookingsRequest, MaintainRecurringBookingsUseCase
 from src.application.use_cases.registration_questions.add_custom import AddCustomQuestionRequest, AddCustomQuestionUseCase
 from src.application.use_cases.registration_questions.delete import DeleteCustomQuestionRequest, DeleteCustomQuestionUseCase
@@ -99,6 +105,12 @@ class MediatorProvider(Provider):
         get_day_availability_map_for_assignment_use_case: GetDayAvailabilityMapForAssignmentUseCase,
         add_recurring_booking_use_case: AddRecurringBookingUseCase,
         maintain_recurring_booking_use_case: MaintainRecurringBookingsUseCase,
+        reschedule_booking_use_case: RescheduleBookingUseCase,
+        get_booking_by_id_use_case: GetBookingByIdUseCase,
+        change_recurring_booking_schedule_use_case: ChangeRecurringBookingScheduleUseCase,
+        deactivate_reccuring_booking_use_case: DeactivateRecurringBookingUseCase,
+        get_active_recurring_bookings_by_trainer_use_case: GetActiveRecurringBookingsByTrainerUseCase,
+        get_recurring_booking_by_id_use_case: GetRecurringBookingByIdUseCase,
 
     ) -> Mediator:
         mediator = Mediator()
@@ -148,6 +160,12 @@ class MediatorProvider(Provider):
         mediator.register(GetDayAvailabilityMapForAssignmentRequest, get_day_availability_map_for_assignment_use_case)
         mediator.register(AddRecurringBookingRequest, add_recurring_booking_use_case)
         mediator.register(MaintainRecurringBookingsRequest, maintain_recurring_booking_use_case)
+        mediator.register(RescheduleBookingRequest, reschedule_booking_use_case)
+        mediator.register(GetBookingByIdRequest, get_booking_by_id_use_case)
+        mediator.register(ChangeRecurringBookingScheduleRequest, change_recurring_booking_schedule_use_case)
+        mediator.register(DeactivateRecurringBookingRequest, deactivate_reccuring_booking_use_case)
+        mediator.register(GetActiveRecurringBookingsByTrainerRequest, get_active_recurring_bookings_by_trainer_use_case)
+        mediator.register(GetRecurringBookingByIdRequest, get_recurring_booking_by_id_use_case)
 
         return mediator
 

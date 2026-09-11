@@ -14,5 +14,5 @@ TRAINER_MENU_TARGETS: dict[str, State] = {
     "clients": TrainerClientsSG.list,
     "settings": TrainerSettingsSG.main,
     "profile": TrainerProfileSG.main,
-    "recurring": TrainerRecurringSG.select_client,
+    "recurring": TrainerRecurringSG.list,
 }
