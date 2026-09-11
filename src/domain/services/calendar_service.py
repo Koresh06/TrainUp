@@ -116,3 +116,24 @@ class CalendarService:
         today = date.today()
         date_to = today + timedelta(days=days_ahead)
         return await self.slot_repo.get_slots_for_range(trainer_id, today, date_to)
+
+    async def book_slot_forced(self, slot_id: int) -> CalendarSlot:
+        """
+        Бронирование без проверки capacity — для постоянных клиентов (RecurringBooking),
+        у которых есть безусловное право на своё время, даже если слот формально
+        переполнен обычными клиентами.
+        """
+        slot = await self.slot_repo.get_by_id_for_update(slot_id)
+        if slot is None:
+            raise CalendarSlotNotFoundException(slot_id)
+    
+        if slot.status == SlotStatus.BLOCKED:
+            raise SlotAlreadyBookedException(slot_id)
+    
+        active_count = await self.booking_repo.count_active_by_slot_id(slot_id)
+        if active_count + 1 >= slot.capacity:
+            slot.status = SlotStatus.BOOKED
+            slot.touch()
+            await self.slot_repo.save(slot)
+    
+        return slot

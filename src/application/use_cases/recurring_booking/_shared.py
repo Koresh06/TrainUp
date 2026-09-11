@@ -1,0 +1,85 @@
+from datetime import timedelta
+
+from src.application.interfaces.booking_scheduler import BookingScheduler
+from src.application.interfaces.notification_service import NotificationService
+from src.domain.constants import (
+    REMINDER_HOURS_BEFORE_TRAINING,
+    REMINDER_TEST_DELAY_MINUTES,
+    REMINDER_TEST_MODE,
+)
+from src.domain.entities.booking import Booking
+from src.domain.entities.calendar_slot import CalendarSlot
+from src.domain.entities.recurring_booking import RecurringBooking
+from src.domain.enums.booking import BookingStatus
+from src.domain.repositories.booking import BookingRepository
+from src.domain.repositories.client import ClientRepository
+from src.domain.repositories.trainer import TrainerRepository
+from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
+from src.domain.services.calendar_service import CalendarService
+from src.domain.utils import get_training_datetime_utc
+from src.infrastructure.database.transaction_manager.base import TransactionManager
+from src.utils.get_datetime_utc_now import get_datetime_utc_now
+
+
+async def _create_recurring_occurrence(
+    *,
+    recurring: RecurringBooking,
+    slot: CalendarSlot,
+    booking_repo: BookingRepository,
+    calendar_service: CalendarService,
+    pricing_rule_repo: TrainerPricingRuleRepository,
+    client_repo: ClientRepository,
+    trainer_repo: TrainerRepository,
+    notification_service: NotificationService,
+    booking_scheduler: BookingScheduler,
+    transaction_manager: TransactionManager,
+) -> Booking:
+    await calendar_service.book_slot_forced(slot.id)
+
+    pricing_rule = await pricing_rule_repo.get_by_trainer_id(recurring.trainer_id)
+    price = (
+        pricing_rule.price_for(slot.start_time) if pricing_rule is not None else None
+    )
+
+    booking = Booking(
+        client_id=recurring.client_id,
+        trainer_id=recurring.trainer_id,
+        slot_id=slot.id,
+        status=BookingStatus.CONFIRMED,
+        price=price,
+        recurring_booking_id=recurring.id,
+    )
+    saved = await booking_repo.save(booking)
+    await transaction_manager.commit()
+
+    client = await client_repo.get_by_id(recurring.client_id)
+    trainer = await trainer_repo.get_by_id(recurring.trainer_id)
+    if client is not None and trainer is not None:
+        await notification_service.send(
+            chat_id=client.tg_id,
+            text=(
+                f"📅 <b>Ваша постоянная тренировка запланирована</b>\n\n"
+                f"Тренер: {trainer.name}\n"
+                f"📅 {slot.slot_date.strftime('%d.%m.%Y')}\n"
+                f"🕐 {slot.start_time.strftime('%H:%M')}\n\n"
+                f"Если нужно отменить или перенести — свяжитесь с тренером напрямую."
+            ),
+        )
+
+    if REMINDER_TEST_MODE:
+        remind_at_utc = get_datetime_utc_now() + timedelta(
+            minutes=REMINDER_TEST_DELAY_MINUTES
+        )
+    else:
+        training_at_utc = get_training_datetime_utc(slot)
+        remind_at_utc = training_at_utc - timedelta(
+            hours=REMINDER_HOURS_BEFORE_TRAINING
+        )
+
+    if remind_at_utc > get_datetime_utc_now():
+        await booking_scheduler.schedule_training_reminder(
+            booking_id=saved.id,
+            remind_at_utc=remind_at_utc,
+        )
+
+    return saved

@@ -15,6 +15,7 @@ from .trainer_booking_settings import TrainerBookingSettingsModel
 from .trainer_pricing_rule import TrainerPricingRuleModel
 from .registration_question import RegistrationQuestionModel
 from .client_answer import ClientAnswerModel
+from .recurring_booking import RecurringBookingModel
 
 
 __all__ = [
@@ -35,4 +36,5 @@ __all__ = [
     "TrainerPricingRuleModel",
     "RegistrationQuestionModel",
     "ClientAnswerModel",
+    "RecurringBookingModel",
 ]

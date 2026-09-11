@@ -8,11 +8,15 @@ from src.application.use_cases.booking.create import CreateBookingUseCase, Creat
 from src.application.use_cases.booking.send_reminder import SendTrainingReminderRequest, SendTrainingReminderUseCase
 from src.application.use_cases.calendar.get_available_slots import GetAvailableSlotsRequest, GetAvailableSlotsUseCase
 from src.application.use_cases.calendar.get_day_availability_map import GetDayAvailabilityMapRequest, GetDayAvailabilityMapUseCase
+from src.application.use_cases.calendar.get_day_availability_map_assignment import GetDayAvailabilityMapForAssignmentRequest, GetDayAvailabilityMapForAssignmentUseCase
 from src.application.use_cases.calendar.get_day_slots import GetDaySlotsRequest, GetDaySlotsUseCase
 from src.application.use_cases.calendar.get_time_column import GetTimeColumnsUseCase, GetTimeColumnsRequest
 from src.application.use_cases.calendar.get_week_grid import GetWeekGridUseCase, GetWeekGridRequest
 from src.application.use_cases.calendar.maintain_calendar_buffer import MaintainCalendarBufferUseCase, MaintainCalendarBufferRequest
 from src.application.use_cases.calendar.get_slot_by_id import GetSlotByIdUseCase, GetSlotByIdRequest
+from src.application.use_cases.client.get_by_id import GetClientByIdRequest, GetClientByIdUseCase
+from src.application.use_cases.recurring_booking.add import AddRecurringBookingRequest, AddRecurringBookingUseCase
+from src.application.use_cases.recurring_booking.maintain import MaintainRecurringBookingsRequest, MaintainRecurringBookingsUseCase
 from src.application.use_cases.registration_questions.add_custom import AddCustomQuestionRequest, AddCustomQuestionUseCase
 from src.application.use_cases.registration_questions.delete import DeleteCustomQuestionRequest, DeleteCustomQuestionUseCase
 from src.application.use_cases.registration_questions.get_active import GetActiveRegistrationQuestionsRequest, GetActiveRegistrationQuestionsUseCase
@@ -91,6 +95,11 @@ class MediatorProvider(Provider):
         delete_custom_question_use_case: DeleteCustomQuestionUseCase,
         update_question_options_use_case: UpdateQuestionOptionsUseCase,
         get_registration_question_by_id_use_case: GetRegistrationQuestionByIdUseCase,
+        get_client_by_id_use_case: GetClientByIdUseCase,
+        get_day_availability_map_for_assignment_use_case: GetDayAvailabilityMapForAssignmentUseCase,
+        add_recurring_booking_use_case: AddRecurringBookingUseCase,
+        maintain_recurring_booking_use_case: MaintainRecurringBookingsUseCase,
+
     ) -> Mediator:
         mediator = Mediator()
 
@@ -135,6 +144,10 @@ class MediatorProvider(Provider):
         mediator.register(DeleteCustomQuestionRequest, delete_custom_question_use_case)
         mediator.register(UpdateQuestionOptionsRequest, update_question_options_use_case)
         mediator.register(GetRegistrationQuestionByIdRequest, get_registration_question_by_id_use_case)
+        mediator.register(GetClientByIdRequest, get_client_by_id_use_case)
+        mediator.register(GetDayAvailabilityMapForAssignmentRequest, get_day_availability_map_for_assignment_use_case)
+        mediator.register(AddRecurringBookingRequest, add_recurring_booking_use_case)
+        mediator.register(MaintainRecurringBookingsRequest, maintain_recurring_booking_use_case)
 
         return mediator
 

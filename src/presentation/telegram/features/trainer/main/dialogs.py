@@ -9,7 +9,7 @@ from .handlers import on_menu_item_click
 
 trainer_main_dialog = Dialog(
     Window(
-        Const("Кабинет тренера. Что делаем?"),
+        Const("Кабинет тренера"),
         Column(
             Button(
                 Const("🔗 Тренерская ссылка"),
@@ -24,6 +24,11 @@ trainer_main_dialog = Dialog(
             Button(
                 Const("👥 Мои клиенты"),
                 id="clients",
+                on_click=on_menu_item_click,
+            ),
+            Button(
+                Const("🔁 Постоянные клиенты"),
+                id="recurring",
                 on_click=on_menu_item_click,
             ),
             Button(

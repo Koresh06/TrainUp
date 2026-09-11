@@ -28,6 +28,7 @@ if TYPE_CHECKING:
         ProgramRequestModel,
         TrainerBookingSettingsModel,
         TrainerPricingRuleModel,
+        RecurringBookingModel,
     )
 
 
@@ -81,6 +82,10 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         "TrainerPricingRuleModel",
         back_populates="trainer",
         uselist=False,
+    )
+    recurring_bookings: Mapped[list["RecurringBookingModel"]] = relationship(
+        "RecurringBookingModel",
+        back_populates="trainer",
     )
 
     @classmethod

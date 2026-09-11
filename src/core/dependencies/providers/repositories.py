@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.client_answer import ClientAnswerRepository
+from src.domain.repositories.recurring_booking import RecurringBookingRepository
 from src.domain.repositories.registration_question import RegistrationQuestionRepository
 from src.domain.repositories.subscription_price_plan import (
     SubscriptionPricePlanRepository,
@@ -22,6 +23,7 @@ from src.domain.repositories.trainer_booking_settings import (
 )
 from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
 from src.infrastructure.repositories.client.sqlalchemy import SQLAlchemyClientRepo
+from src.infrastructure.repositories.recurring_booking.sqlalchemy import SQLAlchemyRecurringBookingRepo
 from src.infrastructure.repositories.registration_question.sqlalchemy import SQLAlchemyRegistrationQuestionRepo
 from src.infrastructure.repositories.subscription_price_plan.sqlalchemy import (
     SQLAlchemySubscriptionPricePlanRepo,
@@ -141,3 +143,9 @@ class RepositoriesProvider(Provider):
         self, session: AsyncSession
     ) -> ClientAnswerRepository:
         return SQLAlchemyClientAnswerRepo(session=session)
+
+    @provide(scope=Scope.REQUEST)
+    def get_recurring_booking_repository(
+        self, session: AsyncSession
+    ) -> RecurringBookingRepository:
+        return SQLAlchemyRecurringBookingRepo(session=session)

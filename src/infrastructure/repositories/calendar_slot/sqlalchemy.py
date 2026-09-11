@@ -136,3 +136,18 @@ class SQLAlchemyCalendarSlotRepo(CalendarSlotRepository):
         )
         result = await self._session.execute(query)
         return [model.to_entity() for model in result.scalars().all()]
+
+    async def get_by_date_and_time(
+        self,
+        trainer_id: int,
+        slot_date: date,
+        start_time: time,
+    ) -> CalendarSlot | None:
+        query = select(CalendarSlotModel).where(
+            CalendarSlotModel.trainer_id == trainer_id,
+            CalendarSlotModel.slot_date == slot_date,
+            CalendarSlotModel.start_time == start_time,
+        )
+        result = await self._session.execute(query)
+        model = result.scalar_one_or_none()
+        return model.to_entity() if model is not None else None

@@ -23,7 +23,9 @@ if TYPE_CHECKING:
         BookingModel,
         ProgramRequestModel,
         FeedbackMessageModel,
+        RecurringBookingModel,
     )
+
 
 class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     __tablename__ = "clients"
@@ -63,6 +65,10 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     )
     feedback_messages: Mapped[list["FeedbackMessageModel"]] = relationship(
         "FeedbackMessageModel",
+        back_populates="client",
+    )
+    recurring_bookings: Mapped[list["RecurringBookingModel"]] = relationship(
+        "RecurringBookingModel",
         back_populates="client",
     )
 
