@@ -10,6 +10,7 @@ from src.domain.exception.booking import ClientAlreadyBookedThisSlotException
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.trainer import TrainerRepository
+from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
 from src.domain.services.calendar_service import CalendarService
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.application.interfaces.notification_service import (
@@ -34,6 +35,7 @@ class CreateBookingUseCase(UseCase[CreateBookingRequest, Booking]):
     booking_repo: BookingRepository
     trainer_repo: TrainerRepository
     client_repo: ClientRepository
+    pricing_rule_repo: TrainerPricingRuleRepository
     notification_service: NotificationService
     transaction_manager: TransactionManager
 
@@ -56,11 +58,21 @@ class CreateBookingUseCase(UseCase[CreateBookingRequest, Booking]):
 
         slot: CalendarSlot = await self.calendar_service.book_slot(command.slot_id)
 
+        pricing_rule = await self.pricing_rule_repo.get_by_trainer_id(
+            command.trainer_id
+        )
+        price = (
+            pricing_rule.price_for(slot.start_time)
+            if pricing_rule is not None
+            else None
+        )
+
         booking = Booking(
             client_id=command.client_id,
             trainer_id=command.trainer_id,
             slot_id=command.slot_id,
             status=BookingStatus.PENDING,
+            price=price,
         )
         saved = await self.booking_repo.save(booking)
         await self.transaction_manager.commit()

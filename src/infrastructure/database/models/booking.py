@@ -1,17 +1,14 @@
-from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import (
     ForeignKey,
-    DateTime,
     ForeignKey,
-    BigInteger,
     Integer,
     VARCHAR,
-    Boolean,
     Enum as SqlEnum,
+    Numeric,
 )
 
 from src.domain.entities.booking import Booking
@@ -24,6 +21,7 @@ if TYPE_CHECKING:
         ClientModel,
         TrainerModel,
         CalendarSlotModel,
+        RecurringBookingModel,
     )
 
 
@@ -43,7 +41,13 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         ForeignKey("calendar_slots.id", ondelete="RESTRICT"),
     )
     status: Mapped[BookingStatus] = mapped_column(SqlEnum(BookingStatus))
+    price: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     reminder_job_id: Mapped[str | None] = mapped_column(VARCHAR(255), nullable=True)
+    recurring_booking_id: Mapped[int | None] = mapped_column(
+        ForeignKey("recurring_bookings.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     client: Mapped["ClientModel"] = relationship(
         "ClientModel",
@@ -56,6 +60,10 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     slot: Mapped["CalendarSlotModel"] = relationship(
         "CalendarSlotModel",
         back_populates="booking",
+    )
+    recurring_booking: Mapped["RecurringBookingModel | None"] = relationship(
+        "RecurringBookingModel",
+        back_populates="bookings",
     )
 
     @classmethod

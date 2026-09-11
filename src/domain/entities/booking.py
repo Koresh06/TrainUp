@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from decimal import Decimal
 
 from src.domain.entities.base import Entity
 from src.domain.enums.booking import BookingStatus
@@ -10,7 +11,9 @@ class Booking(Entity):
     trainer_id: int
     slot_id: int
     status: BookingStatus
+    price: Decimal | None = None
     reminder_job_id: str | None = None
+    recurring_booking_id: int | None = None
 
     def confirm(self) -> None:
         self.status = BookingStatus.CONFIRMED

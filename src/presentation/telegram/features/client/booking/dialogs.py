@@ -1,10 +1,10 @@
 from aiogram_dialog import Dialog, Window
-from aiogram_dialog.widgets.kbd import Back, Select, Button, Cancel
+from aiogram_dialog.widgets.kbd import Back, Select, Button, Cancel, Group
 from aiogram_dialog.widgets.text import Const, Format
 
 from src.presentation.telegram.widgets.booking_calendar import BookingCalendar
+from src.presentation.telegram.features.slot_style import slot_style
 
-from .slot_style import slot_style
 from .states import BookingSG
 from .handlers import (
     on_date_clicked,
@@ -27,20 +27,23 @@ booking_dialog = Dialog(
     ),
     Window(
         Format("Свободное время на {selected_day_label}:{header_note}"),
-        Select(
-            Format("{item[label]}"),
-            id="time_select",
-            items="times",
-            item_id_getter=lambda item: item["value_id"],
-            on_click=on_time_clicked,
-            style=slot_style,
+        Group(
+            Select(
+                Format("{item[label]}"),
+                id="time_select",
+                items="times",
+                item_id_getter=lambda item: item["value_id"],
+                on_click=on_time_clicked,
+                style=slot_style,
+            ),
+            width=2,
         ),
         Back(Const("⬅️ Назад")),
         state=BookingSG.select_time,
         getter=times_getter,
     ),
     Window(
-        Format("Проверь данные записи:\n\n" "📅 {date} в {time}\n\n"),
+        Format("Проверь данные записи:\n\n📅 {date} в {time}{price_label}\n\n"),
         Button(
             Const("✅ Подтвердить"),
             id="confirm_booking",

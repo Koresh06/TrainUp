@@ -1,4 +1,4 @@
-from sqlalchemy import exists, func, select
+from sqlalchemy import desc, exists, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -116,3 +116,16 @@ class SQLAlchemyBookingRepo(BookingRepository):
             raise BookingNotFoundException(booking_id=booking_id)
         await self._session.delete(model)
         await self._session.flush()
+
+    async def get_latest_by_recurring_booking_id(
+        self, recurring_booking_id: int
+    ) -> Booking | None:
+        stmt = (
+            select(BookingModel)
+            .where(BookingModel.recurring_booking_id == recurring_booking_id)
+            .order_by(desc(BookingModel.id))
+            .limit(1)
+        )
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return model.to_entity() if model is not None else None
