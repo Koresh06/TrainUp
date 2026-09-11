@@ -50,8 +50,9 @@ class AddRecurringBookingUseCase(UseCase[AddRecurringBookingRequest, Booking]):
             start_time=slot.start_time,
             is_active=True,
         )
-        saved_recurring = await self.recurring_repo.save(recurring)
+        saved_recurring: RecurringBooking = await self.recurring_repo.save(recurring)
         await self.transaction_manager.commit()
+        print(saved_recurring)
 
         return await _create_recurring_occurrence(
             recurring=saved_recurring,

@@ -55,16 +55,22 @@ async def _create_recurring_occurrence(
     client = await client_repo.get_by_id(recurring.client_id)
     trainer = await trainer_repo.get_by_id(recurring.trainer_id)
     if client is not None and trainer is not None:
-        await notification_service.send(
-            chat_id=client.tg_id,
-            text=(
-                f"📅 <b>Ваша постоянная тренировка запланирована</b>\n\n"
-                f"Тренер: {trainer.name}\n"
-                f"📅 {slot.slot_date.strftime('%d.%m.%Y')}\n"
-                f"🕐 {slot.start_time.strftime('%H:%M')}\n\n"
-                f"Если нужно отменить или перенести — свяжитесь с тренером напрямую."
-            ),
+        contact_lines = [
+            f'💬 <a href="tg://user?id={trainer.tg_id}">Написать тренеру в Telegram</a>'
+        ]
+        if trainer.phone:
+            contact_lines.append(f"📞 {trainer.phone}")
+        contact_block = "\n".join(contact_lines)
+
+        text = (
+            f"📅 <b>Ваша постоянная тренировка запланирована</b>\n\n"
+            f"Тренер: {trainer.name}\n"
+            f"📅 {slot.slot_date.strftime('%d.%m.%Y')}\n"
+            f"🕐 {slot.start_time.strftime('%H:%M')}\n\n"
+            f"Если понадобится перенести время — свяжитесь с тренером напрямую:\n"
+            f"{contact_block}"
         )
+        await notification_service.send(chat_id=client.tg_id,text=text,)
 
     if REMINDER_TEST_MODE:
         remind_at_utc = get_datetime_utc_now() + timedelta(

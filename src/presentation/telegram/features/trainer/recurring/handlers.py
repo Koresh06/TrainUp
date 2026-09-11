@@ -7,8 +7,26 @@ from aiogram_dialog.widgets.kbd import Select, Button
 from aiogram_dialog.widgets.kbd.calendar_kbd import ManagedCalendar
 
 from src.application.mediator import Mediator
+from src.application.use_cases.calendar.get_day_availability_map_assignment import (
+    GetDayAvailabilityMapForAssignmentRequest,
+)
 from src.application.use_cases.recurring_booking.add import AddRecurringBookingRequest
-from src.presentation.telegram.widgets.booking_calendar import AVAILABILITY_CACHE_KEY
+from src.application.use_cases.recurring_booking.change import ChangeRecurringBookingScheduleRequest
+from src.application.use_cases.recurring_booking.deactivate import (
+    DeactivateRecurringBookingRequest,
+)
+from src.application.use_cases.trainer_booking_settings.get_by_id import (
+    GetTrainerBookingSettingsRequest,
+)
+from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
+from src.domain.exception.calendar_slot import SlotFullException
+from src.presentation.telegram.features.trainer.recurring.states import (
+    TrainerRecurringSG,
+)
+from src.presentation.telegram.widgets.booking_calendar import (
+    AVAILABILITY_CACHE_KEY,
+    HORIZON_CACHE_KEY,
+)
 
 
 async def on_client_selected(
@@ -70,3 +88,96 @@ async def on_recurring_confirm(
 
     await callback.answer("Постоянная тренировка добавлена!", show_alert=True)
     await dialog_manager.done()
+
+
+async def on_recurring_item_selected(
+    callback: CallbackQuery,
+    widget: Select,
+    dialog_manager: DialogManager,
+    item_id: str,
+) -> None:
+    dialog_manager.dialog_data["editing_recurring_id"] = int(item_id)
+    await dialog_manager.switch_to(TrainerRecurringSG.detail)
+
+
+async def on_add_recurring_click(
+    callback: CallbackQuery,
+    button: Button,
+    dialog_manager: DialogManager,
+) -> None:
+    await dialog_manager.switch_to(TrainerRecurringSG.select_client)
+
+
+async def on_edit_time_click(
+    callback: CallbackQuery,
+    button: Button,
+    dialog_manager: DialogManager,
+) -> None:
+    await dialog_manager.switch_to(TrainerRecurringSG.edit_day)
+
+
+@inject
+async def on_deactivate_recurring_click(
+    callback: CallbackQuery,
+    button: Button,
+    dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+) -> None:
+    recurring_id: int = dialog_manager.dialog_data["editing_recurring_id"]
+    await mediator.handle(
+        DeactivateRecurringBookingRequest(recurring_booking_id=recurring_id)
+    )
+    await callback.answer("Постоянная запись остановлена")
+    await dialog_manager.switch_to(TrainerRecurringSG.list)
+
+
+async def on_edit_recurring_date_clicked(
+    callback: ChatEvent,
+    widget: ManagedCalendar,
+    dialog_manager: DialogManager,
+    clicked_date: date,
+    **kwargs,
+) -> None:
+    availability: dict[str, int] = dialog_manager.dialog_data.get(
+        AVAILABILITY_CACHE_KEY, {}
+    )
+    if availability.get(clicked_date.isoformat(), 0) == 0:
+        await callback.answer("На этот день нет открытых слотов", show_alert=True)
+        return
+    dialog_manager.dialog_data["new_recurring_day"] = clicked_date.isoformat()
+    await dialog_manager.switch_to(TrainerRecurringSG.edit_time)
+
+
+async def on_edit_recurring_time_clicked(
+    callback: CallbackQuery,
+    widget: Select[str],
+    dialog_manager: DialogManager,
+    item_id: str,
+) -> None:
+    dialog_manager.dialog_data["new_recurring_slot_id"] = int(item_id)
+    await dialog_manager.switch_to(TrainerRecurringSG.edit_confirm)
+
+
+@inject
+async def on_edit_recurring_confirm(
+    callback: CallbackQuery,
+    button: Button,
+    dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+) -> None:
+    recurring_id: int = dialog_manager.dialog_data["editing_recurring_id"]
+    new_slot_id: int = dialog_manager.dialog_data["new_recurring_slot_id"]
+
+    try:
+        await mediator.handle(
+            ChangeRecurringBookingScheduleRequest(
+                recurring_booking_id=recurring_id,
+                new_slot_id=new_slot_id,
+            )
+        )
+    except SlotFullException:
+        await callback.answer("Мест не осталось на этом слоте", show_alert=True)
+        return
+
+    await callback.answer("Расписание обновлено!", show_alert=True)
+    await dialog_manager.switch_to(TrainerRecurringSG.list)
