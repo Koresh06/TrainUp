@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Protocol
 
 from src.domain.entities.booking import Booking
@@ -19,3 +20,16 @@ class BookingRepository(Protocol):
     async def get_latest_by_recurring_booking_id(
         self, recurring_booking_id: int
     ) -> Booking | None: ...
+    async def get_past_confirmed(self, before_date: date) -> list[Booking]: ...
+    async def count_completed_by_trainer_in_period(
+        self,
+        trainer_id: int,
+        date_from: date,
+        date_to: date,
+    ) -> int: ...
+    async def count_cancelled_by_trainer_in_period(
+        self,
+        trainer_id: int,
+        date_from: date,
+        date_to: date,
+    ) -> int: ...

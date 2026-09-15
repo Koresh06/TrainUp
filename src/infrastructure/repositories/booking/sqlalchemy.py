@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy import desc, exists, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -129,3 +131,50 @@ class SQLAlchemyBookingRepo(BookingRepository):
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         return model.to_entity() if model is not None else None
+
+    async def get_past_confirmed(self, before_date: date) -> list[Booking]:
+        query = (
+            select(BookingModel)
+            .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
+            .where(
+                BookingModel.status == BookingStatus.CONFIRMED,
+                CalendarSlotModel.slot_date < before_date,
+            )
+        )
+        result = await self._session.execute(query)
+        return [model.to_entity() for model in result.scalars().all()]
+
+    async def count_completed_by_trainer_in_period(
+        self, trainer_id: int, date_from: date, date_to: date
+    ) -> int:
+        query = (
+            select(func.count())
+            .select_from(BookingModel)
+            .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
+            .where(
+                BookingModel.trainer_id == trainer_id,
+                BookingModel.status == BookingStatus.COMPLETED,
+                CalendarSlotModel.slot_date >= date_from,
+                CalendarSlotModel.slot_date <= date_to,
+            )
+        )
+        result = await self._session.execute(query)
+        return result.scalar_one()
+    
+    
+    async def count_cancelled_by_trainer_in_period(
+        self, trainer_id: int, date_from: date, date_to: date
+    ) -> int:
+        query = (
+            select(func.count())
+            .select_from(BookingModel)
+            .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
+            .where(
+                BookingModel.trainer_id == trainer_id,
+                BookingModel.status == BookingStatus.CANCELLED,
+                BookingModel.updated_at >= date_from,
+                BookingModel.updated_at <= date_to,
+            )
+        )
+        result = await self._session.execute(query)
+        return result.scalar_one()

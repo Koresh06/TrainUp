@@ -40,6 +40,7 @@ from src.application.use_cases.slot_template.get_active import (
 from src.application.use_cases.slot_template.sync_weekday import (
     SyncWeekdaySlotTemplatesUseCase,
 )
+from src.application.use_cases.stats.get_trainer import GetTrainerStatsUseCase
 from src.application.use_cases.subscription.get_active import (
     GetActiveSubscriptionUseCase,
 )
@@ -105,6 +106,9 @@ from src.application.use_cases.recurring_booking.change import (
 )
 from src.application.use_cases.recurring_booking.get_all_active_by_trainer import (
     GetActiveRecurringBookingsByTrainerUseCase,
+)
+from src.application.use_cases.booking.mark_past_completed import (
+    MarkPastBookingsCompletedUseCase,
 )
 from src.application.use_cases.calendar.get_slot_by_id import GetSlotByIdUseCase
 from src.application.use_cases.client.register import RegisterClientUseCase
@@ -713,5 +717,29 @@ class UseCasesProvider(Provider):
         recurring_repo: RecurringBookingRepository,
     ) -> GetRecurringBookingByIdUseCase:
         return GetRecurringBookingByIdUseCase(
+            recurring_repo=recurring_repo,
+        )
+
+    @provide
+    def mark_past_bookings_completed_use_case(
+        self,
+        booking_repo: BookingRepository,
+        transaction_manager: TransactionManager,
+    ) -> MarkPastBookingsCompletedUseCase:
+        return MarkPastBookingsCompletedUseCase(
+            booking_repo=booking_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_trainer_stats_use_case(
+        self,
+        client_repo: ClientRepository,
+        booking_repo: BookingRepository,
+        recurring_repo: RecurringBookingRepository,
+    ) -> GetTrainerStatsUseCase:
+        return GetTrainerStatsUseCase(
+            client_repo=client_repo,
+            booking_repo=booking_repo,
             recurring_repo=recurring_repo,
         )
