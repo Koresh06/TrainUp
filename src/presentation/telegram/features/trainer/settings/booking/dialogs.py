@@ -1,6 +1,6 @@
 from aiogram_dialog import Window, Dialog
 from aiogram_dialog.widgets.text import Const, Format
-from aiogram_dialog.widgets.kbd import SwitchTo, Back, Cancel
+from aiogram_dialog.widgets.kbd import SwitchTo, Back, Cancel, Group, Select
 from aiogram_dialog.widgets.input import TextInput
 
 from src.presentation.telegram.features.error_handler import on_input_error
@@ -8,18 +8,18 @@ from src.presentation.telegram.features.trainer.settings.booking.states import (
     TrainerBookingSettingsSG,
 )
 
-from .getters import booking_settings_getter
+from .getters import booking_settings_getter, horizon_weeks_getter
 from .handlers import (
-    on_horizon_entered,
+    on_horizon_weeks_selected,
     on_max_bookings_entered,
 )
-from ..validaters import validate_horizon_days, validate_max_bookings
+from .validaters import validate_max_bookings
 
 trainer_booking_settings_dialog = Dialog(
     Window(
         Format(
             "⚙️ <b>Настройки записи</b>\n\n"
-            "📅 Горизонт календаря: {horizon_days} дней\n"
+            "📅 Горизонт календаря: {horizon_weeks} нед.\n"
             "🔢 Максимум активных записей на клиента: {max_bookings}\n\n"
             "Что изменить?"
         ),
@@ -38,15 +38,20 @@ trainer_booking_settings_dialog = Dialog(
         getter=booking_settings_getter,
     ),
     Window(
-        Const("Укажи горизонт календаря в днях (от 1 до 90):"),
-        TextInput(
-            id="horizon_input",
-            type_factory=validate_horizon_days,
-            on_success=on_horizon_entered,
-            on_error=on_input_error,
+        Const("Укажи горизонт календаря (от 1 до 8 недель, максимум ~2 месяца):"),
+        Group(
+            Select(
+                Format("{item[label]}"),
+                id="horizon_weeks_select",
+                item_id_getter=lambda item: item["id"],
+                items="weeks",
+                on_click=on_horizon_weeks_selected,
+            ),
+            width=4,
         ),
         Back(Const("⬅️ Назад")),
         state=TrainerBookingSettingsSG.edit_horizon,
+        getter=horizon_weeks_getter,
     ),
     Window(
         Const(
