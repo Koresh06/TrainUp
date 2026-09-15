@@ -6,6 +6,7 @@ from src.presentation.telegram.features.trainer.client.states import TrainerClie
 from src.presentation.telegram.features.trainer.profile.states import TrainerProfileSG
 from src.presentation.telegram.features.trainer.recurring.states import TrainerRecurringSG
 from src.presentation.telegram.features.trainer.settings.menu.states import TrainerSettingsSG
+from src.presentation.telegram.features.trainer.stats.states import TrainerStatsSG
 
 
 TRAINER_MENU_TARGETS: dict[str, State] = {
@@ -15,4 +16,5 @@ TRAINER_MENU_TARGETS: dict[str, State] = {
     "settings": TrainerSettingsSG.main,
     "profile": TrainerProfileSG.main,
     "recurring": TrainerRecurringSG.list,
+    "stats": TrainerStatsSG.main
 }

@@ -54,7 +54,7 @@ DEFAULT_MAX_ACTIVE_BOOKINGS = 1     # сколько активных запис
 # ВРЕМЕННО для теста — напоминание придёт через REMINDER_TEST_DELAY_MINUTES после
 # подтверждения брони, а не за REMINDER_HOURS_BEFORE_TRAINING до тренировки.
 # Перед деплоем в прод — выставить обратно в False!
-REMINDER_TEST_MODE = True
+REMINDER_TEST_MODE = False
 REMINDER_TEST_DELAY_MINUTES = 1
 
 # --- Дефолты для TrainerPricingRule (если тренер ещё не настроил свои цены) ---

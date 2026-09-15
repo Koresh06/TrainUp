@@ -40,7 +40,12 @@ trainer_main_dialog = Dialog(
                 Const("👤 Профиль"),
                 id="profile",
                 on_click=on_menu_item_click,
-            )
+            ),
+            Button(
+                Const("📊 Статистика"),
+                id="stats",
+                on_click=on_menu_item_click,
+            ),
         ),
         state=TrainerMainSG.main,
     )
