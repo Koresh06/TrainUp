@@ -7,6 +7,7 @@ from src.application.use_cases.trainer.get_by_id import GetTrainerByIdRequest
 from src.domain.entities.trainer import Trainer
 from src.domain.enums.question_type import QuestionType
 from src.domain.enums.training import (
+    SPORT_EXPERIENCE_LABELS,
     SportExperience,
 )
 from .helpers import _current_question
@@ -23,14 +24,6 @@ async def welcome_getter(
         GetTrainerByIdRequest(trainer_id=trainer_id)
     )
     return {"trainer_name": trainer.name, "trainer_bio": trainer.bio}
-
-
-SPORT_EXPERIENCE_LABELS: dict[SportExperience, str] = {
-    SportExperience.NONE: "Нет опыта",
-    SportExperience.UP_TO_3_MONTHS: "До 3 месяцев",
-    SportExperience.UP_TO_6_MONTHS: "До 6 месяцев",
-    SportExperience.MORE_THAN_YEAR: "Более 1 года",
-}
 
 
 async def sport_experience_getter(dialog_manager: DialogManager, **kwargs) -> dict:

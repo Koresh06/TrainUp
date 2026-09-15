@@ -33,3 +33,11 @@ class HealthCondition(str, Enum):
     OVERWEIGHT = "overweight"
     UNDERWEIGHT = "underweight"
     OTHER = "other"
+
+
+SPORT_EXPERIENCE_LABELS: dict[SportExperience, str] = {
+    SportExperience.NONE: "Нет опыта",
+    SportExperience.UP_TO_3_MONTHS: "До 3 месяцев",
+    SportExperience.UP_TO_6_MONTHS: "До 6 месяцев",
+    SportExperience.MORE_THAN_YEAR: "Более 1 года",
+}
