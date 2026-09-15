@@ -10,6 +10,7 @@ from src.application.use_cases.booking.get_by_id import GetBookingByIdUseCase
 from src.application.use_cases.booking.reschedule import RescheduleBookingUseCase
 from src.application.use_cases.booking.send_reminder import SendTrainingReminderUseCase
 from src.application.use_cases.calendar.get_day_availability_map_assignment import GetDayAvailabilityMapForAssignmentUseCase
+from src.application.use_cases.client.get_answers_by_id import GetClientAnswersUseCase
 from src.application.use_cases.client.get_by_id import GetClientByIdUseCase
 from src.application.use_cases.recurring_booking.add import AddRecurringBookingUseCase
 from src.application.use_cases.recurring_booking.deactivate import DeactivateRecurringBookingUseCase
@@ -742,4 +743,13 @@ class UseCasesProvider(Provider):
             client_repo=client_repo,
             booking_repo=booking_repo,
             recurring_repo=recurring_repo,
+        )
+
+    @provide
+    def get_client_answers_use_case(
+        self,
+        answer_repo: ClientAnswerRepository,
+    ) -> GetClientAnswersUseCase:
+        return GetClientAnswersUseCase(
+            answer_repo=answer_repo,
         )

@@ -61,6 +61,7 @@ from src.application.use_cases.calendar.get_slot_by_id import (
     GetSlotByIdUseCase,
     GetSlotByIdRequest,
 )
+from src.application.use_cases.client.get_answers_by_id import GetClientAnswersRequest, GetClientAnswersUseCase
 from src.application.use_cases.client.get_by_id import (
     GetClientByIdRequest,
     GetClientByIdUseCase,
@@ -274,6 +275,7 @@ class MediatorProvider(Provider):
         get_recurring_booking_by_id_use_case: GetRecurringBookingByIdUseCase,
         mark_past_bookings_completed_use_case: MarkPastBookingsCompletedUseCase,
         get_trainer_stats_use_case: GetTrainerStatsUseCase,
+        get_client_answers_use_case: GetClientAnswersUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -387,5 +389,8 @@ class MediatorProvider(Provider):
             MarkPastBookingsCompletedRequest, mark_past_bookings_completed_use_case
         )
         mediator.register(GetTrainerStatsRequest, get_trainer_stats_use_case)
+        mediator.register(
+            GetClientAnswersRequest, get_client_answers_use_case
+        )
 
         return mediator

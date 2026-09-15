@@ -55,6 +55,9 @@ from src.presentation.telegram.features.trainer.booking.dialogs import (
 from src.presentation.telegram.features.trainer.stats.dialogs import (
     trainer_stats_dialog,
 )
+from src.presentation.telegram.features.trainer.clients.dialogs import (
+    clients_trainer_dialog,
+)
 
 
 def get_all_routers() -> list[Router]:
@@ -84,4 +87,5 @@ def get_all_dialogs() -> list[Dialog]:
         trainer_recurring_dialog,
         list_bookings_dialog,
         trainer_stats_dialog,
+        clients_trainer_dialog,
     ]
