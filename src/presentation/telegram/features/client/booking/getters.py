@@ -4,7 +4,9 @@ from dishka.integrations.aiogram_dialog import inject, FromDishka
 from aiogram_dialog import DialogManager
 
 
-from src.application.use_cases.trainer_pricing_rule.get_by_id import GetTrainerPricingRuleRequest
+from src.application.use_cases.trainer_pricing_rule.get_by_id import (
+    GetTrainerPricingRuleRequest,
+)
 from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
 from src.domain.entities.trainer_pricing_rule import TrainerPricingRule
@@ -21,8 +23,10 @@ from src.application.use_cases.booking.count_active_by_slot_ids import (
 )
 from src.application.use_cases.calendar.get_slot_by_id import GetSlotByIdRequest
 from src.application.use_cases.calendar.get_day_slots import GetDaySlotsRequest
-from src.presentation.telegram.widgets.booking_calendar import AVAILABILITY_CACHE_KEY, HORIZON_CACHE_KEY
-
+from src.presentation.telegram.widgets.booking_calendar import (
+    AVAILABILITY_CACHE_KEY,
+    HORIZON_CACHE_KEY,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +70,9 @@ async def times_getter(
     slots: list[CalendarSlot] = await mediator.handle(
         GetDaySlotsRequest(trainer_id=trainer_id, slot_date=selected_day)
     )
-    logger.info("[DEBUG] times_getter slots=%s selected_day=%s", len(slots), selected_day)
+    logger.info(
+        "[DEBUG] times_getter slots=%s selected_day=%s", len(slots), selected_day
+    )
     slots.sort(key=lambda s: s.start_time)
 
     slot_ids = [s.id for s in slots]
@@ -106,6 +112,7 @@ async def times_getter(
         "header_note": header_note,
     }
 
+
 @inject
 async def confirm_booking_getter(
     dialog_manager: DialogManager,
@@ -121,8 +128,7 @@ async def confirm_booking_getter(
     )
     price_label = ""
     if pricing_rule is not None:
-        price = pricing_rule.price_for(slot.start_time)
-        price_label = f"\n💰 Стоимость: {price:.0f} BYN"
+        price_label = f"\n💰 Стоимость: {pricing_rule.format_price(slot.start_time)}"
 
     return {
         "date": slot.slot_date.strftime("%d.%m.%Y"),

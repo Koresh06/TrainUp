@@ -25,30 +25,6 @@ from src.domain.entities.trainer_pricing_rule import TrainerPricingRule
 from .states import TrainerPricingRuleSG
 
 
-async def on_open_edit_boundary(
-    callback: CallbackQuery,
-    button: Button,
-    dialog_manager: DialogManager,
-) -> None:
-    await dialog_manager.switch_to(TrainerPricingRuleSG.edit_boundary_time)
-
-
-async def on_open_edit_price_before(
-    callback: CallbackQuery,
-    button: Button,
-    dialog_manager: DialogManager,
-) -> None:
-    await dialog_manager.switch_to(TrainerPricingRuleSG.edit_price_before)
-
-
-async def on_open_edit_price_after(
-    callback: CallbackQuery,
-    button: Button,
-    dialog_manager: DialogManager,
-) -> None:
-    await dialog_manager.switch_to(TrainerPricingRuleSG.edit_price_after)
-
-
 @inject
 async def on_boundary_time_entered(
     message: Message,
