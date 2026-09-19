@@ -21,6 +21,8 @@ from src.application.use_cases.booking.get_by_id import (
     GetBookingByIdRequest,
     GetBookingByIdUseCase,
 )
+from src.application.use_cases.booking.get_history_by_trainer import GetBookingsHistoryByTrainerRequest, GetBookingsHistoryByTrainerUseCase
+from src.application.use_cases.booking.mark_completed import MarkBookingCompletedRequest, MarkBookingCompletedUseCase
 from src.application.use_cases.booking.reschedule import (
     RescheduleBookingRequest,
     RescheduleBookingUseCase,
@@ -214,6 +216,8 @@ from src.application.use_cases.booking.mark_past_completed import (
     MarkPastBookingsCompletedUseCase,
     MarkPastBookingsCompletedRequest,
 )
+from src.application.use_cases.trainer_reminder_settings.get_by_trainer_id import GetTrainerReminderSettingsRequest, GetTrainerReminderSettingsUseCase
+from src.application.use_cases.trainer_reminder_settings.update import UpdateTrainerReminderSettingsRequest, UpdateTrainerReminderSettingsUseCase
 
 
 class MediatorProvider(Provider):
@@ -276,6 +280,10 @@ class MediatorProvider(Provider):
         mark_past_bookings_completed_use_case: MarkPastBookingsCompletedUseCase,
         get_trainer_stats_use_case: GetTrainerStatsUseCase,
         get_client_answers_use_case: GetClientAnswersUseCase,
+        update_trainer_reminder_settings_use_case: UpdateTrainerReminderSettingsUseCase,
+        get_trainer_reminder_settings_use_case: GetTrainerReminderSettingsUseCase,
+        mark_booking_completed_use_case: MarkBookingCompletedUseCase,
+        get_bookings_history_by_trainer_use_case: GetBookingsHistoryByTrainerUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -392,5 +400,9 @@ class MediatorProvider(Provider):
         mediator.register(
             GetClientAnswersRequest, get_client_answers_use_case
         )
+        mediator.register(UpdateTrainerReminderSettingsRequest, update_trainer_reminder_settings_use_case)
+        mediator.register(GetTrainerReminderSettingsRequest, get_trainer_reminder_settings_use_case)
+        mediator.register(MarkBookingCompletedRequest, mark_booking_completed_use_case)
+        mediator.register(GetBookingsHistoryByTrainerRequest, get_bookings_history_by_trainer_use_case)
 
         return mediator

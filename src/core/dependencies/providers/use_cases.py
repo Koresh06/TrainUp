@@ -7,6 +7,8 @@ from src.application.use_cases.booking.count_active_by_slot_ids import (
     CountActiveBookingsBySlotIdsUseCase,
 )
 from src.application.use_cases.booking.get_by_id import GetBookingByIdUseCase
+from src.application.use_cases.booking.get_history_by_trainer import GetBookingsHistoryByTrainerUseCase
+from src.application.use_cases.booking.mark_completed import MarkBookingCompletedUseCase
 from src.application.use_cases.booking.reschedule import RescheduleBookingUseCase
 from src.application.use_cases.booking.send_reminder import SendTrainingReminderUseCase
 from src.application.use_cases.calendar.get_day_availability_map_assignment import GetDayAvailabilityMapForAssignmentUseCase
@@ -70,6 +72,8 @@ from src.application.use_cases.trainer_pricing_rule.get_by_id import (
 from src.application.use_cases.trainer_pricing_rule.update import (
     UpdateTrainerPricingRuleUseCase,
 )
+from src.application.use_cases.trainer_reminder_settings.get_by_trainer_id import GetTrainerReminderSettingsUseCase
+from src.application.use_cases.trainer_reminder_settings.update import UpdateTrainerReminderSettingsUseCase
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.client import ClientRepository
@@ -87,6 +91,7 @@ from src.domain.repositories.trainer_booking_settings import (
     TrainerBookingSettingsRepository,
 )
 from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
+from src.domain.repositories.trainer_reminder_settings import TrainerReminderSettingsRepository
 from src.domain.services.calendar_service import CalendarService
 
 from src.application.use_cases.booking.create import CreateBookingUseCase
@@ -245,6 +250,7 @@ class UseCasesProvider(Provider):
         client_repo: ClientRepository,
         trainer_repo: TrainerRepository,
         slot_repo: CalendarSlotRepository,
+        reminder_settings_repo: TrainerReminderSettingsRepository,
         booking_scheduler: BookingScheduler,
         notification_service: NotificationService,
         transaction_manager: TransactionManager,
@@ -254,6 +260,7 @@ class UseCasesProvider(Provider):
             client_repo=client_repo,
             trainer_repo=trainer_repo,
             slot_repo=slot_repo,
+            reminder_settings_repo=reminder_settings_repo,
             booking_scheduler=booking_scheduler,
             notification_service=notification_service,
             transaction_manager=transaction_manager,
@@ -752,4 +759,44 @@ class UseCasesProvider(Provider):
     ) -> GetClientAnswersUseCase:
         return GetClientAnswersUseCase(
             answer_repo=answer_repo,
+        )
+
+    @provide
+    def update_trainer_reminder_settings_use_case(
+        self,
+        trainer_reminder_settings_repo: TrainerReminderSettingsRepository,
+        transaction_manager: TransactionManager
+    ) -> UpdateTrainerReminderSettingsUseCase:
+        return UpdateTrainerReminderSettingsUseCase(
+            settings_repo=trainer_reminder_settings_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_trainer_reminder_settings_use_case(
+        self,
+        trainer_reminder_settings_repo: TrainerReminderSettingsRepository,
+    ) -> GetTrainerReminderSettingsUseCase:
+        return GetTrainerReminderSettingsUseCase(
+            settings_repo=trainer_reminder_settings_repo,
+        )
+
+    @provide
+    def mark_booking_completed_use_case(
+        self,
+        booking_repo: BookingRepository,
+        transaction_manager: TransactionManager,
+    ) -> MarkBookingCompletedUseCase:
+        return MarkBookingCompletedUseCase(
+            booking_repo=booking_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_bookings_history_by_trainer_use_case(
+        self,
+        booking_repo: BookingRepository,
+    ) -> GetBookingsHistoryByTrainerUseCase:
+        return GetBookingsHistoryByTrainerUseCase(
+            booking_repo=booking_repo,
         )

@@ -22,6 +22,7 @@ from src.domain.repositories.trainer_booking_settings import (
     TrainerBookingSettingsRepository,
 )
 from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
+from src.domain.repositories.trainer_reminder_settings import TrainerReminderSettingsRepository
 from src.infrastructure.repositories.client.sqlalchemy import SQLAlchemyClientRepo
 from src.infrastructure.repositories.recurring_booking.sqlalchemy import SQLAlchemyRecurringBookingRepo
 from src.infrastructure.repositories.registration_question.sqlalchemy import SQLAlchemyRegistrationQuestionRepo
@@ -55,6 +56,7 @@ from src.infrastructure.repositories.trainer_booking_settings.sqlalchemy import 
 )
 from src.infrastructure.repositories.trainer_pricing_rule.sqlalchemy import SQLAlchemyTrainerPricingRuleRepo
 from src.infrastructure.repositories.client_answer.sqlalchemy import SQLAlchemyClientAnswerRepo
+from src.infrastructure.repositories.trainer_reminder_settings.sqlalchemy import SQLAlchemyTrainerReminderSettingsRepo
 
 
 class RepositoriesProvider(Provider):
@@ -149,3 +151,9 @@ class RepositoriesProvider(Provider):
         self, session: AsyncSession
     ) -> RecurringBookingRepository:
         return SQLAlchemyRecurringBookingRepo(session=session)
+
+    @provide(scope=Scope.REQUEST)
+    def get_trainer_reminder_settings_repository(
+        self, session: AsyncSession
+    ) -> TrainerReminderSettingsRepository:
+        return SQLAlchemyTrainerReminderSettingsRepo(session=session)

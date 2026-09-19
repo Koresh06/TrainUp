@@ -92,3 +92,6 @@ GOAL_LABELS: dict[TrainingGoal, str] = {
 # вместо раз в сутки, чтобы быстро проверить авто-создание следующей недели.
 # Перед деплоем в прод — выставить обратно в False!
 RECURRING_BOOKINGS_TEST_MODE = False
+
+# --- Опции для напоминаний (в часах) ---
+REMINDER_HOUR_OPTIONS = [1, 2, 3, 4, 6, 12, 24]

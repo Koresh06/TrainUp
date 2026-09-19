@@ -6,6 +6,7 @@ from src.domain.constants import (
     REMINDER_HOURS_BEFORE_TRAINING,
     REMINDER_TEST_DELAY_MINUTES,
     REMINDER_TEST_MODE,
+    SLOT_DURATION_MINUTES,
 )
 from src.domain.entities.booking import Booking
 from src.domain.entities.calendar_slot import CalendarSlot
@@ -15,6 +16,7 @@ from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.trainer import TrainerRepository
 from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
+from src.domain.repositories.trainer_reminder_settings import TrainerReminderSettingsRepository
 from src.domain.services.calendar_service import CalendarService
 from src.domain.utils import get_training_datetime_utc
 from src.infrastructure.database.transaction_manager.base import TransactionManager
@@ -28,6 +30,7 @@ async def _create_recurring_occurrence(
     booking_repo: BookingRepository,
     calendar_service: CalendarService,
     pricing_rule_repo: TrainerPricingRuleRepository,
+    reminder_settings_repo: TrainerReminderSettingsRepository,
     client_repo: ClientRepository,
     trainer_repo: TrainerRepository,
     notification_service: NotificationService,
@@ -70,7 +73,16 @@ async def _create_recurring_occurrence(
             f"Если понадобится перенести время — свяжитесь с тренером напрямую:\n"
             f"{contact_block}"
         )
-        await notification_service.send(chat_id=client.tg_id,text=text,)
+        await notification_service.send(chat_id=client.tg_id, text=text)
+
+    reminder_settings = await reminder_settings_repo.get_by_trainer_id(
+        recurring.trainer_id
+    )
+    hours_before = (
+        reminder_settings.hours_before
+        if reminder_settings is not None
+        else REMINDER_HOURS_BEFORE_TRAINING
+    )
 
     if REMINDER_TEST_MODE:
         remind_at_utc = get_datetime_utc_now() + timedelta(
@@ -78,14 +90,20 @@ async def _create_recurring_occurrence(
         )
     else:
         training_at_utc = get_training_datetime_utc(slot)
-        remind_at_utc = training_at_utc - timedelta(
-            hours=REMINDER_HOURS_BEFORE_TRAINING
-        )
+        remind_at_utc = training_at_utc - timedelta(hours=hours_before)
 
     if remind_at_utc > get_datetime_utc_now():
         await booking_scheduler.schedule_training_reminder(
             booking_id=saved.id,
             remind_at_utc=remind_at_utc,
         )
+
+    complete_at_utc = get_training_datetime_utc(slot) + timedelta(
+        minutes=SLOT_DURATION_MINUTES
+    )
+    await booking_scheduler.schedule_booking_completion(
+        booking_id=saved.id,
+        complete_at_utc=complete_at_utc,
+    )
 
     return saved
