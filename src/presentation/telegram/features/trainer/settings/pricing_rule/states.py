@@ -6,3 +6,4 @@ class TrainerPricingRuleSG(StatesGroup):
     edit_boundary_time = State()
     edit_price_before = State()
     edit_price_after = State()
+    edit_trainer_fee = State()

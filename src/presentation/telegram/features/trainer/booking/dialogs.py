@@ -2,15 +2,20 @@ from aiogram.enums import ButtonStyle
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.kbd import (
     Cancel,
+    CurrentPage,
     Group,
+    NextPage,
+    PrevPage,
+    Row,
     Select,
     Button,
     Back,
     ScrollingGroup,
 )
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Const, Format, List as ListWidget
 from aiogram_dialog.widgets.style import Style
 
+from src.domain.enums.booking import BookingsListMode
 from src.presentation.telegram.widgets.booking_calendar import BookingCalendar
 
 
@@ -25,22 +30,34 @@ from .getters import (
 from .handlers import (
     is_not_recurring,
     on_booking_selected,
+    on_bookings_mode_selected,
     on_cancel_booking_from_list,
     on_reschedule_click,
     on_reschedule_confirm,
     on_reschedule_date_clicked,
     on_reschedule_time_clicked,
+    show_cancel_button,
+    show_reschedule_button,
 )
 
 list_bookings_dialog = Dialog(
     Window(
-        Const(
-            "📋 <b>Ближайшие бронирования</b>\n\n"
-            "⏳ — ожидает подтверждения\n"
-            "✅ — подтверждено\n"
-            "🔁 - постоянные тренировки\n\n"
-            "Выберите запись:"
+        Const("📋 <b>Бронирования</b>\n\nЧто посмотреть?"),
+        Button(
+            Const("📅 Текущие"),
+            id=BookingsListMode.UPCOMING.value,
+            on_click=on_bookings_mode_selected,
         ),
+        Button(
+            Const("🕓 История"),
+            id=BookingsListMode.HISTORY.value,
+            on_click=on_bookings_mode_selected,
+        ),
+        Cancel(Const("⬅️ Назад")),
+        state=TrainerBookingsSG.mode,
+    ),
+    Window(
+        Format("{title}{empty_hint}"),
         ScrollingGroup(
             Select(
                 Format("{item[label]}"),
@@ -52,9 +69,23 @@ list_bookings_dialog = Dialog(
             id="bookings_scroll",
             width=1,
             height=8,
+            when="is_upcoming",
             hide_on_single_page=True,
         ),
-        Cancel(Const("⬅️ Назад")),
+        ListWidget(
+            Format("{item[label]}"),
+            items="bookings",
+            id="history_list",
+            page_size=8,
+            when="is_history",
+        ),
+        Row(
+            PrevPage(scroll="history_list", text=Const("◀️")),
+            CurrentPage(scroll="history_list", text=Format("{current_page1}/{pages}")),
+            NextPage(scroll="history_list", text=Const("▶️")),
+            when="is_history",
+        ),
+        Back(Const("⬅️ Назад")),
         state=TrainerBookingsSG.list,
         getter=bookings_list_getter,
     ),
@@ -69,13 +100,14 @@ list_bookings_dialog = Dialog(
             Const("🔁 Перенести"),
             id="reschedule",
             on_click=on_reschedule_click,
-            when=is_not_recurring,
+            when=show_reschedule_button,
         ),
         Button(
             Const("❌ Отменить"),
             id="cancel_booking",
             on_click=on_cancel_booking_from_list,
             style=Style(style=ButtonStyle.DANGER),
+            when=show_cancel_button,
         ),
         Back(Const("⬅️ Назад")),
         state=TrainerBookingsSG.detail,

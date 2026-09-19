@@ -20,11 +20,14 @@ from src.application.mediator import Mediator
 from src.application.use_cases.trainer.get_upcoming_bookings_by_trainer import (
     GetUpcomingBookingsByTrainerRequest,
 )
+from src.application.use_cases.booking.get_history_by_trainer import (
+    GetBookingsHistoryByTrainerRequest,
+)
 from src.application.use_cases.booking.get_by_id import GetBookingByIdRequest
 from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.client import Client
 from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
-from src.domain.enums.booking import BookingStatus
+from src.domain.enums.booking import BookingStatus, BookingsListMode
 from src.domain.enums.slot import SlotStatus
 from src.presentation.telegram.widgets.booking_calendar import (
     AVAILABILITY_CACHE_KEY,
@@ -40,24 +43,56 @@ BOOKING_STATUS_LABELS: dict[BookingStatus, str] = {
 
 
 @inject
+async def booking_detail_getter(
+    dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+    **kwargs,
+) -> dict:
+    booking_id: int = dialog_manager.dialog_data["editing_booking_id"]
+    mode = dialog_manager.dialog_data.get("bookings_mode", BookingsListMode.UPCOMING.value)
+    is_history = mode == BookingsListMode.HISTORY.value
+
+    booking: Booking = await mediator.handle(GetBookingByIdRequest(booking_id=booking_id))
+    slot: CalendarSlot = await mediator.handle(GetSlotByIdRequest(slot_id=booking.slot_id))
+    client: Client = await mediator.handle(GetClientByIdRequest(client_id=booking.client_id))
+
+    return {
+        "client_name": f"{client.first_name} {client.last_name or ''}".strip(),
+        "date": slot.slot_date.strftime("%d.%m.%Y"),
+        "time": slot.start_time.strftime("%H:%M"),
+        "status": BOOKING_STATUS_LABELS.get(booking.status, booking.status.name),
+        "is_recurring": booking.recurring_booking_id is not None,
+        "recurring_note": (
+            "\n🔁 Постоянная тренировка" if booking.recurring_booking_id is not None else ""
+        ),
+        "is_history": is_history,
+        "is_upcoming": not is_history,
+    }
+
+
+@inject
 async def bookings_list_getter(
     dialog_manager: DialogManager,
     mediator: FromDishka[Mediator],
     **kwargs,
 ) -> dict:
     trainer_id: int = dialog_manager.start_data["trainer_id"]
-    bookings: list[Booking] = await mediator.handle(
-        GetUpcomingBookingsByTrainerRequest(trainer_id=trainer_id)
-    )
+    mode = dialog_manager.dialog_data.get("bookings_mode", BookingsListMode.UPCOMING.value)
+    is_history = mode == BookingsListMode.HISTORY.value
+
+    if is_history:
+        bookings: list[Booking] = await mediator.handle(
+            GetBookingsHistoryByTrainerRequest(trainer_id=trainer_id)
+        )
+        title = "🕓 <b>История</b>"
+    else:
+        bookings = await mediator.handle(GetUpcomingBookingsByTrainerRequest(trainer_id=trainer_id))
+        title = "📅 <b>Текущие</b>"
 
     items = []
     for b in bookings:
-        slot: CalendarSlot = await mediator.handle(
-            GetSlotByIdRequest(slot_id=b.slot_id)
-        )
-        client: Client = await mediator.handle(
-            GetClientByIdRequest(client_id=b.client_id)
-        )
+        slot: CalendarSlot = await mediator.handle(GetSlotByIdRequest(slot_id=b.slot_id))
+        client: Client = await mediator.handle(GetClientByIdRequest(client_id=b.client_id))
         label = (
             f"{BOOKING_STATUS_LABELS.get(b.status, '')} "
             f"{'🔁 ' if b.recurring_booking_id is not None else ''}"
@@ -66,33 +101,12 @@ async def bookings_list_getter(
         )
         items.append({"id": str(b.id), "label": label})
 
-    return {"bookings": items}
-
-
-@inject
-async def booking_detail_getter(
-    dialog_manager: DialogManager,
-    mediator: FromDishka[Mediator],
-    **kwargs,
-) -> dict:
-    booking_id: int = dialog_manager.dialog_data["editing_booking_id"]
-    booking: Booking = await mediator.handle(
-        GetBookingByIdRequest(booking_id=booking_id)
-    )
-    slot: CalendarSlot = await mediator.handle(
-        GetSlotByIdRequest(slot_id=booking.slot_id)
-    )
-    client: Client = await mediator.handle(
-        GetClientByIdRequest(client_id=booking.client_id)
-    )
-
     return {
-        "client_name": f"{client.first_name} {client.last_name or ''}".strip(),
-        "date": slot.slot_date.strftime("%d.%m.%Y"),
-        "time": slot.start_time.strftime("%H:%M"),
-        "status": BOOKING_STATUS_LABELS.get(booking.status, booking.status.name),
-        "is_recurring": booking.recurring_booking_id is not None,
-        "recurring_note": "\n🔁 Постоянная тренировка" if booking.recurring_booking_id is not None else "",
+        "bookings": items,
+        "title": title,
+        "is_upcoming": not is_history,
+        "is_history": is_history,
+        "empty_hint": "\n\nЗаписей пока нет" if not items else "",
     }
 
 

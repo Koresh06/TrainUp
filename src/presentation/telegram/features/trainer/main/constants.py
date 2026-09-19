@@ -11,7 +11,7 @@ from src.presentation.telegram.features.trainer.stats.states import TrainerStats
 
 TRAINER_MENU_TARGETS: dict[str, State] = {
     "invite_link": TrainerInviteLinkSG.main,
-    "bookings": TrainerBookingsSG.list,
+    "bookings": TrainerBookingsSG.mode,
     "clients": TrainerClientsSG.list,
     "settings": TrainerSettingsSG.main,
     "profile": TrainerProfileSG.main,

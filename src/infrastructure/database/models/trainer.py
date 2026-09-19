@@ -29,6 +29,7 @@ if TYPE_CHECKING:
         TrainerBookingSettingsModel,
         TrainerPricingRuleModel,
         RecurringBookingModel,
+        TrainerReminderSettingsModel,
     )
 
 
@@ -86,6 +87,11 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     recurring_bookings: Mapped[list["RecurringBookingModel"]] = relationship(
         "RecurringBookingModel",
         back_populates="trainer",
+    )
+    reminder_settings: Mapped["TrainerReminderSettingsModel | None"] = relationship(
+        "TrainerReminderSettingsModel",
+        back_populates="trainer",
+        uselist=False,
     )
 
     @classmethod

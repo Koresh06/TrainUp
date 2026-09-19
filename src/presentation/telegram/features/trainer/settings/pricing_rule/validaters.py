@@ -22,3 +22,16 @@ def validate_price(value: str) -> Decimal:
     if price > Decimal("99999"):
         raise ValueError("Слишком большая цена")
     return price
+
+
+def validate_trainer_fee(value: str) -> Decimal | None:
+    value = value.strip()
+    if value == "-":
+        return None
+    try:
+        fee = Decimal(value.replace(",", "."))
+    except InvalidOperation:
+        raise ValueError("Введите число или «-», чтобы убрать доплату")
+    if fee < 0:
+        raise ValueError("Доплата не может быть отрицательной")
+    return fee

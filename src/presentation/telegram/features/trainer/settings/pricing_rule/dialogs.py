@@ -16,8 +16,9 @@ from .handlers import (
     on_open_edit_price_after,
     on_price_after_entered,
     on_price_before_entered,
+    on_trainer_fee_entered,
 )
-from .validaters import validate_boundary_time, validate_price
+from .validaters import validate_boundary_time, validate_price, validate_trainer_fee
 
 pricing_rule_dialog = Dialog(
     Window(
@@ -81,5 +82,19 @@ pricing_rule_dialog = Dialog(
         ),
         Back(Const("⬅️ Назад")),
         state=TrainerPricingRuleSG.edit_price_after,
+    ),
+    Window(
+        Const(
+            "Укажи доплату за работу тренера (число), или отправь «-», "
+            "чтобы убрать доплату и показывать только цену тренировки:"
+        ),
+        TextInput(
+            id="trainer_fee_input",
+            type_factory=validate_trainer_fee,
+            on_success=on_trainer_fee_entered,
+            on_error=on_input_error,
+        ),
+        Back(Const("⬅️ Назад")),
+        state=TrainerPricingRuleSG.edit_trainer_fee,
     ),
 )

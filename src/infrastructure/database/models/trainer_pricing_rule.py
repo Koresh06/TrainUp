@@ -26,6 +26,7 @@ class TrainerPricingRuleModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     boundary_time: Mapped[time] = mapped_column(Time(timezone=True))
     price_before: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     price_after: Mapped[Decimal] = mapped_column(Numeric(12, 2))
+    trainer_fee: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
 
     trainer: Mapped["TrainerModel"] = relationship(
         "TrainerModel",
@@ -39,6 +40,7 @@ class TrainerPricingRuleModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             boundary_time=entity.boundary_time,
             price_before=entity.price_before,
             price_after=entity.price_after,
+            trainer_fee=entity.trainer_fee,
         )
 
     def to_entity(self) -> "TrainerPricingRule":
@@ -48,6 +50,7 @@ class TrainerPricingRuleModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             boundary_time=self.boundary_time,
             price_before=self.price_before,
             price_after=self.price_after,
+            trainer_fee=self.trainer_fee,
         )
 
     def update_model(self, entity: "TrainerPricingRule") -> None:
@@ -55,3 +58,4 @@ class TrainerPricingRuleModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.boundary_time = entity.boundary_time
         self.price_before = entity.price_before
         self.price_after = entity.price_after
+        self.trainer_fee = entity.trainer_fee

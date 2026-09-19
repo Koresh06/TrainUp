@@ -14,6 +14,7 @@ class UpdateTrainerPricingRuleRequest(UseCaseRequest):
     boundary_time: time
     price_before: Decimal
     price_after: Decimal
+    trainer_fee: Decimal | None
 
 
 @dataclass(kw_only=True)
@@ -28,6 +29,7 @@ class UpdateTrainerPricingRuleUseCase(UseCase[UpdateTrainerPricingRuleRequest, T
             existing.boundary_time = command.boundary_time
             existing.price_before = command.price_before
             existing.price_after = command.price_after
+            existing.trainer_fee = command.trainer_fee
             saved = await self.pricing_repo.save(existing)
         else:
             new_rule = TrainerPricingRule(
@@ -35,6 +37,7 @@ class UpdateTrainerPricingRuleUseCase(UseCase[UpdateTrainerPricingRuleRequest, T
                 boundary_time=command.boundary_time,
                 price_before=command.price_before,
                 price_after=command.price_after,
+                trainer_fee=command.trainer_fee
             )
             saved = await self.pricing_repo.save(new_rule)
 

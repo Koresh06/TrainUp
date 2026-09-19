@@ -15,11 +15,25 @@ async def pricing_rule_getter(
     **kwargs,
 ) -> dict:
     trainer_id: int = dialog_manager.start_data["trainer_id"]
-    rule: TrainerPricingRule = await mediator.handle(
+    rule: TrainerPricingRule | None = await mediator.handle(
         GetTrainerPricingRuleRequest(trainer_id=trainer_id)
     )
+
+    if rule is None:
+        return {
+            "boundary_time": "—",
+            "price_before": "—",
+            "price_after": "—",
+            "trainer_fee": "не указана",
+        }
+
     return {
         "boundary_time": rule.boundary_time.strftime("%H:%M"),
-        "price_before": f"{rule.price_before:.0f}",
-        "price_after": f"{rule.price_after:.0f}",
+        "price_before": f"{rule.price_before:.0f} BYN",
+        "price_after": f"{rule.price_after:.0f} BYN",
+        "trainer_fee": (
+            f"{rule.trainer_fee:.0f} BYN"
+            if rule.trainer_fee is not None
+            else "не указана"
+        ),
     }

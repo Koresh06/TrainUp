@@ -15,6 +15,11 @@ from src.application.use_cases.trainer_pricing_rule.get_by_id import (
 from src.application.use_cases.trainer_pricing_rule.update import (
     UpdateTrainerPricingRuleRequest,
 )
+from src.domain.constants import (
+    DEFAULT_PRICE_AFTER,
+    DEFAULT_PRICE_BEFORE,
+    DEFAULT_PRICING_BOUNDARY_TIME,
+)
 from src.domain.entities.trainer_pricing_rule import TrainerPricingRule
 
 from .states import TrainerPricingRuleSG
@@ -63,6 +68,7 @@ async def on_boundary_time_entered(
             boundary_time=value,
             price_before=current.price_before,
             price_after=current.price_after,
+            trainer_fee=current.trainer_fee,
         )
     )
     await message.answer(f"✅ Граница времени обновлена: {value.strftime('%H:%M')}")
@@ -88,6 +94,7 @@ async def on_price_before_entered(
             boundary_time=current.boundary_time,
             price_before=value,
             price_after=current.price_after,
+            trainer_fee=current.trainer_fee,
         )
     )
     await message.answer(f"✅ Цена до границы обновлена: {value}")
@@ -100,20 +107,55 @@ async def on_price_after_entered(
     widget: ManagedTextInput[Decimal],
     dialog_manager: DialogManager,
     value: Decimal,
+    /,
     mediator: FromDishka[Mediator],
 ) -> None:
     trainer_id: int = dialog_manager.start_data["trainer_id"]
-    current: TrainerPricingRule = await mediator.handle(
+    current: TrainerPricingRule | None = await mediator.handle(
         GetTrainerPricingRuleRequest(trainer_id=trainer_id)
     )
 
     await mediator.handle(
         UpdateTrainerPricingRuleRequest(
             trainer_id=trainer_id,
-            boundary_time=current.boundary_time,
-            price_before=current.price_before,
+            boundary_time=current.boundary_time if current else DEFAULT_PRICING_BOUNDARY_TIME,
+            price_before=current.price_before if current else DEFAULT_PRICE_BEFORE,
             price_after=value,
+            trainer_fee=current.trainer_fee if current else None,
         )
     )
-    await message.answer(f"✅ Цена после границы обновлена: {value}")
+    await message.answer(f"✅ Цена после границы обновлена: {value:.0f} BYN")
+    await dialog_manager.switch_to(TrainerPricingRuleSG.main)
+
+
+@inject
+async def on_trainer_fee_entered(
+    message: Message,
+    widget: ManagedTextInput[Decimal | None],
+    dialog_manager: DialogManager,
+    value: Decimal | None,
+    /,
+    mediator: FromDishka[Mediator],
+) -> None:
+    trainer_id: int = dialog_manager.start_data["trainer_id"]
+    current: TrainerPricingRule | None = await mediator.handle(
+        GetTrainerPricingRuleRequest(trainer_id=trainer_id)
+    )
+
+    await mediator.handle(
+        UpdateTrainerPricingRuleRequest(
+            trainer_id=trainer_id,
+            boundary_time=(
+                current.boundary_time if current else DEFAULT_PRICING_BOUNDARY_TIME
+            ),
+            price_before=current.price_before if current else DEFAULT_PRICE_BEFORE,
+            price_after=current.price_after if current else DEFAULT_PRICE_AFTER,
+            trainer_fee=value,
+        )
+    )
+    await message.answer(
+        f"✅ Доплата тренера обновлена: {value:.0f} BYN"
+        if value is not None
+        else "✅ Доплата тренера убрана"
+    )
     await dialog_manager.switch_to(TrainerPricingRuleSG.main)

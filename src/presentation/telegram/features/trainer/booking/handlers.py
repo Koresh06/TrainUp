@@ -1,7 +1,7 @@
 from datetime import date
 
 from dishka.integrations.aiogram_dialog import inject, FromDishka
-from aiogram_dialog import ChatEvent, DialogManager
+from aiogram_dialog import ChatEvent, DialogManager, ShowMode
 from aiogram.types import CallbackQuery
 from aiogram_dialog.widgets.kbd import ManagedCalendar, Select, Button
 
@@ -15,6 +15,23 @@ from src.domain.exception.calendar_slot import SlotFullException
 from src.presentation.telegram.widgets.booking_calendar import AVAILABILITY_CACHE_KEY
 
 from .states import TrainerBookingsSG
+
+
+async def on_bookings_mode_selected(
+    callback: CallbackQuery,
+    button: Button,
+    dialog_manager: DialogManager,
+) -> None:
+    dialog_manager.dialog_data["bookings_mode"] = button.widget_id
+    await dialog_manager.switch_to(TrainerBookingsSG.list)
+
+
+def show_reschedule_button(data: dict, widget, manager: DialogManager) -> bool:
+    return data.get("is_upcoming", True) and not data.get("is_recurring", False)
+
+
+def show_cancel_button(data: dict, widget, manager: DialogManager) -> bool:
+    return data.get("is_upcoming", True)
 
 
 async def on_booking_selected(
