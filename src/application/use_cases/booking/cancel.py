@@ -49,6 +49,9 @@ class CancelBookingUseCase(UseCase[CancelBookingRequest, Booking]):
         if booking.reminder_job_id:
             await self.booking_scheduler.cancel_training_reminder(booking_id=booking.id)
 
+        if booking.completion_job_id:
+            await self.booking_scheduler.cancel_booking_completion(booking_id=booking.id)
+
         if command.initiated_by == CancelInitiator.TRAINER:
             client = await self.client_repo.get_by_id(booking.client_id)
             if client is not None:

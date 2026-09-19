@@ -14,6 +14,7 @@ class Booking(Entity):
     price: Decimal | None = None
     reminder_job_id: str | None = None
     recurring_booking_id: int | None = None
+    completion_job_id: str | None = None
 
     def confirm(self) -> None:
         self.status = BookingStatus.CONFIRMED

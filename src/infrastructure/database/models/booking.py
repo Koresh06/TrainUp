@@ -48,6 +48,9 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         nullable=True,
         index=True,
     )
+    completion_job_id: Mapped[str | None] = mapped_column(
+        VARCHAR(255), nullable=True
+    )
 
     client: Mapped["ClientModel"] = relationship(
         "ClientModel",
@@ -75,6 +78,7 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             status=entity.status,
             reminder_job_id=entity.reminder_job_id,
             recurring_booking_id=entity.recurring_booking_id,
+            completion_job_id=entity.completion_job_id,
         )
 
     def to_entity(self):
@@ -86,6 +90,7 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             status=self.status,
             reminder_job_id=self.reminder_job_id,
             recurring_booking_id=self.recurring_booking_id,
+            completion_job_id=self.completion_job_id,
         )
 
     def update_model(self, entity: "Booking") -> None:
@@ -95,3 +100,4 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.status = entity.status
         self.reminder_job_id = entity.reminder_job_id
         self.recurring_booking_id = entity.recurring_booking_id
+        self.completion_job_id = entity.completion_job_id

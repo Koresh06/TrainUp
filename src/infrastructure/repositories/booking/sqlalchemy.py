@@ -6,7 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.entities.booking import Booking
 from src.domain.enums.booking import BookingStatus
-from src.domain.exception.booking import BookingNotFoundException, SlotAlreadyBookedException
+from src.domain.exception.booking import (
+    BookingNotFoundException,
+    SlotAlreadyBookedException,
+)
 from src.domain.repositories.booking import BookingRepository
 from src.infrastructure.database.models import BookingModel, CalendarSlotModel
 from src.utils.get_datetime_utc_now import get_datetime_utc_now
@@ -34,7 +37,9 @@ class SQLAlchemyBookingRepo(BookingRepository):
             .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
             .where(
                 BookingModel.client_id == client_id,
-                BookingModel.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED]),
+                BookingModel.status.in_(
+                    [BookingStatus.PENDING, BookingStatus.CONFIRMED]
+                ),
                 CalendarSlotModel.slot_date >= today,
             )
             .order_by(CalendarSlotModel.slot_date, CalendarSlotModel.start_time)
@@ -49,7 +54,9 @@ class SQLAlchemyBookingRepo(BookingRepository):
             .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
             .where(
                 BookingModel.trainer_id == trainer_id,
-                BookingModel.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED]),
+                BookingModel.status.in_(
+                    [BookingStatus.PENDING, BookingStatus.CONFIRMED]
+                ),
                 CalendarSlotModel.slot_date >= today,
             )
             .order_by(CalendarSlotModel.slot_date, CalendarSlotModel.start_time)
@@ -64,7 +71,7 @@ class SQLAlchemyBookingRepo(BookingRepository):
         )
         result = await self._session.execute(query)
         return result.scalar_one()
-    
+
     async def count_active_by_slot_ids(self, slot_ids: list[int]) -> dict[int, int]:
         if not slot_ids:
             return {}
@@ -72,19 +79,25 @@ class SQLAlchemyBookingRepo(BookingRepository):
             select(BookingModel.slot_id, func.count(BookingModel.id))
             .where(
                 BookingModel.slot_id.in_(slot_ids),
-                BookingModel.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED]),
+                BookingModel.status.in_(
+                    [BookingStatus.PENDING, BookingStatus.CONFIRMED]
+                ),
             )
             .group_by(BookingModel.slot_id)
         )
         result = await self._session.execute(query)
         return dict(result.all())
 
-    async def exists_active_by_client_and_slot(self, client_id: int, slot_id: int) -> bool:
+    async def exists_active_by_client_and_slot(
+        self, client_id: int, slot_id: int
+    ) -> bool:
         query = select(
             exists().where(
                 BookingModel.client_id == client_id,
                 BookingModel.slot_id == slot_id,
-                BookingModel.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED]),
+                BookingModel.status.in_(
+                    [BookingStatus.PENDING, BookingStatus.CONFIRMED]
+                ),
             )
         )
         result = await self._session.execute(query)
@@ -160,8 +173,7 @@ class SQLAlchemyBookingRepo(BookingRepository):
         )
         result = await self._session.execute(query)
         return result.scalar_one()
-    
-    
+
     async def count_cancelled_by_trainer_in_period(
         self, trainer_id: int, date_from: date, date_to: date
     ) -> int:
@@ -178,3 +190,23 @@ class SQLAlchemyBookingRepo(BookingRepository):
         )
         result = await self._session.execute(query)
         return result.scalar_one()
+
+    async def get_history_by_trainer(
+        self, trainer_id: int, limit: int = 50
+    ) -> list[Booking]:
+        query = (
+            select(BookingModel)
+            .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
+            .where(
+                BookingModel.trainer_id == trainer_id,
+                BookingModel.status.in_(
+                    [BookingStatus.COMPLETED, BookingStatus.CANCELLED]
+                ),
+            )
+            .order_by(
+                CalendarSlotModel.slot_date.desc(), CalendarSlotModel.start_time.desc()
+            )
+            .limit(limit)
+        )
+        result = await self._session.execute(query)
+        return [model.to_entity() for model in result.scalars().all()]

@@ -37,6 +37,32 @@ class BookingSchedulerImpl(BookingScheduler):
             booking.clear_reminder_job()
             await self._booking_repo.save(booking)
 
+    async def schedule_booking_completion(
+        self, *, booking_id: int, complete_at_utc: datetime
+    ) -> None:
+        booking = await self._booking_repo.get_by_id(booking_id)
+        if booking is None:
+            raise BookingNotFoundException(booking_id)
+
+        job_id = await self._queue.schedule(
+            task_name="mark_booking_completed",
+            args=(booking_id,),
+            run_at_utc=complete_at_utc,
+        )
+        if job_id:
+            booking.completion_job_id = job_id
+            await self._booking_repo.save(booking)
+
+    async def cancel_booking_completion(self, *, booking_id: int) -> None:
+        booking = await self._booking_repo.get_by_id(booking_id)
+        if booking is None:
+            raise BookingNotFoundException(booking_id)
+
+        if booking.completion_job_id:
+            await self._queue.cancel(job_id=booking.completion_job_id)
+            booking.completion_job_id = None
+            await self._booking_repo.save(booking)
+
     async def schedule_plan_next_training_reminder(
         self, *, client_id: int, remind_at_utc: datetime
     ) -> None:

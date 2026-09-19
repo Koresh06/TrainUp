@@ -6,3 +6,8 @@ class BookingStatus(str, Enum):
     CONFIRMED = "confirmed"
     CANCELLED = "cancelled"
     COMPLETED = "completed"
+
+
+class BookingsListMode(str, Enum):
+    UPCOMING = "upcoming"
+    HISTORY = "history"

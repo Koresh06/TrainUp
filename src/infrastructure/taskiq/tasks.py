@@ -1,3 +1,4 @@
+from src.application.use_cases.booking.mark_completed import MarkBookingCompletedRequest, MarkBookingCompletedUseCase
 from src.application.use_cases.recurring_booking.maintain import (
     MaintainRecurringBookingsRequest,
     MaintainRecurringBookingsUseCase,
@@ -47,18 +48,25 @@ def register_taskiq_tasks(broker, *, container):
             use_case = await request_container.get(MaintainRecurringBookingsUseCase)
         await use_case(MaintainRecurringBookingsRequest())
 
-    @broker.task(
-        task_name="mark_past_bookings_completed",
-        schedule=[{"cron": "0 * * * *"}], # каждый час
-    )
-    async def mark_past_bookings_completed() -> None:
+    @broker.task(task_name="mark_booking_completed")
+    async def mark_booking_completed(booking_id: int) -> None:
         async with container() as request_container:
-            use_case = await request_container.get(MarkPastBookingsCompletedUseCase)
-        await use_case(MarkPastBookingsCompletedRequest())
+            use_case = await request_container.get(MarkBookingCompletedUseCase)
+            await use_case(MarkBookingCompletedRequest(booking_id=booking_id))
+
+    # @broker.task(
+    #     task_name="mark_past_bookings_completed",
+    #     schedule=[{"cron": "0 5 * * *"}],
+    # )
+    # async def mark_past_bookings_completed() -> None:
+    #     async with container() as request_container:
+    #         use_case = await request_container.get(MarkPastBookingsCompletedUseCase)
+    #         await use_case(MarkPastBookingsCompletedRequest())
 
     return {
         "maintain_calendar_buffer": maintain_calendar_buffer,
         "send_training_reminder": send_training_reminder,
         "maintain_recurring_bookings": maintain_recurring_bookings,
-        "mark_past_bookings_completed": mark_past_bookings_completed,
+        "mark_booking_completed": mark_booking_completed,
+        # "mark_past_bookings_completed": mark_past_bookings_completed,
     }

@@ -72,6 +72,9 @@ class RescheduleBookingUseCase(UseCase[RescheduleBookingRequest, Booking]):
         if booking.reminder_job_id:
             await self.booking_scheduler.cancel_training_reminder(booking_id=booking.id)
 
+        if booking.completion_job_id:
+            await self.booking_scheduler.cancel_booking_completion(booking_id=booking.id)
+
         if booking.status == BookingStatus.CONFIRMED:
             if REMINDER_TEST_MODE:
                 remind_at_utc = get_datetime_utc_now() + timedelta(minutes=REMINDER_TEST_DELAY_MINUTES)
