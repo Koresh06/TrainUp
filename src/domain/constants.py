@@ -3,6 +3,10 @@ from decimal import Decimal
 
 from src.domain.enums.training import HealthCondition, TrainingGoal
 
+from zoneinfo import ZoneInfo
+
+PROJECT_TIMEZONE = ZoneInfo("Europe/Moscow")
+
 # --- Слоты календаря: длительность и генерация сетки времён ---
 
 SLOT_DURATION_MINUTES = 60  # длительность одной тренировки в минутах (используется при создании SlotTemplate)
