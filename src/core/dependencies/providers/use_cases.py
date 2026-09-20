@@ -16,6 +16,7 @@ from src.application.use_cases.client.get_answers_by_id import GetClientAnswersU
 from src.application.use_cases.client.get_by_id import GetClientByIdUseCase
 from src.application.use_cases.recurring_booking.add import AddRecurringBookingUseCase
 from src.application.use_cases.recurring_booking.deactivate import DeactivateRecurringBookingUseCase
+from src.application.use_cases.recurring_booking.get_active_by_client import GetActiveRecurringBookingsByClientUseCase
 from src.application.use_cases.recurring_booking.get_by_id import GetRecurringBookingByIdUseCase
 from src.application.use_cases.recurring_booking.maintain import MaintainRecurringBookingsUseCase
 from src.application.use_cases.registration_questions.add_custom import AddCustomQuestionUseCase
@@ -606,6 +607,7 @@ class UseCasesProvider(Provider):
         pricing_rule_repo: TrainerPricingRuleRepository,
         client_repo: ClientRepository,
         trainer_repo: TrainerRepository,
+        reminder_settings_repo: TrainerReminderSettingsRepository,
         notification_service: NotificationService,
         booking_scheduler: BookingScheduler,
         transaction_manager: TransactionManager,
@@ -618,6 +620,7 @@ class UseCasesProvider(Provider):
             pricing_rule_repo=pricing_rule_repo,
             client_repo=client_repo,
             trainer_repo=trainer_repo,
+            reminder_settings_repo=reminder_settings_repo,
             notification_service=notification_service,
             booking_scheduler=booking_scheduler,
             transaction_manager=transaction_manager,
@@ -632,6 +635,7 @@ class UseCasesProvider(Provider):
         calendar_service: CalendarService,
         trainer_repo: TrainerRepository,
         client_repo: ClientRepository,
+        reminder_settings_repo: TrainerReminderSettingsRepository,
         pricing_rule_repo: TrainerPricingRuleRepository,
         notification_service: NotificationService,
         booking_scheduler: BookingScheduler,
@@ -644,6 +648,7 @@ class UseCasesProvider(Provider):
             calendar_service=calendar_service,
             trainer_repo=trainer_repo,
             client_repo=client_repo,
+            reminder_settings_repo=reminder_settings_repo,
             pricing_rule_repo=pricing_rule_repo,
             notification_service=notification_service,
             booking_scheduler=booking_scheduler,
@@ -655,10 +660,10 @@ class UseCasesProvider(Provider):
         self,
         booking_repo: BookingRepository,
         client_repo: ClientRepository,
-        trainer_repo: TrainerRepository,
         slot_repo: CalendarSlotRepository,
         calendar_service: CalendarService,
         pricing_rule_repo: TrainerPricingRuleRepository,
+        reminder_settings_repo: TrainerReminderSettingsRepository,
         notification_service: NotificationService,
         booking_scheduler: BookingScheduler,
         transaction_manager: TransactionManager,
@@ -666,10 +671,10 @@ class UseCasesProvider(Provider):
         return RescheduleBookingUseCase(
             booking_repo=booking_repo,
             client_repo=client_repo,
-            trainer_repo=trainer_repo,
             slot_repo=slot_repo,
             calendar_service=calendar_service,
             pricing_rule_repo=pricing_rule_repo,
+            reminder_settings_repo=reminder_settings_repo,
             notification_service=notification_service,
             booking_scheduler=booking_scheduler,
             transaction_manager=transaction_manager,
@@ -799,4 +804,13 @@ class UseCasesProvider(Provider):
     ) -> GetBookingsHistoryByTrainerUseCase:
         return GetBookingsHistoryByTrainerUseCase(
             booking_repo=booking_repo,
+        )
+
+    @provide
+    def get_active_recurring_bookings_by_client_use_case(
+        self,
+        recurring_repo: RecurringBookingRepository,
+    ) -> GetActiveRecurringBookingsByClientUseCase:
+        return GetActiveRecurringBookingsByClientUseCase(
+            recurring_repo=recurring_repo,
         )

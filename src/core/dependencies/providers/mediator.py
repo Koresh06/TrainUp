@@ -80,6 +80,7 @@ from src.application.use_cases.recurring_booking.deactivate import (
     DeactivateRecurringBookingRequest,
     DeactivateRecurringBookingUseCase,
 )
+from src.application.use_cases.recurring_booking.get_active_by_client import GetActiveRecurringBookingsByClientRequest, GetActiveRecurringBookingsByClientUseCase
 from src.application.use_cases.recurring_booking.get_all_active_by_trainer import (
     GetActiveRecurringBookingsByTrainerRequest,
     GetActiveRecurringBookingsByTrainerUseCase,
@@ -284,6 +285,7 @@ class MediatorProvider(Provider):
         get_trainer_reminder_settings_use_case: GetTrainerReminderSettingsUseCase,
         mark_booking_completed_use_case: MarkBookingCompletedUseCase,
         get_bookings_history_by_trainer_use_case: GetBookingsHistoryByTrainerUseCase,
+        get_active_recurring_bookings_by_client_use_case: GetActiveRecurringBookingsByClientUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -404,5 +406,6 @@ class MediatorProvider(Provider):
         mediator.register(GetTrainerReminderSettingsRequest, get_trainer_reminder_settings_use_case)
         mediator.register(MarkBookingCompletedRequest, mark_booking_completed_use_case)
         mediator.register(GetBookingsHistoryByTrainerRequest, get_bookings_history_by_trainer_use_case)
+        mediator.register(GetActiveRecurringBookingsByClientRequest, get_active_recurring_bookings_by_client_use_case)
 
         return mediator
