@@ -13,6 +13,7 @@ from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.recurring_booking import RecurringBookingRepository
 from src.domain.repositories.trainer import TrainerRepository
 from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
+from src.domain.repositories.trainer_reminder_settings import TrainerReminderSettingsRepository
 from src.domain.services.calendar_service import CalendarService
 from src.infrastructure.database.transaction_manager.base import TransactionManager
 
@@ -32,6 +33,7 @@ class MaintainRecurringBookingsUseCase(UseCase[MaintainRecurringBookingsRequest,
     calendar_service: CalendarService
     trainer_repo: TrainerRepository
     client_repo: ClientRepository
+    reminder_settings_repo: TrainerReminderSettingsRepository
     pricing_rule_repo: TrainerPricingRuleRepository
     notification_service: NotificationService
     booking_scheduler: BookingScheduler
@@ -74,6 +76,7 @@ class MaintainRecurringBookingsUseCase(UseCase[MaintainRecurringBookingsRequest,
                 booking_repo=self.booking_repo,
                 calendar_service=self.calendar_service,
                 pricing_rule_repo=self.pricing_rule_repo,
+                reminder_settings_repo=self.reminder_settings_repo,
                 client_repo=self.client_repo,
                 trainer_repo=self.trainer_repo,
                 notification_service=self.notification_service,
