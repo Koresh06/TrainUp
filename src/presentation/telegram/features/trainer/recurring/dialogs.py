@@ -17,13 +17,12 @@ from src.presentation.telegram.widgets.booking_calendar import BookingCalendar
 
 from .states import TrainerRecurringSG
 from .handlers import (
-    on_add_recurring_click,
+    on_recurring_client_selected,
     on_client_selected,
     on_deactivate_recurring_click,
     on_edit_recurring_confirm,
     on_edit_recurring_date_clicked,
     on_edit_recurring_time_clicked,
-    on_edit_time_click,
     on_recurring_confirm,
     on_recurring_date_clicked,
     on_recurring_item_selected,
@@ -32,9 +31,10 @@ from .handlers import (
 from .getters import (
     edit_recurring_confirm_getter,
     edit_recurring_times_getter,
+    recurring_client_bookings_getter,
     recurring_confirm_getter,
     recurring_detail_getter,
-    recurring_list_getter,
+    recurring_clients_getter,
     recurring_times_getter,
     select_client_getter,
     recurring_day_calendar_getter,
@@ -47,25 +47,44 @@ trainer_recurring_dialog = Dialog(
         ScrollingGroup(
             Select(
                 Format("{item[label]}"),
-                id="recurring_list_select",
+                id="recurring_client_list_select",
                 item_id_getter=lambda item: item["id"],
                 items="recurring_list",
-                on_click=on_recurring_item_selected,
+                on_click=on_recurring_client_selected,
             ),
             id="recurring_scroll",
             width=1,
             height=8,
             hide_on_single_page=True,
         ),
-        Button(
+        SwitchTo(
             Const("➕ Добавить"),
             id="add_recurring",
-            on_click=on_add_recurring_click,
+            state=TrainerRecurringSG.select_client,
             style=Style(style=ButtonStyle.SUCCESS),
         ),
         Cancel(Const("⬅️ Назад")),
         state=TrainerRecurringSG.list,
-        getter=recurring_list_getter,
+        getter=recurring_clients_getter,
+    ),
+    Window(
+        Format("👤 <b>{client_name}</b>\n\nПостоянные тренировки:"),
+        ScrollingGroup(
+            Select(
+                Format("{item[label]}"),
+                id="recurring_item_select",
+                item_id_getter=lambda item: item["id"],
+                items="recurring_list",
+                on_click=on_recurring_item_selected,
+            ),
+            id="client_recurring_scroll",
+            width=1,
+            height=8,
+            hide_on_single_page=True,
+        ),
+        Back(Const("⬅️ Назад")),
+        state=TrainerRecurringSG.client_bookings,
+        getter=recurring_client_bookings_getter,
     ),
     Window(
         Const("Выберите клиента для постоянной записи:"),
@@ -131,10 +150,10 @@ trainer_recurring_dialog = Dialog(
         Format(
             "👤 Клиент: {client_name}\n" "📅 Каждую неделю: {weekday_label} в {time}"
         ),
-        Button(
+        SwitchTo(
             Const("🔁 Изменить день/время"),
             id="edit_recurring_time",
-            on_click=on_edit_time_click,
+            state=TrainerRecurringSG.edit_day,
         ),
         Button(
             Const("🛑 Остановить постоянную запись"),
@@ -145,7 +164,7 @@ trainer_recurring_dialog = Dialog(
         SwitchTo(
             Const("⬅️ Назад"),
             id="back_to_list",
-            state=TrainerRecurringSG.list,
+            state=TrainerRecurringSG.client_bookings,
         ),
         state=TrainerRecurringSG.detail,
         getter=recurring_detail_getter,

@@ -7,26 +7,21 @@ from aiogram_dialog.widgets.kbd import Select, Button
 from aiogram_dialog.widgets.kbd.calendar_kbd import ManagedCalendar
 
 from src.application.mediator import Mediator
-from src.application.use_cases.calendar.get_day_availability_map_assignment import (
-    GetDayAvailabilityMapForAssignmentRequest,
-)
 from src.application.use_cases.recurring_booking.add import AddRecurringBookingRequest
-from src.application.use_cases.recurring_booking.change import ChangeRecurringBookingScheduleRequest
+from src.application.use_cases.recurring_booking.change import (
+    ChangeRecurringBookingScheduleRequest,
+)
 from src.application.use_cases.recurring_booking.deactivate import (
     DeactivateRecurringBookingRequest,
 )
-from src.application.use_cases.trainer_booking_settings.get_by_id import (
-    GetTrainerBookingSettingsRequest,
-)
-from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
 from src.domain.exception.calendar_slot import SlotFullException
+from src.domain.exception.recurring_booking import (
+    RecurringBookingAlreadyExistsException,
+)
 from src.presentation.telegram.features.trainer.recurring.states import (
     TrainerRecurringSG,
 )
-from src.presentation.telegram.widgets.booking_calendar import (
-    AVAILABILITY_CACHE_KEY,
-    HORIZON_CACHE_KEY,
-)
+from src.presentation.telegram.widgets.booking_calendar import AVAILABILITY_CACHE_KEY
 
 
 async def on_client_selected(
@@ -78,18 +73,36 @@ async def on_recurring_confirm(
     client_id: int = dialog_manager.dialog_data["selected_client_id"]
     slot_id: int = dialog_manager.dialog_data["selected_slot_id"]
 
-    await mediator.handle(
-        AddRecurringBookingRequest(
-            trainer_id=trainer_id,
-            client_id=client_id,
-            slot_id=slot_id,
+    try:
+        await mediator.handle(
+            AddRecurringBookingRequest(
+                trainer_id=trainer_id,
+                client_id=client_id,
+                slot_id=slot_id,
+            )
         )
-    )
+    except RecurringBookingAlreadyExistsException:
+        await callback.answer(
+            "У этого клиента уже есть постоянная запись на это время.",
+            show_alert=True,
+        )
+        return
 
     await callback.answer("Постоянная тренировка добавлена!", show_alert=True)
     await dialog_manager.done()
 
 
+async def on_recurring_client_selected(
+    callback: CallbackQuery,
+    widget: Select,
+    dialog_manager: DialogManager,
+    item_id: str,
+) -> None:
+    dialog_manager.dialog_data["selected_client_id"] = int(item_id)
+    await dialog_manager.next()
+
+
+@inject
 async def on_recurring_item_selected(
     callback: CallbackQuery,
     widget: Select,
@@ -98,22 +111,6 @@ async def on_recurring_item_selected(
 ) -> None:
     dialog_manager.dialog_data["editing_recurring_id"] = int(item_id)
     await dialog_manager.switch_to(TrainerRecurringSG.detail)
-
-
-async def on_add_recurring_click(
-    callback: CallbackQuery,
-    button: Button,
-    dialog_manager: DialogManager,
-) -> None:
-    await dialog_manager.switch_to(TrainerRecurringSG.select_client)
-
-
-async def on_edit_time_click(
-    callback: CallbackQuery,
-    button: Button,
-    dialog_manager: DialogManager,
-) -> None:
-    await dialog_manager.switch_to(TrainerRecurringSG.edit_day)
 
 
 @inject

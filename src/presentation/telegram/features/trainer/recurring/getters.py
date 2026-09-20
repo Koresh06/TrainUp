@@ -25,6 +25,9 @@ from src.application.use_cases.recurring_booking.get_by_id import (
 from src.application.use_cases.trainer_booking_settings.get_by_id import (
     GetTrainerBookingSettingsRequest,
 )
+from src.application.use_cases.recurring_booking.get_active_by_client import (
+    GetActiveRecurringBookingsByClientRequest,
+)
 from src.domain.constants import WEEKDAY_LABELS_FULL
 from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.client import Client
@@ -38,7 +41,7 @@ from src.presentation.telegram.widgets.booking_calendar import (
 
 
 @inject
-async def recurring_list_getter(
+async def recurring_clients_getter(
     dialog_manager: DialogManager,
     mediator: FromDishka[Mediator],
     **kwargs,
@@ -48,16 +51,19 @@ async def recurring_list_getter(
         GetActiveRecurringBookingsByTrainerRequest(trainer_id=trainer_id)
     )
 
-    items = []
+    by_client: dict[int, list[RecurringBooking]] = {}
     for r in recurring_list:
+        by_client.setdefault(r.client_id, []).append(r)
+
+    items = []
+    for client_id, bookings in by_client.items():
         client: Client = await mediator.handle(
-            GetClientByIdRequest(client_id=r.client_id)
+            GetClientByIdRequest(client_id=client_id)
         )
-        weekday_label = WEEKDAY_LABELS_FULL[r.weekday]
-        label = (
-            f"{client.first_name} — {weekday_label} {r.start_time.strftime('%H:%M')}"
-        )
-        items.append({"id": str(r.id), "label": label})
+        name = f"{client.first_name} {client.last_name or ''}".strip()
+        items.append({"id": str(client_id), "label": f"{name} ({len(bookings)})"})
+
+    items.sort(key=lambda i: i["label"])
     return {"recurring_list": items}
 
 
@@ -79,6 +85,38 @@ async def select_client_getter(
             }
             for c in clients
         ]
+    }
+
+
+@inject
+async def recurring_client_bookings_getter(
+    dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+    **kwargs,
+) -> dict:
+    trainer_id: int = dialog_manager.start_data["trainer_id"]
+    client_id: int = dialog_manager.dialog_data["selected_client_id"]
+
+    client_recurring: list[RecurringBooking] = await mediator.handle(
+        GetActiveRecurringBookingsByClientRequest(
+            trainer_id=trainer_id, client_id=client_id
+        )
+    )
+    client: Client = await mediator.handle(GetClientByIdRequest(client_id=client_id))
+
+    items = []
+    for r in sorted(client_recurring, key=lambda r: (r.weekday, r.start_time)):
+        weekday_label = WEEKDAY_LABELS_FULL[r.weekday]
+        items.append(
+            {
+                "id": str(r.id),
+                "label": f"{weekday_label} — {r.start_time.strftime('%H:%M')}",
+            }
+        )
+
+    return {
+        "client_name": f"{client.first_name} {client.last_name or ''}".strip(),
+        "recurring_list": items,
     }
 
 
