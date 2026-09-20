@@ -8,12 +8,14 @@ from src.application.use_cases.recurring_booking._shared import _create_recurrin
 from src.domain.entities.booking import Booking
 from src.domain.entities.recurring_booking import RecurringBooking
 from src.domain.exception.calendar_slot import CalendarSlotNotFoundException
+from src.domain.exception.recurring_booking import RecurringBookingAlreadyExistsException
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.recurring_booking import RecurringBookingRepository
 from src.domain.repositories.trainer import TrainerRepository
 from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
+from src.domain.repositories.trainer_reminder_settings import TrainerReminderSettingsRepository
 from src.domain.services.calendar_service import CalendarService
 from src.infrastructure.database.transaction_manager.base import TransactionManager
 
@@ -34,6 +36,7 @@ class AddRecurringBookingUseCase(UseCase[AddRecurringBookingRequest, Booking]):
     pricing_rule_repo: TrainerPricingRuleRepository
     client_repo: ClientRepository
     trainer_repo: TrainerRepository
+    reminder_settings_repo: TrainerReminderSettingsRepository
     notification_service: NotificationService
     booking_scheduler: BookingScheduler
     transaction_manager: TransactionManager
@@ -42,7 +45,21 @@ class AddRecurringBookingUseCase(UseCase[AddRecurringBookingRequest, Booking]):
         slot = await self.slot_repo.get_by_id(command.slot_id)
         if slot is None:
             raise CalendarSlotNotFoundException(command.slot_id)
-
+    
+        already_exists = await self.recurring_repo.exists_active(
+            trainer_id=command.trainer_id,
+            client_id=command.client_id,
+            weekday=slot.slot_date.weekday(),
+            start_time=slot.start_time,
+        )
+        if already_exists:
+            raise RecurringBookingAlreadyExistsException(
+                trainer_id=command.trainer_id,
+                client_id=command.client_id,
+                weekday=slot.slot_date.weekday(),
+                start_time=slot.start_time,
+            )
+    
         recurring = RecurringBooking(
             trainer_id=command.trainer_id,
             client_id=command.client_id,
@@ -52,7 +69,6 @@ class AddRecurringBookingUseCase(UseCase[AddRecurringBookingRequest, Booking]):
         )
         saved_recurring: RecurringBooking = await self.recurring_repo.save(recurring)
         await self.transaction_manager.commit()
-        print(saved_recurring)
 
         return await _create_recurring_occurrence(
             recurring=saved_recurring,
@@ -62,6 +78,7 @@ class AddRecurringBookingUseCase(UseCase[AddRecurringBookingRequest, Booking]):
             pricing_rule_repo=self.pricing_rule_repo,
             client_repo=self.client_repo,
             trainer_repo=self.trainer_repo,
+            reminder_settings_repo=self.reminder_settings_repo,
             notification_service=self.notification_service,
             booking_scheduler=self.booking_scheduler,
             transaction_manager=self.transaction_manager,

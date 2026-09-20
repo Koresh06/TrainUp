@@ -1,4 +1,6 @@
-from sqlalchemy import select
+from datetime import date, time
+
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.entities.recurring_booking import RecurringBooking
@@ -42,3 +44,33 @@ class SQLAlchemyRecurringBookingRepo(RecurringBookingRepository):
 
         await self._session.flush()
         return model.to_entity()
+
+    async def exists_active(
+        self,
+        trainer_id: int,
+        client_id: int,
+        weekday: int,
+        start_time: time,
+    ) -> bool:
+        stmt = select(
+            exists().where(
+                RecurringBookingModel.trainer_id == trainer_id,
+                RecurringBookingModel.client_id == client_id,
+                RecurringBookingModel.weekday == weekday,
+                RecurringBookingModel.start_time == start_time,
+                RecurringBookingModel.is_active.is_(True),
+            )
+        )
+        result = await self._session.execute(stmt)
+        return result.scalar()
+
+    async def get_active_by_trainer_and_client(
+        self, trainer_id: int, client_id: int
+    ) -> list[RecurringBooking]:
+        stmt = select(RecurringBookingModel).where(
+            RecurringBookingModel.trainer_id == trainer_id,
+            RecurringBookingModel.client_id == client_id,
+            RecurringBookingModel.is_active.is_(True),
+        )
+        result = await self._session.execute(stmt)
+        return [m.to_entity() for m in result.scalars().all()]
