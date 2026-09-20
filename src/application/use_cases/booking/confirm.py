@@ -16,7 +16,9 @@ from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.trainer import TrainerRepository
-from src.domain.repositories.trainer_reminder_settings import TrainerReminderSettingsRepository
+from src.domain.repositories.trainer_reminder_settings import (
+    TrainerReminderSettingsRepository,
+)
 from src.infrastructure.database.transaction_manager.base import TransactionManager
 from src.utils.get_datetime_utc_now import get_datetime_utc_now
 from src.domain.utils import get_training_datetime_utc
@@ -77,25 +79,26 @@ class ConfirmBookingUseCase(UseCase[ConfirmBookingRequest, Booking]):
                 if reminder_settings is not None
                 else REMINDER_HOURS_BEFORE_TRAINING
             )
+            training_at_utc = get_training_datetime_utc(slot)
+            now = get_datetime_utc_now()
 
             if REMINDER_TEST_MODE:
-                remind_at_utc = get_datetime_utc_now() + timedelta(
-                    minutes=REMINDER_TEST_DELAY_MINUTES
-                )
+                remind_at_utc = now + timedelta(minutes=REMINDER_TEST_DELAY_MINUTES)
             else:
-                training_at_utc = get_training_datetime_utc(slot)
                 remind_at_utc = training_at_utc - timedelta(hours=hours_before)
 
-            if remind_at_utc > get_datetime_utc_now():
+            if remind_at_utc > now:
                 await self.booking_scheduler.schedule_training_reminder(
                     booking_id=saved.id,
                     remind_at_utc=remind_at_utc,
                 )
+            elif training_at_utc > now:
+                await self.booking_scheduler.schedule_training_reminder(
+                    booking_id=saved.id,
+                    remind_at_utc=now + timedelta(seconds=10),
+                )
 
-            # планируем автозавершение — см. пункт 2
-            complete_at_utc = get_training_datetime_utc(slot) + timedelta(
-                minutes=SLOT_DURATION_MINUTES
-            )
+            complete_at_utc = training_at_utc + timedelta(minutes=SLOT_DURATION_MINUTES)
             await self.booking_scheduler.schedule_booking_completion(
                 booking_id=saved.id,
                 complete_at_utc=complete_at_utc,

@@ -21,7 +21,7 @@ class TrainingReminderNotificationDTO:
     date_label: str
     time_label: str
     trainer_name: str
-    hours_before: int
+    minutes_before: int
     booking_id: int
 
 

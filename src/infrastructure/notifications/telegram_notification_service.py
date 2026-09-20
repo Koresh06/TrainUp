@@ -76,7 +76,7 @@ class TelegramNotificationService(NotificationService):
     
         text = (
             f"⏰ <b>Напоминание о тренировке</b>\n\n"
-            f"Через {data.hours_before} {self.pluralize_hours(data.hours_before)} — "
+            f"{self.format_time_left(data.minutes_before)} — "
             f"тренировка с <b>{data.trainer_name}</b>\n\n"
             f"📅 {data.date_label}\n"
             f"🕐 {data.time_label}"
@@ -84,7 +84,20 @@ class TelegramNotificationService(NotificationService):
         await self._bot.send_message(
             chat_id=data.chat_id, text=text, reply_markup=kb.as_markup()
         )
-        
+    
+    @staticmethod
+    def format_time_left(minutes_before: int) -> str:
+        if minutes_before < 60:
+            minutes = max(minutes_before, 1)
+            return f"Через {minutes} {TelegramNotificationService.pluralize_minutes(minutes)}"
+    
+        hours, minutes = divmod(minutes_before, 60)
+        hours_part = f"{hours} {TelegramNotificationService.pluralize_hours(hours)}"
+        if minutes == 0:
+            return f"Через {hours_part}"
+        minutes_part = f"{minutes} {TelegramNotificationService.pluralize_minutes(minutes)}"
+        return f"Через {hours_part} {minutes_part}"
+    
     @staticmethod
     def pluralize_hours(n: int) -> str:
         if n % 10 == 1 and n % 100 != 11:
@@ -92,4 +105,11 @@ class TelegramNotificationService(NotificationService):
         if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14):
             return "часа"
         return "часов"
-        
+    
+    @staticmethod
+    def pluralize_minutes(n: int) -> str:
+        if n % 10 == 1 and n % 100 != 11:
+            return "минуту"
+        if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14):
+            return "минуты"
+        return "минут"
