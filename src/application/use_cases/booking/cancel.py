@@ -53,11 +53,18 @@ class CancelBookingUseCase(UseCase[CancelBookingRequest, Booking]):
             await self.booking_scheduler.cancel_booking_completion(booking_id=booking.id)
 
         if command.initiated_by == CancelInitiator.TRAINER:
+            trainer = await self.trainer_repo.get_by_id(booking.trainer_id)
             client = await self.client_repo.get_by_id(booking.client_id)
-            if client is not None:
+            slot = await self.slot_repo.get_by_id(booking.slot_id)
+            if trainer is not None and client is not None and slot is not None:
                 await self.notification_service.send(
                     chat_id=client.tg_id,
-                    text="❌ Тренер отменил вашу запись. Вы можете выбрать другое время.",
+                    text=(
+                        f"❌ Тренер {trainer.name} отменил вашу тренировку\n\n"
+                        f"📅 {slot.slot_date.strftime('%d.%m.%Y')}\n"
+                        f"🕐 {slot.start_time.strftime('%H:%M')}\n\n"
+                        f"Вы можете выбрать другое время."
+                    ),
                 )
         else:
             trainer = await self.trainer_repo.get_by_id(booking.trainer_id)
