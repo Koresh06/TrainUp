@@ -81,7 +81,10 @@ list_bookings_dialog = Dialog(
         ),
         Row(
             PrevPage(scroll="history_list", text=Const("◀️")),
-            CurrentPage(scroll="history_list", text=Format("{current_page1}/{pages}")),
+            CurrentPage(
+                scroll="history_list",
+                text=Format("{current_page1}/{pages}"),
+            ),
             NextPage(scroll="history_list", text=Const("▶️")),
             when="is_history",
         ),
@@ -91,9 +94,11 @@ list_bookings_dialog = Dialog(
     ),
     Window(
         Format(
-            "👤 Клиент: {client_name}\n"
-            "📅 {date} в {time}\n"
-            "Статус: {status}"
+            "👤 <b>Клиент:</b> {client_name}\n"
+            "{contact_block}\n\n"
+            "📅 <b>Дата:</b> {date}\n"
+            "🕐 <b>Время:</b> {time}\n"
+            "📌 <b>Статус:</b> {status}"
             "{recurring_note}"
         ),
         Button(

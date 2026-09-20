@@ -27,7 +27,7 @@ async def on_bookings_mode_selected(
 
 
 def show_reschedule_button(data: dict, widget, manager: DialogManager) -> bool:
-    return data.get("is_upcoming", True) and not data.get("is_recurring", False)
+    return data.get("is_upcoming", True)
 
 
 def show_cancel_button(data: dict, widget, manager: DialogManager) -> bool:
