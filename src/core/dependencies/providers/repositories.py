@@ -2,6 +2,8 @@ from dishka import Provider, provide, Scope
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.repositories.client import ClientRepository
+from src.domain.repositories.payment import PaymentRepository
+from src.infrastructure.repositories.payment.sqlalchemy import SQLAlchemyPaymentRepo
 from src.domain.repositories.client_answer import ClientAnswerRepository
 from src.domain.repositories.recurring_booking import RecurringBookingRepository
 from src.domain.repositories.registration_question import RegistrationQuestionRepository
@@ -157,3 +159,7 @@ class RepositoriesProvider(Provider):
         self, session: AsyncSession
     ) -> TrainerReminderSettingsRepository:
         return SQLAlchemyTrainerReminderSettingsRepo(session=session)
+
+    @provide(scope=Scope.REQUEST)
+    def get_payment_repository(self, session: AsyncSession) -> PaymentRepository:
+        return SQLAlchemyPaymentRepo(session=session)

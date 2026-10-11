@@ -169,10 +169,6 @@ from src.application.use_cases.subscription.get_active_price_plans import (
     GetActivePricePlansRequest,
     GetActivePricePlansUseCase,
 )
-from src.application.use_cases.subscription.purchse import (
-    PurchaseSubscriptionRequest,
-    PurchaseSubscriptionUseCase,
-)
 from src.application.use_cases.trainer.get_by_id import (
     GetTrainerByIdRequest,
     GetTrainerByIdUseCase,
@@ -220,6 +216,150 @@ from src.application.use_cases.booking.mark_past_completed import (
 from src.application.use_cases.trainer_reminder_settings.get_by_trainer_id import GetTrainerReminderSettingsRequest, GetTrainerReminderSettingsUseCase
 from src.application.use_cases.trainer_reminder_settings.update import UpdateTrainerReminderSettingsRequest, UpdateTrainerReminderSettingsUseCase
 
+from src.application.use_cases.client_request.create_program import (
+    CreateProgramRequestRequest,
+    CreateProgramRequestUseCase,
+)
+from src.application.use_cases.client_request.create_consultation import (
+    CreateConsultationRequestRequest,
+    CreateConsultationRequestUseCase,
+)
+from src.application.use_cases.client_request.create_feedback import (
+    CreateFeedbackRequest,
+    CreateFeedbackUseCase,
+)
+from src.application.use_cases.client_request.get_by_trainer import (
+    GetClientRequestsByTrainerRequest,
+    GetClientRequestsByTrainerUseCase,
+)
+from src.application.use_cases.client_request.get_by_id import (
+    GetClientRequestByIdRequest,
+    GetClientRequestByIdUseCase,
+)
+from src.application.use_cases.client_request.update_status import (
+    UpdateClientRequestStatusRequest,
+    UpdateClientRequestStatusUseCase,
+)
+from src.application.use_cases.faq.get_active import (
+    GetActiveFaqItemsRequest,
+    GetActiveFaqItemsUseCase,
+)
+from src.application.use_cases.faq.get_by_id import (
+    GetFaqItemByIdRequest,
+    GetFaqItemByIdUseCase,
+)
+from src.application.use_cases.faq.add import (
+    AddFaqItemRequest,
+    AddFaqItemUseCase,
+)
+from src.application.use_cases.faq.deactivate import (
+    DeactivateFaqItemRequest,
+    DeactivateFaqItemUseCase,
+)
+from src.application.use_cases.calendar.set_slot_blocked import (
+    SetSlotBlockedRequest,
+    SetSlotBlockedUseCase,
+)
+from src.application.use_cases.calendar.set_day_blocked import (
+    SetDayBlockedRequest,
+    SetDayBlockedUseCase,
+)
+from src.application.use_cases.booking.get_upcoming_by_client import (
+    GetUpcomingBookingsByClientRequest,
+    GetUpcomingBookingsByClientUseCase,
+)
+from src.application.use_cases.client.update_answers import (
+    UpdateClientAnswersRequest,
+    UpdateClientAnswersUseCase,
+)
+from src.application.use_cases.booking.send_plan_next_reminder import (
+    SendPlanNextTrainingReminderRequest,
+    SendPlanNextTrainingReminderUseCase,
+)
+
+from src.application.use_cases.subscription.grant import (
+    GrantSubscriptionRequest,
+    GrantSubscriptionUseCase,
+)
+from src.application.use_cases.subscription.check_expiring import (
+    CheckExpiringSubscriptionsRequest,
+    CheckExpiringSubscriptionsUseCase,
+)
+from src.application.use_cases.subscription.get_by_trainer import (
+    GetSubscriptionsByTrainerRequest,
+    GetSubscriptionsByTrainerUseCase,
+)
+from src.application.use_cases.access.get_user_access import (
+    GetUserAccessRequest,
+    GetUserAccessUseCase,
+)
+from src.application.use_cases.trainer.set_blocked import (
+    SetTrainerBlockedRequest,
+    SetTrainerBlockedUseCase,
+)
+from src.application.use_cases.client.set_blocked import (
+    SetClientBlockedRequest,
+    SetClientBlockedUseCase,
+)
+from src.application.use_cases.client.search import (
+    SearchClientsRequest,
+    SearchClientsUseCase,
+)
+from src.application.use_cases.trainer.get_all import (
+    GetAllTrainersRequest,
+    GetAllTrainersUseCase,
+)
+from src.application.use_cases.admin.get_overview_stats import (
+    GetAdminOverviewStatsRequest,
+    GetAdminOverviewStatsUseCase,
+)
+from src.application.use_cases.admin.get_trainer_report import (
+    GetAdminTrainerReportRequest,
+    GetAdminTrainerReportUseCase,
+)
+from src.application.use_cases.admin.export_report import (
+    ExportReportRequest,
+    ExportReportUseCase,
+)
+from src.application.use_cases.mailing.enqueue import (
+    EnqueueMailingRequest,
+    EnqueueMailingUseCase,
+)
+from src.application.use_cases.mailing.execute import (
+    ExecuteMailingRequest,
+    ExecuteMailingUseCase,
+)
+from src.application.use_cases.mailing.execute_batch import (
+    ExecuteMailingBatchRequest,
+    ExecuteMailingBatchUseCase,
+)
+
+from src.application.use_cases.access.is_trainer_available import (
+    IsTrainerAvailableRequest,
+    IsTrainerAvailableUseCase,
+)
+
+from src.application.use_cases.payment.create_subscription_payment import (
+    CreateSubscriptionPaymentRequest,
+    CreateSubscriptionPaymentUseCase,
+)
+from src.application.use_cases.payment.confirm import (
+    ConfirmPaymentRequest,
+    ConfirmPaymentUseCase,
+)
+from src.application.use_cases.payment.reject import (
+    RejectPaymentRequest,
+    RejectPaymentUseCase,
+)
+from src.application.use_cases.payment.get_methods import (
+    GetPaymentMethodsRequest,
+    GetPaymentMethodsUseCase,
+)
+from src.application.use_cases.payment.get_by_external_id import (
+    GetPaymentByExternalIdRequest,
+    GetPaymentByExternalIdUseCase,
+)
+
 
 class MediatorProvider(Provider):
     scope = Scope.REQUEST
@@ -248,7 +388,6 @@ class MediatorProvider(Provider):
         get_upcoming_booking_by_trainer_use_case: GetUpcomingBookingsByTrainerUseCase,
         get_clients_by_trainer_use_case: GetClientsByTrainerUseCase,
         get_active_invite_link_use_case: GetActiveInviteLinkUseCase,
-        purchase_subscription_use_case: PurchaseSubscriptionUseCase,
         get_active_price_plans_use_case: GetActivePricePlansUseCase,
         get_active_subscription_use_case: GetActiveSubscriptionUseCase,
         register_trainer_use_case: RegisterTrainerUseCase,
@@ -286,6 +425,41 @@ class MediatorProvider(Provider):
         mark_booking_completed_use_case: MarkBookingCompletedUseCase,
         get_bookings_history_by_trainer_use_case: GetBookingsHistoryByTrainerUseCase,
         get_active_recurring_bookings_by_client_use_case: GetActiveRecurringBookingsByClientUseCase,
+        create_program_request_use_case: CreateProgramRequestUseCase,
+        create_consultation_request_use_case: CreateConsultationRequestUseCase,
+        create_feedback_use_case: CreateFeedbackUseCase,
+        get_client_requests_by_trainer_use_case: GetClientRequestsByTrainerUseCase,
+        get_client_request_by_id_use_case: GetClientRequestByIdUseCase,
+        update_client_request_status_use_case: UpdateClientRequestStatusUseCase,
+        get_active_faq_items_use_case: GetActiveFaqItemsUseCase,
+        get_faq_item_by_id_use_case: GetFaqItemByIdUseCase,
+        add_faq_item_use_case: AddFaqItemUseCase,
+        deactivate_faq_item_use_case: DeactivateFaqItemUseCase,
+        set_slot_blocked_use_case: SetSlotBlockedUseCase,
+        set_day_blocked_use_case: SetDayBlockedUseCase,
+        get_upcoming_bookings_by_client_use_case: GetUpcomingBookingsByClientUseCase,
+        update_client_answers_use_case: UpdateClientAnswersUseCase,
+        send_plan_next_training_reminder_use_case: SendPlanNextTrainingReminderUseCase,
+        grant_subscription_use_case: GrantSubscriptionUseCase,
+        check_expiring_subscriptions_use_case: CheckExpiringSubscriptionsUseCase,
+        get_subscriptions_by_trainer_use_case: GetSubscriptionsByTrainerUseCase,
+        get_user_access_use_case: GetUserAccessUseCase,
+        set_trainer_blocked_use_case: SetTrainerBlockedUseCase,
+        set_client_blocked_use_case: SetClientBlockedUseCase,
+        search_clients_use_case: SearchClientsUseCase,
+        get_all_trainers_use_case: GetAllTrainersUseCase,
+        get_admin_overview_stats_use_case: GetAdminOverviewStatsUseCase,
+        get_admin_trainer_report_use_case: GetAdminTrainerReportUseCase,
+        export_report_use_case: ExportReportUseCase,
+        enqueue_mailing_use_case: EnqueueMailingUseCase,
+        execute_mailing_use_case: ExecuteMailingUseCase,
+        execute_mailing_batch_use_case: ExecuteMailingBatchUseCase,
+        is_trainer_available_use_case: IsTrainerAvailableUseCase,
+        create_subscription_payment_use_case: CreateSubscriptionPaymentUseCase,
+        confirm_payment_use_case: ConfirmPaymentUseCase,
+        reject_payment_use_case: RejectPaymentUseCase,
+        get_payment_methods_use_case: GetPaymentMethodsUseCase,
+        get_payment_by_external_id_use_case: GetPaymentByExternalIdUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -321,7 +495,6 @@ class MediatorProvider(Provider):
         )
         mediator.register(GetClientsByTrainerRequest, get_clients_by_trainer_use_case)
         mediator.register(GetActiveInviteLinkRequest, get_active_invite_link_use_case)
-        mediator.register(PurchaseSubscriptionRequest, purchase_subscription_use_case)
         mediator.register(GetActivePricePlansRequest, get_active_price_plans_use_case)
         mediator.register(
             GetActiveSubscriptionRequest, get_active_subscription_use_case
@@ -407,5 +580,42 @@ class MediatorProvider(Provider):
         mediator.register(MarkBookingCompletedRequest, mark_booking_completed_use_case)
         mediator.register(GetBookingsHistoryByTrainerRequest, get_bookings_history_by_trainer_use_case)
         mediator.register(GetActiveRecurringBookingsByClientRequest, get_active_recurring_bookings_by_client_use_case)
+        mediator.register(CreateProgramRequestRequest, create_program_request_use_case)
+        mediator.register(CreateConsultationRequestRequest, create_consultation_request_use_case)
+        mediator.register(CreateFeedbackRequest, create_feedback_use_case)
+        mediator.register(GetClientRequestsByTrainerRequest, get_client_requests_by_trainer_use_case)
+        mediator.register(GetClientRequestByIdRequest, get_client_request_by_id_use_case)
+        mediator.register(UpdateClientRequestStatusRequest, update_client_request_status_use_case)
+        mediator.register(GetActiveFaqItemsRequest, get_active_faq_items_use_case)
+        mediator.register(GetFaqItemByIdRequest, get_faq_item_by_id_use_case)
+        mediator.register(AddFaqItemRequest, add_faq_item_use_case)
+        mediator.register(DeactivateFaqItemRequest, deactivate_faq_item_use_case)
+        mediator.register(SetSlotBlockedRequest, set_slot_blocked_use_case)
+        mediator.register(SetDayBlockedRequest, set_day_blocked_use_case)
+        mediator.register(GetUpcomingBookingsByClientRequest, get_upcoming_bookings_by_client_use_case)
+        mediator.register(UpdateClientAnswersRequest, update_client_answers_use_case)
+        mediator.register(SendPlanNextTrainingReminderRequest, send_plan_next_training_reminder_use_case)
+
+        mediator.register(GrantSubscriptionRequest, grant_subscription_use_case)
+        mediator.register(CheckExpiringSubscriptionsRequest, check_expiring_subscriptions_use_case)
+        mediator.register(GetSubscriptionsByTrainerRequest, get_subscriptions_by_trainer_use_case)
+        mediator.register(GetUserAccessRequest, get_user_access_use_case)
+        mediator.register(SetTrainerBlockedRequest, set_trainer_blocked_use_case)
+        mediator.register(SetClientBlockedRequest, set_client_blocked_use_case)
+        mediator.register(SearchClientsRequest, search_clients_use_case)
+        mediator.register(GetAllTrainersRequest, get_all_trainers_use_case)
+        mediator.register(GetAdminOverviewStatsRequest, get_admin_overview_stats_use_case)
+        mediator.register(GetAdminTrainerReportRequest, get_admin_trainer_report_use_case)
+        mediator.register(ExportReportRequest, export_report_use_case)
+        mediator.register(EnqueueMailingRequest, enqueue_mailing_use_case)
+        mediator.register(ExecuteMailingRequest, execute_mailing_use_case)
+        mediator.register(ExecuteMailingBatchRequest, execute_mailing_batch_use_case)
+        mediator.register(IsTrainerAvailableRequest, is_trainer_available_use_case)
+
+        mediator.register(CreateSubscriptionPaymentRequest, create_subscription_payment_use_case)
+        mediator.register(ConfirmPaymentRequest, confirm_payment_use_case)
+        mediator.register(RejectPaymentRequest, reject_payment_use_case)
+        mediator.register(GetPaymentMethodsRequest, get_payment_methods_use_case)
+        mediator.register(GetPaymentByExternalIdRequest, get_payment_by_external_id_use_case)
 
         return mediator

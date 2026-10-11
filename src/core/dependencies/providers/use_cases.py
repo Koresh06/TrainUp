@@ -51,7 +51,6 @@ from src.application.use_cases.subscription.get_active import (
 from src.application.use_cases.subscription.get_active_price_plans import (
     GetActivePricePlansUseCase,
 )
-from src.application.use_cases.subscription.purchse import PurchaseSubscriptionUseCase
 from src.application.use_cases.trainer.get_by_tg_id import GetTrainerByTgIdUseCase
 from src.application.use_cases.trainer.get_clients_by_trainer import (
     GetClientsByTrainerUseCase,
@@ -125,6 +124,53 @@ from src.application.use_cases.trainer.get_by_id import GetTrainerByIdUseCase
 from src.application.interfaces.notification_service import NotificationService
 
 from src.infrastructure.database.transaction_manager.base import TransactionManager
+
+from src.application.use_cases.client_request.create_program import CreateProgramRequestUseCase
+from src.application.use_cases.client_request.create_consultation import CreateConsultationRequestUseCase
+from src.application.use_cases.client_request.create_feedback import CreateFeedbackUseCase
+from src.application.use_cases.client_request.get_by_trainer import GetClientRequestsByTrainerUseCase
+from src.application.use_cases.client_request.get_by_id import GetClientRequestByIdUseCase
+from src.application.use_cases.client_request.update_status import UpdateClientRequestStatusUseCase
+from src.application.use_cases.faq.get_active import GetActiveFaqItemsUseCase
+from src.application.use_cases.faq.get_by_id import GetFaqItemByIdUseCase
+from src.application.use_cases.faq.add import AddFaqItemUseCase
+from src.application.use_cases.faq.deactivate import DeactivateFaqItemUseCase
+from src.application.use_cases.calendar.set_slot_blocked import SetSlotBlockedUseCase
+from src.application.use_cases.calendar.set_day_blocked import SetDayBlockedUseCase
+from src.application.use_cases.booking.get_upcoming_by_client import GetUpcomingBookingsByClientUseCase
+from src.application.use_cases.client.update_answers import UpdateClientAnswersUseCase
+from src.application.use_cases.booking.send_plan_next_reminder import SendPlanNextTrainingReminderUseCase
+from src.domain.repositories.consultation import ConsultationRequestRepository
+from src.domain.repositories.faq import FaqRepository
+from src.domain.repositories.feedback import FeedbackRepository
+from src.domain.repositories.program import ProgramRequestRepository
+
+from src.application.use_cases.subscription.grant import GrantSubscriptionUseCase
+from src.application.use_cases.subscription.check_expiring import CheckExpiringSubscriptionsUseCase
+from src.application.use_cases.subscription.get_by_trainer import GetSubscriptionsByTrainerUseCase
+from src.application.use_cases.access.get_user_access import GetUserAccessUseCase
+from src.application.use_cases.trainer.set_blocked import SetTrainerBlockedUseCase
+from src.application.use_cases.client.set_blocked import SetClientBlockedUseCase
+from src.application.use_cases.client.search import SearchClientsUseCase
+from src.application.use_cases.trainer.get_all import GetAllTrainersUseCase
+from src.application.use_cases.admin.get_overview_stats import GetAdminOverviewStatsUseCase
+from src.application.use_cases.admin.get_trainer_report import GetAdminTrainerReportUseCase
+from src.application.use_cases.admin.export_report import ExportReportUseCase
+from src.application.use_cases.mailing.enqueue import EnqueueMailingUseCase
+from src.application.use_cases.mailing.execute import ExecuteMailingUseCase
+from src.application.use_cases.mailing.execute_batch import ExecuteMailingBatchUseCase
+from src.application.interfaces.mailing_progress import MailingProgressStore
+from src.application.interfaces.task_queue import TaskQueue
+
+from src.application.use_cases.access.is_trainer_available import IsTrainerAvailableUseCase
+
+from src.application.use_cases.payment.create_subscription_payment import CreateSubscriptionPaymentUseCase
+from src.application.use_cases.payment.confirm import ConfirmPaymentUseCase
+from src.application.use_cases.payment.reject import RejectPaymentUseCase
+from src.application.use_cases.payment.get_methods import GetPaymentMethodsUseCase
+from src.application.use_cases.payment.get_by_external_id import GetPaymentByExternalIdUseCase
+from src.application.services.payment_provider_registry import PaymentProviderRegistry
+from src.domain.repositories.payment import PaymentRepository
 
 
 class UseCasesProvider(Provider):
@@ -213,6 +259,9 @@ class UseCasesProvider(Provider):
         trainer_repo: TrainerRepository,
         client_repo: ClientRepository,
         pricing_rule_repo: TrainerPricingRuleRepository,
+        booking_settings_repo: TrainerBookingSettingsRepository,
+        answer_repo: ClientAnswerRepository,
+        question_repo: RegistrationQuestionRepository,
         notification_service: NotificationService,
         transaction_manager: TransactionManager,
     ) -> CreateBookingUseCase:
@@ -222,6 +271,9 @@ class UseCasesProvider(Provider):
             trainer_repo=trainer_repo,
             client_repo=client_repo,
             pricing_rule_repo=pricing_rule_repo,
+            booking_settings_repo=booking_settings_repo,
+            answer_repo=answer_repo,
+            question_repo=question_repo,
             notification_service=notification_service,
             transaction_manager=transaction_manager,
         )
@@ -358,19 +410,6 @@ class UseCasesProvider(Provider):
         )
 
     @provide
-    def purchase_subscription_use_case(
-        self,
-        price_plan_repo: SubscriptionPricePlanRepository,
-        subscription_repo: TrainerSubscriptionRepository,
-        transaction_manager: TransactionManager,
-    ) -> PurchaseSubscriptionUseCase:
-        return PurchaseSubscriptionUseCase(
-            price_plan_repo=price_plan_repo,
-            subscription_repo=subscription_repo,
-            transaction_manager=transaction_manager,
-        )
-
-    @provide
     def get_active_price_plans_use_case(
         self,
         price_plan_repo: SubscriptionPricePlanRepository,
@@ -422,14 +461,12 @@ class UseCasesProvider(Provider):
         template_repo: SlotTemplateRepository,
         slot_repo: CalendarSlotRepository,
         calendar_service: CalendarService,
-        booking_settings_repo: TrainerBookingSettingsRepository,
         transaction_manager: TransactionManager,
     ) -> SyncWeekdaySlotTemplatesUseCase:
         return SyncWeekdaySlotTemplatesUseCase(
             template_repo=template_repo,
             slot_repo=slot_repo,
             calendar_service=calendar_service,
-            booking_settings_repo=booking_settings_repo,
             transaction_manager=transaction_manager,
         )
 
@@ -708,10 +745,18 @@ class UseCasesProvider(Provider):
     def deactivate_reccuring_booking_use_case(
         self,
         recurring_repo: RecurringBookingRepository,
+        booking_repo: BookingRepository,
+        client_repo: ClientRepository,
+        cancel_use_case: CancelBookingUseCase,
+        notification_service: NotificationService,
         transaction_manager: TransactionManager,
     ) -> DeactivateRecurringBookingUseCase:
         return DeactivateRecurringBookingUseCase(
             recurring_repo=recurring_repo,
+            booking_repo=booking_repo,
+            client_repo=client_repo,
+            cancel_use_case=cancel_use_case,
+            notification_service=notification_service,
             transaction_manager=transaction_manager,
         )
 
@@ -790,10 +835,12 @@ class UseCasesProvider(Provider):
     def mark_booking_completed_use_case(
         self,
         booking_repo: BookingRepository,
+        booking_scheduler: BookingScheduler,
         transaction_manager: TransactionManager,
     ) -> MarkBookingCompletedUseCase:
         return MarkBookingCompletedUseCase(
             booking_repo=booking_repo,
+            booking_scheduler=booking_scheduler,
             transaction_manager=transaction_manager,
         )
 
@@ -813,4 +860,473 @@ class UseCasesProvider(Provider):
     ) -> GetActiveRecurringBookingsByClientUseCase:
         return GetActiveRecurringBookingsByClientUseCase(
             recurring_repo=recurring_repo,
+        )
+
+    @provide
+    def create_program_request_use_case(
+        self,
+        program_repo: ProgramRequestRepository,
+        trainer_repo: TrainerRepository,
+        client_repo: ClientRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> CreateProgramRequestUseCase:
+        return CreateProgramRequestUseCase(
+            program_repo=program_repo,
+            trainer_repo=trainer_repo,
+            client_repo=client_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def create_consultation_request_use_case(
+        self,
+        consultation_repo: ConsultationRequestRepository,
+        trainer_repo: TrainerRepository,
+        client_repo: ClientRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> CreateConsultationRequestUseCase:
+        return CreateConsultationRequestUseCase(
+            consultation_repo=consultation_repo,
+            trainer_repo=trainer_repo,
+            client_repo=client_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def create_feedback_use_case(
+        self,
+        feedback_repo: FeedbackRepository,
+        trainer_repo: TrainerRepository,
+        client_repo: ClientRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> CreateFeedbackUseCase:
+        return CreateFeedbackUseCase(
+            feedback_repo=feedback_repo,
+            trainer_repo=trainer_repo,
+            client_repo=client_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_client_requests_by_trainer_use_case(
+        self,
+        program_repo: ProgramRequestRepository,
+        consultation_repo: ConsultationRequestRepository,
+        feedback_repo: FeedbackRepository,
+    ) -> GetClientRequestsByTrainerUseCase:
+        return GetClientRequestsByTrainerUseCase(
+            program_repo=program_repo,
+            consultation_repo=consultation_repo,
+            feedback_repo=feedback_repo,
+        )
+
+    @provide
+    def get_client_request_by_id_use_case(
+        self,
+        program_repo: ProgramRequestRepository,
+        consultation_repo: ConsultationRequestRepository,
+        feedback_repo: FeedbackRepository,
+    ) -> GetClientRequestByIdUseCase:
+        return GetClientRequestByIdUseCase(
+            program_repo=program_repo,
+            consultation_repo=consultation_repo,
+            feedback_repo=feedback_repo,
+        )
+
+    @provide
+    def update_client_request_status_use_case(
+        self,
+        get_request_use_case: GetClientRequestByIdUseCase,
+        transaction_manager: TransactionManager,
+    ) -> UpdateClientRequestStatusUseCase:
+        return UpdateClientRequestStatusUseCase(
+            get_request_use_case=get_request_use_case,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_active_faq_items_use_case(
+        self,
+        faq_repo: FaqRepository,
+    ) -> GetActiveFaqItemsUseCase:
+        return GetActiveFaqItemsUseCase(
+            faq_repo=faq_repo,
+        )
+
+    @provide
+    def get_faq_item_by_id_use_case(
+        self,
+        faq_repo: FaqRepository,
+    ) -> GetFaqItemByIdUseCase:
+        return GetFaqItemByIdUseCase(
+            faq_repo=faq_repo,
+        )
+
+    @provide
+    def add_faq_item_use_case(
+        self,
+        faq_repo: FaqRepository,
+        transaction_manager: TransactionManager,
+    ) -> AddFaqItemUseCase:
+        return AddFaqItemUseCase(
+            faq_repo=faq_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def deactivate_faq_item_use_case(
+        self,
+        faq_repo: FaqRepository,
+        transaction_manager: TransactionManager,
+    ) -> DeactivateFaqItemUseCase:
+        return DeactivateFaqItemUseCase(
+            faq_repo=faq_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def set_slot_blocked_use_case(
+        self,
+        calendar_service: CalendarService,
+        transaction_manager: TransactionManager,
+    ) -> SetSlotBlockedUseCase:
+        return SetSlotBlockedUseCase(
+            calendar_service=calendar_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def set_day_blocked_use_case(
+        self,
+        calendar_service: CalendarService,
+        transaction_manager: TransactionManager,
+    ) -> SetDayBlockedUseCase:
+        return SetDayBlockedUseCase(
+            calendar_service=calendar_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_upcoming_bookings_by_client_use_case(
+        self,
+        booking_repo: BookingRepository,
+    ) -> GetUpcomingBookingsByClientUseCase:
+        return GetUpcomingBookingsByClientUseCase(
+            booking_repo=booking_repo,
+        )
+
+    @provide
+    def update_client_answers_use_case(
+        self,
+        answer_repo: ClientAnswerRepository,
+        transaction_manager: TransactionManager,
+    ) -> UpdateClientAnswersUseCase:
+        return UpdateClientAnswersUseCase(
+            answer_repo=answer_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def send_plan_next_training_reminder_use_case(
+        self,
+        booking_repo: BookingRepository,
+        slot_repo: CalendarSlotRepository,
+        client_repo: ClientRepository,
+        trainer_repo: TrainerRepository,
+        recurring_repo: RecurringBookingRepository,
+        notification_service: NotificationService,
+    ) -> SendPlanNextTrainingReminderUseCase:
+        return SendPlanNextTrainingReminderUseCase(
+            booking_repo=booking_repo,
+            slot_repo=slot_repo,
+            client_repo=client_repo,
+            trainer_repo=trainer_repo,
+            recurring_repo=recurring_repo,
+            notification_service=notification_service,
+        )
+
+    @provide
+    def grant_subscription_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+        subscription_repo: TrainerSubscriptionRepository,
+        price_plan_repo: SubscriptionPricePlanRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> GrantSubscriptionUseCase:
+        return GrantSubscriptionUseCase(
+            trainer_repo=trainer_repo,
+            subscription_repo=subscription_repo,
+            price_plan_repo=price_plan_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def check_expiring_subscriptions_use_case(
+        self,
+        subscription_repo: TrainerSubscriptionRepository,
+        trainer_repo: TrainerRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> CheckExpiringSubscriptionsUseCase:
+        return CheckExpiringSubscriptionsUseCase(
+            subscription_repo=subscription_repo,
+            trainer_repo=trainer_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_subscriptions_by_trainer_use_case(
+        self,
+        subscription_repo: TrainerSubscriptionRepository,
+    ) -> GetSubscriptionsByTrainerUseCase:
+        return GetSubscriptionsByTrainerUseCase(
+            subscription_repo=subscription_repo,
+        )
+
+    @provide
+    def get_user_access_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+        client_repo: ClientRepository,
+        subscription_repo: TrainerSubscriptionRepository,
+    ) -> GetUserAccessUseCase:
+        return GetUserAccessUseCase(
+            trainer_repo=trainer_repo,
+            client_repo=client_repo,
+            subscription_repo=subscription_repo,
+        )
+
+    @provide
+    def set_trainer_blocked_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> SetTrainerBlockedUseCase:
+        return SetTrainerBlockedUseCase(
+            trainer_repo=trainer_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def set_client_blocked_use_case(
+        self,
+        client_repo: ClientRepository,
+        transaction_manager: TransactionManager,
+    ) -> SetClientBlockedUseCase:
+        return SetClientBlockedUseCase(
+            client_repo=client_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def search_clients_use_case(
+        self,
+        client_repo: ClientRepository,
+    ) -> SearchClientsUseCase:
+        return SearchClientsUseCase(
+            client_repo=client_repo,
+        )
+
+    @provide
+    def get_all_trainers_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+    ) -> GetAllTrainersUseCase:
+        return GetAllTrainersUseCase(
+            trainer_repo=trainer_repo,
+        )
+
+    @provide
+    def get_admin_overview_stats_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+        client_repo: ClientRepository,
+        booking_repo: BookingRepository,
+        recurring_repo: RecurringBookingRepository,
+        subscription_repo: TrainerSubscriptionRepository,
+        program_repo: ProgramRequestRepository,
+        consultation_repo: ConsultationRequestRepository,
+        feedback_repo: FeedbackRepository,
+        payment_repo: PaymentRepository,
+    ) -> GetAdminOverviewStatsUseCase:
+        return GetAdminOverviewStatsUseCase(
+            trainer_repo=trainer_repo,
+            client_repo=client_repo,
+            booking_repo=booking_repo,
+            recurring_repo=recurring_repo,
+            subscription_repo=subscription_repo,
+            program_repo=program_repo,
+            consultation_repo=consultation_repo,
+            feedback_repo=feedback_repo,
+            payment_repo=payment_repo,
+        )
+
+    @provide
+    def get_admin_trainer_report_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+        client_repo: ClientRepository,
+        booking_repo: BookingRepository,
+        recurring_repo: RecurringBookingRepository,
+        subscription_repo: TrainerSubscriptionRepository,
+        program_repo: ProgramRequestRepository,
+        consultation_repo: ConsultationRequestRepository,
+        feedback_repo: FeedbackRepository,
+    ) -> GetAdminTrainerReportUseCase:
+        return GetAdminTrainerReportUseCase(
+            trainer_repo=trainer_repo,
+            client_repo=client_repo,
+            booking_repo=booking_repo,
+            recurring_repo=recurring_repo,
+            subscription_repo=subscription_repo,
+            program_repo=program_repo,
+            consultation_repo=consultation_repo,
+            feedback_repo=feedback_repo,
+        )
+
+    @provide
+    def export_report_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+        client_repo: ClientRepository,
+        booking_repo: BookingRepository,
+        slot_repo: CalendarSlotRepository,
+        subscription_repo: TrainerSubscriptionRepository,
+    ) -> ExportReportUseCase:
+        return ExportReportUseCase(
+            trainer_repo=trainer_repo,
+            client_repo=client_repo,
+            booking_repo=booking_repo,
+            slot_repo=slot_repo,
+            subscription_repo=subscription_repo,
+        )
+
+    @provide
+    def enqueue_mailing_use_case(
+        self,
+        task_queue: TaskQueue,
+    ) -> EnqueueMailingUseCase:
+        return EnqueueMailingUseCase(
+            task_queue=task_queue,
+        )
+
+    @provide
+    def execute_mailing_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+        client_repo: ClientRepository,
+        notification_service: NotificationService,
+        task_queue: TaskQueue,
+    ) -> ExecuteMailingUseCase:
+        return ExecuteMailingUseCase(
+            trainer_repo=trainer_repo,
+            client_repo=client_repo,
+            notification_service=notification_service,
+            task_queue=task_queue,
+        )
+
+    @provide
+    def execute_mailing_batch_use_case(
+        self,
+        notification_service: NotificationService,
+        progress_store: MailingProgressStore,
+    ) -> ExecuteMailingBatchUseCase:
+        return ExecuteMailingBatchUseCase(
+            notification_service=notification_service,
+            progress_store=progress_store,
+        )
+
+    @provide
+    def is_trainer_available_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+        subscription_repo: TrainerSubscriptionRepository,
+    ) -> IsTrainerAvailableUseCase:
+        return IsTrainerAvailableUseCase(
+            trainer_repo=trainer_repo,
+            subscription_repo=subscription_repo,
+        )
+
+    @provide
+    def create_subscription_payment_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+        price_plan_repo: SubscriptionPricePlanRepository,
+        payment_repo: PaymentRepository,
+        provider_registry: PaymentProviderRegistry,
+        confirm_use_case: ConfirmPaymentUseCase,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> CreateSubscriptionPaymentUseCase:
+        return CreateSubscriptionPaymentUseCase(
+            trainer_repo=trainer_repo,
+            price_plan_repo=price_plan_repo,
+            payment_repo=payment_repo,
+            provider_registry=provider_registry,
+            confirm_use_case=confirm_use_case,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def confirm_payment_use_case(
+        self,
+        payment_repo: PaymentRepository,
+        price_plan_repo: SubscriptionPricePlanRepository,
+        subscription_repo: TrainerSubscriptionRepository,
+        trainer_repo: TrainerRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> ConfirmPaymentUseCase:
+        return ConfirmPaymentUseCase(
+            payment_repo=payment_repo,
+            price_plan_repo=price_plan_repo,
+            subscription_repo=subscription_repo,
+            trainer_repo=trainer_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def reject_payment_use_case(
+        self,
+        payment_repo: PaymentRepository,
+        trainer_repo: TrainerRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> RejectPaymentUseCase:
+        return RejectPaymentUseCase(
+            payment_repo=payment_repo,
+            trainer_repo=trainer_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_payment_methods_use_case(
+        self,
+        provider_registry: PaymentProviderRegistry,
+    ) -> GetPaymentMethodsUseCase:
+        return GetPaymentMethodsUseCase(
+            provider_registry=provider_registry,
+        )
+
+    @provide
+    def get_payment_by_external_id_use_case(
+        self,
+        payment_repo: PaymentRepository,
+    ) -> GetPaymentByExternalIdUseCase:
+        return GetPaymentByExternalIdUseCase(
+            payment_repo=payment_repo,
         )
