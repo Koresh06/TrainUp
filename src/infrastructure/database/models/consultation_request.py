@@ -58,6 +58,7 @@ class ConsultationRequestModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             consultation_type=self.consultation_type,
             comment=self.comment,
             status=self.status,
+            created_at=self.created_at,
         )
 
     def update_model(self, entity: ConsultationRequest) -> None:

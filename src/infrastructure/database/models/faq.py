@@ -1,20 +1,14 @@
-from datetime import datetime
-from decimal import Decimal
-from typing import TYPE_CHECKING
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import (
-    DateTime,
-    ForeignKey,
-    BigInteger,
     Integer,
-    VARCHAR,
     Boolean,
     Enum as SqlEnum,
     TEXT,
 )
 
 from src.domain.entities.faq import FaqItem
+from src.domain.enums.faq import FaqAudience
 
 from .base import BaseModel, CreatedAtMixin, UpdatedAtMixin
 
@@ -27,6 +21,12 @@ class FaqItemModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     answer: Mapped[str] = mapped_column(TEXT)
     order: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    audience: Mapped[FaqAudience] = mapped_column(
+        SqlEnum(FaqAudience),
+        default=FaqAudience.CLIENT,
+        server_default=FaqAudience.CLIENT.name,
+        index=True,
+    )
 
     @classmethod
     def from_entity(cls, entity: "FaqItem") -> "FaqItemModel":
@@ -35,6 +35,7 @@ class FaqItemModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             answer=entity.answer,
             order=entity.order,
             is_active=entity.is_active,
+            audience=entity.audience,
         )
 
     def to_entity(self) -> "FaqItem":
@@ -44,6 +45,7 @@ class FaqItemModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             answer=self.answer,
             order=self.order,
             is_active=self.is_active,
+            audience=self.audience,
         )
 
     def update_model(self, entity: "FaqItem") -> None:
@@ -51,3 +53,4 @@ class FaqItemModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.answer = entity.answer
         self.order = entity.order
         self.is_active = entity.is_active
+        self.audience = entity.audience

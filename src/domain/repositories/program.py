@@ -1,6 +1,8 @@
+from datetime import datetime
 from typing import Protocol
 
 from src.domain.entities.program import ProgramRequest
+from src.domain.enums.request import RequestStatus
 
 
 class ProgramRequestRepository(Protocol):
@@ -14,4 +16,14 @@ class ProgramRequestRepository(Protocol):
         ...
 
     async def delete(self, program_request_id: int) -> None:
+        ...
+
+    async def get_by_trainer_id(
+        self, trainer_id: int, statuses: list[RequestStatus]
+    ) -> list[ProgramRequest]:
+        ...
+
+    async def count_by_trainer_created_between(
+        self, created_from: datetime, created_to: datetime
+    ) -> dict[int, int]:
         ...

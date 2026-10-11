@@ -1,4 +1,3 @@
-import re
 
 
 def validate_full_name(value: str) -> tuple[str, str | None]:

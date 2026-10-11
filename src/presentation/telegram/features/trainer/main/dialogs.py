@@ -1,15 +1,15 @@
-from aiogram import F
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.kbd import Column, Button
-from aiogram_dialog.widgets.text import Const
+from aiogram_dialog.widgets.text import Const, Format
 
 
 from .states import TrainerMainSG
+from .getters import trainer_main_getter
 from .handlers import on_menu_item_click
 
 trainer_main_dialog = Dialog(
     Window(
-        Const("Кабинет тренера"),
+        Format("🏋 <b>Кабинет тренера</b>{subscription_line}"),
         Column(
             Button(
                 Const("🔗 Тренерская ссылка"),
@@ -19,6 +19,11 @@ trainer_main_dialog = Dialog(
             Button(
                 Const("📋 Бронирования"),
                 id="bookings",
+                on_click=on_menu_item_click,
+            ),
+            Button(
+                Format("📨 Заявки{new_requests_badge}"),
+                id="requests",
                 on_click=on_menu_item_click,
             ),
             Button(
@@ -46,7 +51,13 @@ trainer_main_dialog = Dialog(
                 id="stats",
                 on_click=on_menu_item_click,
             ),
+            Button(
+                Const("❓ Помощь"),
+                id="help",
+                on_click=on_menu_item_click,
+            ),
         ),
         state=TrainerMainSG.main,
+        getter=trainer_main_getter,
     )
 )

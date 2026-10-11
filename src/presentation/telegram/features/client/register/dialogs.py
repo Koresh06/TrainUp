@@ -15,6 +15,11 @@ from aiogram_dialog.widgets.style import Style
 
 from src.presentation.telegram.features.error_handler import on_input_error
 from src.presentation.telegram.features.handlers_phone import on_phone_input_success, on_phone_received_contact, validate_phone_number
+from src.presentation.telegram.features.client.questionnaire import (
+    has_text_answer,
+    on_option_toggle,
+)
+
 from .states import ClientRegisterSG
 from .validator import (
     validate_full_name,
@@ -23,8 +28,9 @@ from .validator import (
 from .handlers import (
     on_full_name_success,
     on_multi_select_next,
-    on_option_toggle,
     on_age_input_success,
+    on_confirm_back,
+    on_keep_text_answer,
     on_question_back,
     on_register_confirm,
     on_sport_experience_selected,
@@ -113,7 +119,7 @@ client_register_dialog = Dialog(
         getter=sport_experience_getter,
     ),
     Window(
-        Format("<b>{question_label}</b>"),
+        Format("<b>{question_label}</b>{question_hint}"),
         Group(
             Select(
                 Format("{item[label]}"),
@@ -135,6 +141,12 @@ client_register_dialog = Dialog(
             on_click=on_multi_select_next,
             style=Style(style=ButtonStyle.SUCCESS),
             when=is_multi_select,
+        ),
+        Button(
+            Const("Оставить как есть ➡️"),
+            id="question_keep_text",
+            on_click=on_keep_text_answer,
+            when=has_text_answer,
         ),
         Button(
             Const("⬅️ Назад"),
@@ -159,7 +171,7 @@ client_register_dialog = Dialog(
             on_click=on_register_confirm,
             style=Style(style=ButtonStyle.SUCCESS),
         ),
-        Back(Const("⬅️ Назад")),
+        Button(Const("⬅️ Назад"), id="confirm_back", on_click=on_confirm_back),
         state=ClientRegisterSG.confirm,
         getter=register_confirm_getter,
     ),

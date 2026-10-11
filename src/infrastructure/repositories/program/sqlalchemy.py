@@ -1,7 +1,10 @@
-from sqlalchemy import select
+from datetime import datetime
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.entities.program import ProgramRequest
+from src.domain.enums.request import RequestStatus
 from src.domain.exception.program import ProgramRequestNotFoundException
 from src.domain.repositories.program import ProgramRequestRepository
 from src.infrastructure.database.models import ProgramRequestModel
@@ -53,3 +56,31 @@ class SQLAlchemyProgramRequestRepo(ProgramRequestRepository):
             raise ProgramRequestNotFoundException(program_request_id=program_request_id)
         await self._session.delete(model)
         await self._session.flush()
+
+    async def get_by_trainer_id(
+        self, trainer_id: int, statuses: list[RequestStatus]
+    ) -> list[ProgramRequest]:
+        query = (
+            select(ProgramRequestModel)
+            .where(
+                ProgramRequestModel.trainer_id == trainer_id,
+                ProgramRequestModel.status.in_(statuses),
+            )
+            .order_by(ProgramRequestModel.created_at.desc())
+        )
+        result = await self._session.execute(query)
+        return [model.to_entity() for model in result.scalars().all()]
+
+    async def count_by_trainer_created_between(
+        self, created_from: datetime, created_to: datetime
+    ) -> dict[int, int]:
+        query = (
+            select(ProgramRequestModel.trainer_id, func.count())
+            .where(
+                ProgramRequestModel.created_at >= created_from,
+                ProgramRequestModel.created_at < created_to,
+            )
+            .group_by(ProgramRequestModel.trainer_id)
+        )
+        result = await self._session.execute(query)
+        return dict(result.all())

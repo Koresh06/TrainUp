@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.entities.faq import FaqItem
+from src.domain.enums.faq import FaqAudience
 from src.domain.exception.faq import FaqItemNotFoundException
 from src.domain.repositories.faq import FaqRepository
 from src.infrastructure.database.models import FaqItemModel
@@ -37,10 +38,13 @@ class SQLAlchemyFaqRepo(FaqRepository):
         await self._session.flush()
         return model.to_entity()
 
-    async def get_active(self) -> list[FaqItem]:
+    async def get_active(self, audience: FaqAudience) -> list[FaqItem]:
         query = (
             select(FaqItemModel)
-            .where(FaqItemModel.is_active.is_(True))
+            .where(
+                FaqItemModel.is_active.is_(True),
+                FaqItemModel.audience == audience,
+            )
             .order_by(FaqItemModel.order)
         )
         result = await self._session.execute(query)

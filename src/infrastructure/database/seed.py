@@ -2,8 +2,12 @@ import logging
 
 from decimal import Decimal
 
+from src.domain.constants import SUBSCRIPTION_WARNING_HOURS
+from src.domain.entities.faq import FaqItem
+from src.domain.enums.faq import FaqAudience
 from src.domain.entities.subscription_price_plan import SubscriptionPricePlan
 from src.domain.enums.subscription import SubscriptionPlan
+from src.domain.repositories.faq import FaqRepository
 from src.domain.repositories.subscription_price_plan import (
     SubscriptionPricePlanRepository,
 )
@@ -17,6 +21,119 @@ DEFAULT_SUBSCRIPTION_PRICE_PLANS: list[tuple[SubscriptionPlan, int, Decimal]] = 
     (SubscriptionPlan.THREE_MONTHS, 3, Decimal("80")),
     (SubscriptionPlan.SIX_MONTHS, 6, Decimal("150")),
     (SubscriptionPlan.TWELVE_MONTHS, 12, Decimal("280")),
+]
+
+def _hours_label(hours: int) -> str:
+    return f"{hours // 24} сут." if hours % 24 == 0 else f"{hours} ч."
+
+
+# базовые наборы FAQ на старте — дальше админ редактирует их командой /admin
+DEFAULT_CLIENT_FAQ_ITEMS: list[tuple[str, str]] = [
+    (
+        "Как записаться на тренировку?",
+        "«📅 Записаться на занятия» → день → время → «Подтвердить». "
+        "Запись ждёт подтверждения тренера, после него придёт уведомление.",
+    ),
+    (
+        "Как отменить или перенести тренировку?",
+        "Напишите тренеру — контакты в «👤 Ваш инструктор» и в сообщении о "
+        "подтверждении. Перед тренировкой придёт напоминание с кнопкой отмены.",
+    ),
+    (
+        "Где посмотреть мои записи?",
+        "«📋 Мои записи» — все ближайшие тренировки и их статус.",
+    ),
+    (
+        "Как оплатить занятия?",
+        "Оплата — напрямую тренеру, наличными или переводом. "
+        "Онлайн-оплата в боте появится позже.",
+    ),
+    (
+        "Что взять с собой на тренировку?",
+        "Удобную спортивную форму, сменную обувь, воду и полотенце.",
+    ),
+    (
+        "Можно ли заниматься при травмах или проблемах со здоровьем?",
+        "Да, но обязательно укажите ограничения в «📝 Моя анкета» — "
+        "тренер учтёт их при подготовке тренировок.",
+    ),
+    (
+        "Почему запись недоступна?",
+        "Тренер временно не принимает записи через бота. "
+        "Свяжитесь с ним напрямую или попробуйте позже.",
+    ),
+]
+
+_warnings = " и за ".join(_hours_label(h) for h in SUBSCRIPTION_WARNING_HOURS)
+
+DEFAULT_TRAINER_FAQ_ITEMS: list[tuple[str, str]] = [
+    (
+        "Как клиенты попадают ко мне?",
+        "«🔗 Тренерская ссылка» → отправьте ссылку клиенту. По ней он регистрируется "
+        "и навсегда привязывается к вам. Без ссылки бот клиенту недоступен.",
+    ),
+    (
+        "Как настроить расписание?",
+        "⚙️ Настройки → 🗓 Расписание → день недели → время → ➕/➖ количество мест → "
+        "«💾 Сохранить». Слоты создаются автоматически на 60 дней вперёд. "
+        "Клиенты видят их на горизонт из ⚙️ Настройки → 📅 Запись.",
+    ),
+    (
+        "Как закрыть день или время (отпуск, болезнь)?",
+        "⚙️ Настройки → 🚫 Блокировка: нажмите на время или «Закрыть весь день». "
+        "Существующие записи не отменяются — отмените или перенесите их "
+        "в «📋 Бронирования».",
+    ),
+    (
+        "Как работает подтверждение записи?",
+        "Новая запись приходит в рабочую группу с кнопками «Подтвердить/Отменить». "
+        "После подтверждения клиент получает уведомление, напоминание перед "
+        "тренировкой, а после неё запись завершается автоматически.",
+    ),
+    (
+        "Как отменить или перенести тренировку?",
+        "📋 Бронирования → Текущие → запись → «🔁 Перенести» или «❌ Отменить». "
+        "Клиент получит уведомление.",
+    ),
+    (
+        "Как работают постоянные клиенты?",
+        "🔁 Постоянные клиенты → ➕ → клиент → день → время. Тренировка создаётся "
+        "каждую неделю автоматически и сразу подтверждена. «Изменить день/время» "
+        "переносит ближайшую и все следующие. «Остановить» отменяет все будущие.",
+    ),
+    (
+        "Что такое заявки?",
+        "📨 Заявки — программа тренировок, консультация, звонок, сообщение. "
+        "Приходят в группу с кнопками «В работу/Закрыть», в кабинете — фильтр "
+        "по статусу. Детали и оплату обсуждаете с клиентом напрямую.",
+    ),
+    (
+        "Как задать цены?",
+        "⚙️ Настройки → 💰 Цены: граница времени, цена до и после неё, доплата "
+        "тренера. Цена фиксируется в записи в момент бронирования.",
+    ),
+    (
+        "Как изменить анкету клиента?",
+        "⚙️ Настройки → 📋 Вопросы анкеты. У системных вопросов меняются варианты, "
+        "свои вопросы — текстовые. Вариант «Другое» клиент обязан расписать текстом.",
+    ),
+    (
+        "Лимит записей и напоминания",
+        "⚙️ Настройки → 📅 Запись: горизонт календаря (1–8 недель) и сколько "
+        "активных записей может быть у клиента. 🔔 Напоминания: за сколько часов "
+        "до тренировки напоминать клиенту.",
+    ),
+    (
+        "Что будет, когда закончится подписка?",
+        f"Срок — в «👤 Профиль». Предупреждение придёт за {_warnings} до окончания. "
+        "После окончания кабинет и запись ваших клиентов приостанавливаются "
+        "до продления — кнопка «💳 Продлить подписку».",
+    ),
+    (
+        "Куда приходят уведомления?",
+        "В рабочую группу/канал, выбранный при регистрации. Бот должен оставаться "
+        "там администратором, иначе уведомления не дойдут.",
+    ),
 ]
 
 
@@ -52,3 +169,31 @@ async def seed_subscription_price_plans(container) -> None:
             "[SeedSubscriptionPricePlans] created %s default plans",
             len(DEFAULT_SUBSCRIPTION_PRICE_PLANS),
         )
+
+
+async def seed_faq_items(container) -> None:
+    async with container() as request_container:
+        repo: FaqRepository = await request_container.get(FaqRepository)
+        transaction_manager: TransactionManager = await request_container.get(
+            TransactionManager
+        )
+
+        for audience, items in (
+            (FaqAudience.CLIENT, DEFAULT_CLIENT_FAQ_ITEMS),
+            (FaqAudience.TRAINER, DEFAULT_TRAINER_FAQ_ITEMS),
+        ):
+            existing = await repo.get_active(audience)
+            if existing:
+                logger.info(
+                    "[SeedFaqItems] skip %s — %s items already exist",
+                    audience.value, len(existing),
+                )
+                continue
+
+            for order, (question, answer) in enumerate(items):
+                await repo.save(
+                    FaqItem(question=question, answer=answer, order=order, audience=audience)
+                )
+            logger.info("[SeedFaqItems] %s: created %s items", audience.value, len(items))
+
+        await transaction_manager.commit()

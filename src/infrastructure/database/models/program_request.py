@@ -1,12 +1,8 @@
-from datetime import datetime
-from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import (
-    DateTime,
     ForeignKey,
-    BigInteger,
     Integer,
     VARCHAR,
     Boolean,
@@ -74,6 +70,7 @@ class ProgramRequestModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             direction=self.direction,
             comment=self.comment,
             status=self.status,
+            created_at=self.created_at,
         )
 
     def update_model(self, entity: ProgramRequest) -> None:

@@ -5,6 +5,9 @@ from aiogram.types import Message
 from aiogram_dialog import DialogManager, StartMode
 
 from src.application.mediator import Mediator
+from src.application.use_cases.access.is_trainer_available import (
+    IsTrainerAvailableRequest,
+)
 from src.application.use_cases.client.get_by_tg_id import GetClientByTgIdRequest
 from src.application.use_cases.invite_link.resolve import ResolveInviteLinkRequest
 from src.domain.entities.client import Client
@@ -16,6 +19,7 @@ from src.domain.exception.invite_link import (
 )
 from src.presentation.telegram.features.client.register.states import ClientRegisterSG
 from src.presentation.telegram.features.client.menu.states import ClientMenuSG
+from src.presentation.telegram.middlewares.access import TRAINER_UNAVAILABLE_TEXT
 
 router = Router()
 
@@ -42,8 +46,13 @@ async def process_start_with_token(
         return
 
     try:
-        await mediator.handle(GetClientByTgIdRequest(tg_id=message.from_user.id))
+        client: Client = await mediator.handle(
+            GetClientByTgIdRequest(tg_id=message.from_user.id)
+        )
     except ClientNotFoundException:
+        if not await mediator.handle(IsTrainerAvailableRequest(trainer_id=link.trainer_id)):
+            await message.answer(TRAINER_UNAVAILABLE_TEXT)
+            return
         await dialog_manager.start(
             state=ClientRegisterSG.welcome,
             data={"trainer_id": link.trainer_id},
@@ -51,9 +60,19 @@ async def process_start_with_token(
         )
         return
 
+    # клиент уже привязан к тренеру — чужая ссылка его не перепривязывает,
+    # он возвращается в меню своего тренера
+    if client.trainer_id != link.trainer_id:
+        await message.answer(
+            "ℹ️ Вы уже зарегистрированы у другого тренера — открываю ваше меню."
+        )
+    if not await mediator.handle(IsTrainerAvailableRequest(trainer_id=client.trainer_id)):
+        await message.answer(TRAINER_UNAVAILABLE_TEXT)
+        return
+
     await dialog_manager.start(
         state=ClientMenuSG.main,
-        data={"trainer_id": link.trainer_id},
+        data={"trainer_id": client.trainer_id},
         mode=StartMode.RESET_STACK,
     )
 
@@ -74,6 +93,10 @@ async def process_start_plain(
             "🚫 Доступ к боту возможен только по персональной ссылке от тренера.\n"
             "Попроси тренера отправить тебе ссылку для регистрации."
         )
+        return
+
+    if not await mediator.handle(IsTrainerAvailableRequest(trainer_id=client.trainer_id)):
+        await message.answer(TRAINER_UNAVAILABLE_TEXT)
         return
 
     await dialog_manager.start(

@@ -1,7 +1,10 @@
-from sqlalchemy import select
+from datetime import datetime
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.entities.consultation import ConsultationRequest
+from src.domain.enums.request import RequestStatus
 from src.domain.exception.consultation import ConsultationRequestNotFoundException
 from src.domain.repositories.consultation import ConsultationRequestRepository
 from src.infrastructure.database.models import ConsultationRequestModel
@@ -42,3 +45,31 @@ class SQLAlchemyConsultationRequestRepo(ConsultationRequestRepository):
 
         await self._session.flush()
         return model.to_entity()
+
+    async def get_by_trainer_id(
+        self, trainer_id: int, statuses: list[RequestStatus]
+    ) -> list[ConsultationRequest]:
+        query = (
+            select(ConsultationRequestModel)
+            .where(
+                ConsultationRequestModel.trainer_id == trainer_id,
+                ConsultationRequestModel.status.in_(statuses),
+            )
+            .order_by(ConsultationRequestModel.created_at.desc())
+        )
+        result = await self._session.execute(query)
+        return [model.to_entity() for model in result.scalars().all()]
+
+    async def count_by_trainer_created_between(
+        self, created_from: datetime, created_to: datetime
+    ) -> dict[int, int]:
+        query = (
+            select(ConsultationRequestModel.trainer_id, func.count())
+            .where(
+                ConsultationRequestModel.created_at >= created_from,
+                ConsultationRequestModel.created_at < created_to,
+            )
+            .group_by(ConsultationRequestModel.trainer_id)
+        )
+        result = await self._session.execute(query)
+        return dict(result.all())
