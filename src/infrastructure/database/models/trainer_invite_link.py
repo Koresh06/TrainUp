@@ -1,20 +1,13 @@
-from datetime import datetime
-from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import (
-    DateTime,
     ForeignKey,
-    BigInteger,
     Integer,
-    VARCHAR,
     Boolean,
-    Enum as SqlEnum,
     String,
 )
 
-from src.domain.entities.trainer import Trainer
 from src.domain.entities.trainer_invite_link import TrainerInviteLink
 
 from .base import BaseModel, CreatedAtMixin, UpdatedAtMixin

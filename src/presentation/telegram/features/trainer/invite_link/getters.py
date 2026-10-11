@@ -9,7 +9,6 @@ from src.application.use_cases.invite_link.get_active import (
     GetActiveInviteLinkRequest,
 )
 from src.domain.entities.trainer_invite_link import TrainerInviteLink
-from src.domain.exception.invite_link import TrainerInviteLinkNotFoundException
 
 logger = logging.getLogger(__name__)
 

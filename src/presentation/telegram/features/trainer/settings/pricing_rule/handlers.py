@@ -4,9 +4,7 @@ from decimal import Decimal
 from dishka.integrations.aiogram_dialog import inject, FromDishka
 from aiogram.types import Message
 from aiogram_dialog.widgets.input import ManagedTextInput
-from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager
-from aiogram_dialog.widgets.kbd import Button
 
 from src.application.mediator import Mediator
 from src.application.use_cases.trainer_pricing_rule.get_by_id import (

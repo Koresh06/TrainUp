@@ -6,10 +6,9 @@ from aiogram_dialog.widgets.kbd import (
     Cancel,
     Back,
     Button,
-    Multiselect,
     Row,
 )
-from aiogram_dialog.widgets.text import Const, Format, Multi, Progress
+from aiogram_dialog.widgets.text import Const, Format, Multi
 
 from src.domain.constants import MAX_SLOT_CAPACITY
 from src.presentation.telegram.features.trainer.settings.schedule.capacity_progress import CapacityProgress

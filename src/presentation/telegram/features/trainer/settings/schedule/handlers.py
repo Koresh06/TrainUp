@@ -1,10 +1,9 @@
 from datetime import datetime, timezone
 
 from dishka.integrations.aiogram_dialog import inject, FromDishka
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Select, Button
-from aiogram_dialog.widgets.input import ManagedTextInput
 
 from src.application.mediator import Mediator
 from src.application.use_cases.slot_template.sync_weekday import (

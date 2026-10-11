@@ -18,7 +18,6 @@ from src.application.use_cases.registration_questions.get_by_id import (
     GetRegistrationQuestionByIdRequest,
 )
 from src.domain.entities.registration_question import RegistrationQuestion
-from src.domain.enums.question_type import QuestionType
 
 from .states import TrainerQuestionsSG
 

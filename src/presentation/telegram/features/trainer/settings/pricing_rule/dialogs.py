@@ -1,5 +1,5 @@
 from aiogram_dialog import Dialog, Window
-from aiogram_dialog.widgets.kbd import Column, Cancel, Back, SwitchTo
+from aiogram_dialog.widgets.kbd import Column, Cancel, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 from aiogram_dialog.widgets.input import TextInput
 

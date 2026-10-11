@@ -10,21 +10,6 @@ from alembic import context
 from src.core.config import settings
 from src.infrastructure.database.models import (
     BaseModel,
-    ClientModel,
-    TrainerModel,
-    BookingModel,
-    CalendarSlotModel,
-    SlotTemplateModel,
-    TrainerInviteLinkModel,
-    TrainerSubscriptionModel,
-    ProgramRequestModel,
-    FeedbackMessageModel,
-    SubscriptionPricePlanModel,
-    TrainerBookingSettingsModel,
-    TrainerPricingRuleModel,
-    RegistrationQuestionModel,
-    ClientAnswerModel,
-    RecurringBookingModel,
 ) # noqa
 
 

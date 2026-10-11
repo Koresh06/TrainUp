@@ -1,7 +1,5 @@
 from dishka.integrations.aiogram_dialog import inject, FromDishka
-from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager
-from aiogram_dialog.widgets.kbd import Button, Select
 
 from src.application.mediator import Mediator
 from src.application.use_cases.registration_questions.get_all import (

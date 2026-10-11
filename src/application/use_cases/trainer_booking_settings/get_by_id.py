@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 from src.application.use_cases.base import UseCase, UseCaseRequest
-from src.domain.constants import DEFAULT_CALENDAR_HORIZON_DAYS, DEFAULT_MAX_ACTIVE_BOOKINGS
 from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
 from src.domain.exception.trainer_booking_settings import TrainerBookingSettingsNotFoundException
 from src.domain.repositories.trainer_booking_settings import TrainerBookingSettingsRepository
