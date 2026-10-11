@@ -19,6 +19,9 @@ class Settings(BaseSettings):
         case_sensitive=False,
         env_nested_delimiter="__",
         env_prefix="APP_CONFIG__",
+        # .env общий с docker compose (WEBHOOK_DOMAIN для Caddy и т.п.) —
+        # ключи не для приложения не должны ронять загрузку настроек
+        extra="ignore",
     )
 
 

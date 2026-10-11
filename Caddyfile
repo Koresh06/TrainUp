@@ -1,0 +1,16 @@
+# HTTPS-вход для webhook-сервиса (ЮKassa) и страницы возврата после оплаты.
+# Caddy сам выпускает и продлевает сертификат Let's Encrypt: нужны только
+# A-запись домена на IP сервера и открытые порты 80/443.
+{$WEBHOOK_DOMAIN} {
+	encode gzip
+
+	# наружу — только то, что нужно ЮKassa и пользователю после оплаты
+	@public path /webhook/yookassa /payment/return /health
+	handle @public {
+		reverse_proxy webhook:8080
+	}
+
+	handle {
+		respond 404
+	}
+}

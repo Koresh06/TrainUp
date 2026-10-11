@@ -30,3 +30,12 @@ async def test_every_request_has_handler(container) -> None:
         cls.__name__ for cls in _all_request_types() if cls not in mediator._handlers
     )
     assert missing == [], f"Не зарегистрированы в Mediator: {missing}"
+
+
+def test_settings_ignore_foreign_env_file_keys(tmp_path, monkeypatch) -> None:
+    # регресс: WEBHOOK_DOMAIN (для Caddy) в общем .env ронял старт приложения
+    from src.core.config import Settings
+
+    (tmp_path / ".env").write_text("WEBHOOK_DOMAIN=bot.example.com\nCOMPOSE_PROJECT_NAME=x\n")
+    monkeypatch.chdir(tmp_path)
+    Settings()

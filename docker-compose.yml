@@ -86,6 +86,25 @@ services:
         condition: service_healthy
     restart: always
 
+  # HTTPS-прокси на webhook: сертификат Let's Encrypt выпускается автоматически
+  caddy:
+    image: caddy:2
+    container_name: trainup_caddy
+    environment:
+      WEBHOOK_DOMAIN: ${WEBHOOK_DOMAIN:-bot.24timekeep.ru}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - webhook
+    restart: always
+
 volumes:
   postgres_data:
   redis_data:
+  caddy_data:
+  caddy_config:
