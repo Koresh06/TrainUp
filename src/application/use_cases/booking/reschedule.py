@@ -1,25 +1,24 @@
-from datetime import timedelta
 import logging
 from dataclasses import dataclass
 
 from src.application.interfaces.booking_scheduler import BookingScheduler
-from src.domain.constants import REMINDER_HOURS_BEFORE_TRAINING, REMINDER_TEST_DELAY_MINUTES, REMINDER_TEST_MODE, SLOT_DURATION_MINUTES
 from src.domain.entities.booking import Booking
 from src.domain.enums.booking import BookingStatus
-from src.domain.exception.booking import BookingNotFoundException
+from src.domain.exception.booking import (
+    BookingNotFoundException,
+    BookingStatusTransitionException,
+)
 from src.domain.exception.calendar_slot import CalendarSlotNotFoundException
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.client import ClientRepository
-from src.domain.repositories.trainer import TrainerRepository
 from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
 from src.domain.repositories.trainer_reminder_settings import TrainerReminderSettingsRepository
 from src.domain.services.calendar_service import CalendarService
 from src.application.use_cases.base import UseCase, UseCaseRequest
+from src.application.use_cases.booking._shared import _schedule_booking_jobs
 from src.application.interfaces.notification_service import NotificationService
-from src.domain.utils import get_training_datetime_utc
 from src.infrastructure.database.transaction_manager.base import TransactionManager
-from src.utils.get_datetime_utc_now import get_datetime_utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +27,8 @@ logger = logging.getLogger(__name__)
 class RescheduleBookingRequest(UseCaseRequest):
     booking_id: int
     new_slot_id: int
+    # True — без проверки вместимости (тренировки постоянного клиента)
+    force: bool = False
 
 
 @dataclass(kw_only=True)
@@ -46,13 +47,23 @@ class RescheduleBookingUseCase(UseCase[RescheduleBookingRequest, Booking]):
         booking = await self.booking_repo.get_by_id(command.booking_id)
         if booking is None:
             raise BookingNotFoundException(command.booking_id)
+        if not booking.is_active():
+            raise BookingStatusTransitionException(
+                booking_id=booking.id, status=booking.status
+            )
 
         old_slot_id = booking.slot_id
+        if old_slot_id == command.new_slot_id:
+            return booking
+
         new_slot = await self.slot_repo.get_by_id(command.new_slot_id)
         if new_slot is None:
             raise CalendarSlotNotFoundException(command.new_slot_id)
 
-        await self.calendar_service.book_slot(command.new_slot_id)
+        if command.force:
+            await self.calendar_service.book_slot_forced(command.new_slot_id)
+        else:
+            await self.calendar_service.book_slot(command.new_slot_id)
         await self.calendar_service.release_slot(old_slot_id)
 
         pricing_rule = await self.pricing_rule_repo.get_by_trainer_id(booking.trainer_id)
@@ -68,34 +79,16 @@ class RescheduleBookingUseCase(UseCase[RescheduleBookingRequest, Booking]):
             await self.booking_scheduler.cancel_training_reminder(booking_id=booking.id)
         if booking.completion_job_id:
             await self.booking_scheduler.cancel_booking_completion(booking_id=booking.id)
+        await self.transaction_manager.commit()
 
         if booking.status == BookingStatus.CONFIRMED:
-            reminder_settings = await self.reminder_settings_repo.get_by_trainer_id(booking.trainer_id)
-            hours_before = (
-                reminder_settings.hours_before
-                if reminder_settings is not None
-                else REMINDER_HOURS_BEFORE_TRAINING
-            )
-            training_at_utc = get_training_datetime_utc(new_slot)
-            now = get_datetime_utc_now()
-
-            if REMINDER_TEST_MODE:
-                remind_at_utc = now + timedelta(minutes=REMINDER_TEST_DELAY_MINUTES)
-            else:
-                remind_at_utc = training_at_utc - timedelta(hours=hours_before)
-
-            if remind_at_utc > now:
-                await self.booking_scheduler.schedule_training_reminder(
-                    booking_id=saved.id, remind_at_utc=remind_at_utc,
-                )
-            elif training_at_utc > now:
-                await self.booking_scheduler.schedule_training_reminder(
-                    booking_id=saved.id, remind_at_utc=now + timedelta(seconds=10),
-                )
-
-            complete_at_utc = training_at_utc + timedelta(minutes=SLOT_DURATION_MINUTES)
-            await self.booking_scheduler.schedule_booking_completion(
-                booking_id=saved.id, complete_at_utc=complete_at_utc,
+            await _schedule_booking_jobs(
+                booking_id=saved.id,
+                trainer_id=booking.trainer_id,
+                slot=new_slot,
+                reminder_settings_repo=self.reminder_settings_repo,
+                booking_scheduler=self.booking_scheduler,
+                transaction_manager=self.transaction_manager,
             )
 
         client = await self.client_repo.get_by_id(booking.client_id)
@@ -109,4 +102,8 @@ class RescheduleBookingUseCase(UseCase[RescheduleBookingRequest, Booking]):
                 ),
             )
 
+        logger.info(
+            "[RescheduleBooking:done] booking_id=%s %s -> %s",
+            booking.id, old_slot_id, command.new_slot_id,
+        )
         return saved

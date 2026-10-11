@@ -34,3 +34,12 @@ class SlotFullException(DomainError):
     @property
     def message(self) -> str:
         return f"Слот с id {self.slot_id} полностью заполнен"
+
+
+@dataclass
+class SlotInPastException(DomainError):
+    slot_id: int
+
+    @property
+    def message(self) -> str:
+        return f"Слот с id {self.slot_id} уже прошёл"

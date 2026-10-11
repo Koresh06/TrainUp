@@ -43,6 +43,15 @@ class SQLAlchemyTrainerRepo(TrainerRepository):
         model = result.scalar_one_or_none()
         return model.to_entity() if model is not None else None
 
+    async def get_all_active(self) -> list[Trainer]:
+        query = (
+            select(TrainerModel)
+            .where(TrainerModel.is_active.is_(True))
+            .order_by(TrainerModel.id)
+        )
+        result = await self._session.execute(query)
+        return [model.to_entity() for model in result.scalars().all()]
+
     async def save(self, trainer: Trainer) -> Trainer:
         if trainer.id == 0:
             model = TrainerModel.from_entity(trainer)

@@ -1,5 +1,3 @@
-from datetime import datetime
-from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -118,6 +116,7 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             photo_file_id=self.photo_file_id,
             social_links=self.social_links or {},
             phone=self.phone,
+            created_at=self.created_at,
         )
 
     def update_model(self, entity: "Trainer") -> None:

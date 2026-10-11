@@ -1,15 +1,9 @@
 from dataclasses import dataclass
-from datetime import timedelta
 
 from src.application.interfaces.booking_scheduler import BookingScheduler
 from src.application.interfaces.notification_service import NotificationService
 from src.application.use_cases.base import UseCase, UseCaseRequest
-from src.domain.constants import (
-    REMINDER_HOURS_BEFORE_TRAINING,
-    REMINDER_TEST_DELAY_MINUTES,
-    REMINDER_TEST_MODE,
-    SLOT_DURATION_MINUTES,
-)
+from src.application.use_cases.booking._shared import _schedule_booking_jobs
 from src.domain.entities.booking import Booking
 from src.domain.exception.booking import BookingNotFoundException
 from src.domain.repositories.booking import BookingRepository
@@ -20,8 +14,6 @@ from src.domain.repositories.trainer_reminder_settings import (
     TrainerReminderSettingsRepository,
 )
 from src.infrastructure.database.transaction_manager.base import TransactionManager
-from src.utils.get_datetime_utc_now import get_datetime_utc_now
-from src.domain.utils import get_training_datetime_utc
 
 
 @dataclass(frozen=True, eq=False)
@@ -71,37 +63,13 @@ class ConfirmBookingUseCase(UseCase[ConfirmBookingRequest, Booking]):
             await self.notification_service.send(chat_id=client.tg_id, text=text)
 
         if slot is not None:
-            reminder_settings = await self.reminder_settings_repo.get_by_trainer_id(
-                booking.trainer_id
-            )
-            hours_before = (
-                reminder_settings.hours_before
-                if reminder_settings is not None
-                else REMINDER_HOURS_BEFORE_TRAINING
-            )
-            training_at_utc = get_training_datetime_utc(slot)
-            now = get_datetime_utc_now()
-
-            if REMINDER_TEST_MODE:
-                remind_at_utc = now + timedelta(minutes=REMINDER_TEST_DELAY_MINUTES)
-            else:
-                remind_at_utc = training_at_utc - timedelta(hours=hours_before)
-
-            if remind_at_utc > now:
-                await self.booking_scheduler.schedule_training_reminder(
-                    booking_id=saved.id,
-                    remind_at_utc=remind_at_utc,
-                )
-            elif training_at_utc > now:
-                await self.booking_scheduler.schedule_training_reminder(
-                    booking_id=saved.id,
-                    remind_at_utc=now + timedelta(seconds=10),
-                )
-
-            complete_at_utc = training_at_utc + timedelta(minutes=SLOT_DURATION_MINUTES)
-            await self.booking_scheduler.schedule_booking_completion(
+            await _schedule_booking_jobs(
                 booking_id=saved.id,
-                complete_at_utc=complete_at_utc,
+                trainer_id=booking.trainer_id,
+                slot=slot,
+                reminder_settings_repo=self.reminder_settings_repo,
+                booking_scheduler=self.booking_scheduler,
+                transaction_manager=self.transaction_manager,
             )
 
         return saved

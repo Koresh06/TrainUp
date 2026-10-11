@@ -5,10 +5,15 @@ from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.slot_template import SlotTemplate
 from src.domain.enums.slot import SlotSource, SlotStatus
 from src.domain.exception.booking import SlotAlreadyBookedException
-from src.domain.exception.calendar_slot import CalendarSlotNotFoundException, SlotFullException
+from src.domain.exception.calendar_slot import (
+    CalendarSlotNotFoundException,
+    SlotFullException,
+    SlotInPastException,
+)
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.slot_template import SlotTemplateRepository
+from src.domain.utils import get_project_today, is_slot_in_past
 
 
 @dataclass
@@ -28,7 +33,7 @@ class CalendarService:
         for template in templates:
             template_by_weekday.setdefault(template.weekday, []).append(template)
 
-        today = date.today()
+        today = get_project_today()
         new_slots: list[CalendarSlot] = []
 
         for offset in range(days_ahead + 1):
@@ -60,7 +65,7 @@ class CalendarService:
     async def get_free_slots(
         self, trainer_id: int, days_ahead: int
     ) -> list[CalendarSlot]:
-        today = date.today()
+        today = get_project_today()
         date_to = today + timedelta(days=days_ahead)
         return await self.slot_repo.get_free_slots(trainer_id, today, date_to)
 
@@ -69,8 +74,7 @@ class CalendarService:
         if slot is None:
             raise CalendarSlotNotFoundException(slot_id)
     
-        if slot.status == SlotStatus.BLOCKED:
-            raise SlotAlreadyBookedException(slot_id)
+        self._ensure_bookable(slot)
     
         active_count = await self.booking_repo.count_active_by_slot_id(slot_id)
         if active_count >= slot.capacity:
@@ -105,17 +109,39 @@ class CalendarService:
         slot.block()
         return await self.slot_repo.save(slot)
 
+    async def unblock_slot(self, slot_id: int) -> CalendarSlot:
+        """
+        Снятие блокировки: статус восстанавливаем по факту занятости —
+        если активных записей уже на всю вместимость, слот остаётся BOOKED.
+        """
+        slot = await self.slot_repo.get_by_id(slot_id)
+        if slot is None:
+            raise CalendarSlotNotFoundException(slot_id)
+
+        if slot.status != SlotStatus.BLOCKED:
+            return slot
+
+        active_count = await self.booking_repo.count_active_by_slot_id(slot_id)
+        slot.status = (
+            SlotStatus.BOOKED if active_count >= slot.capacity else SlotStatus.FREE
+        )
+        slot.touch()
+        return await self.slot_repo.save(slot)
+
     async def get_slots_for_date(
         self, trainer_id: int, slot_date: date
     ) -> list[CalendarSlot]:
-        return await self.slot_repo.get_slots_for_date(trainer_id, slot_date)
+        # неактивные слоты — времена, убранные тренером из шаблона расписания
+        slots = await self.slot_repo.get_slots_for_date(trainer_id, slot_date)
+        return [s for s in slots if s.is_active]
 
     async def get_week_grid_slots(
         self, trainer_id: int, days_ahead: int
     ) -> list[CalendarSlot]:
-        today = date.today()
+        today = get_project_today()
         date_to = today + timedelta(days=days_ahead)
-        return await self.slot_repo.get_slots_for_range(trainer_id, today, date_to)
+        slots = await self.slot_repo.get_slots_for_range(trainer_id, today, date_to)
+        return [s for s in slots if s.is_active]
 
     async def book_slot_forced(self, slot_id: int) -> CalendarSlot:
         """
@@ -127,8 +153,7 @@ class CalendarService:
         if slot is None:
             raise CalendarSlotNotFoundException(slot_id)
     
-        if slot.status == SlotStatus.BLOCKED:
-            raise SlotAlreadyBookedException(slot_id)
+        self._ensure_bookable(slot)
     
         active_count = await self.booking_repo.count_active_by_slot_id(slot_id)
         if active_count + 1 >= slot.capacity:
@@ -137,3 +162,10 @@ class CalendarService:
             await self.slot_repo.save(slot)
     
         return slot
+
+    @staticmethod
+    def _ensure_bookable(slot: CalendarSlot) -> None:
+        if slot.status == SlotStatus.BLOCKED or not slot.is_active:
+            raise SlotAlreadyBookedException(slot.id)
+        if is_slot_in_past(slot):
+            raise SlotInPastException(slot.id)

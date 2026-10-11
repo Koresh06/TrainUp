@@ -5,6 +5,7 @@ from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.domain.enums.slot import SlotStatus
 from src.domain.repositories.booking import BookingRepository
 from src.domain.services.calendar_service import CalendarService
+from src.domain.utils import is_slot_in_past
 
 
 @dataclass(frozen=True, eq=False)
@@ -23,8 +24,11 @@ class GetDayAvailabilityMapUseCase(UseCase[GetDayAvailabilityMapRequest, dict[da
             trainer_id=command.trainer_id,
             days_ahead=command.days_ahead,
         )
-        # исключаем заблокированные тренером
-        open_slots = [s for s in all_slots if s.status != SlotStatus.BLOCKED]
+        # исключаем заблокированные тренером и уже прошедшие (сегодняшние) слоты
+        open_slots = [
+            s for s in all_slots
+            if s.status != SlotStatus.BLOCKED and not is_slot_in_past(s)
+        ]
 
         slot_ids = [s.id for s in open_slots]
         booked_counts = await self.booking_repo.count_active_by_slot_ids(slot_ids)

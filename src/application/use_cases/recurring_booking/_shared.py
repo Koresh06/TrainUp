@@ -1,13 +1,6 @@
-from datetime import timedelta
-
 from src.application.interfaces.booking_scheduler import BookingScheduler
 from src.application.interfaces.notification_service import NotificationService
-from src.domain.constants import (
-    REMINDER_HOURS_BEFORE_TRAINING,
-    REMINDER_TEST_DELAY_MINUTES,
-    REMINDER_TEST_MODE,
-    SLOT_DURATION_MINUTES,
-)
+from src.application.use_cases.booking._shared import _schedule_booking_jobs
 from src.domain.entities.booking import Booking
 from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.recurring_booking import RecurringBooking
@@ -20,9 +13,7 @@ from src.domain.repositories.trainer_reminder_settings import (
     TrainerReminderSettingsRepository,
 )
 from src.domain.services.calendar_service import CalendarService
-from src.domain.utils import get_training_datetime_utc
 from src.infrastructure.database.transaction_manager.base import TransactionManager
-from src.utils.get_datetime_utc_now import get_datetime_utc_now
 
 
 async def _create_recurring_occurrence(
@@ -77,38 +68,13 @@ async def _create_recurring_occurrence(
         )
         await notification_service.send(chat_id=client.tg_id, text=text)
 
-    reminder_settings = await reminder_settings_repo.get_by_trainer_id(
-        recurring.trainer_id
-    )
-    hours_before = (
-        reminder_settings.hours_before
-        if reminder_settings is not None
-        else REMINDER_HOURS_BEFORE_TRAINING
-    )
-
-    training_at_utc = get_training_datetime_utc(slot)
-    now = get_datetime_utc_now()
-
-    if REMINDER_TEST_MODE:
-        remind_at_utc = now + timedelta(minutes=REMINDER_TEST_DELAY_MINUTES)
-    else:
-        remind_at_utc = training_at_utc - timedelta(hours=hours_before)
-
-    if remind_at_utc > now:
-        await booking_scheduler.schedule_training_reminder(
-            booking_id=saved.id,
-            remind_at_utc=remind_at_utc,
-        )
-    elif training_at_utc > now:
-        await booking_scheduler.schedule_training_reminder(
-            booking_id=saved.id,
-            remind_at_utc=now + timedelta(seconds=10),
-        )
-
-    complete_at_utc = training_at_utc + timedelta(minutes=SLOT_DURATION_MINUTES)
-    await booking_scheduler.schedule_booking_completion(
+    await _schedule_booking_jobs(
         booking_id=saved.id,
-        complete_at_utc=complete_at_utc,
+        trainer_id=recurring.trainer_id,
+        slot=slot,
+        reminder_settings_repo=reminder_settings_repo,
+        booking_scheduler=booking_scheduler,
+        transaction_manager=transaction_manager,
     )
 
     return saved

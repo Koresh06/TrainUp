@@ -7,10 +7,8 @@ from sqlalchemy import (
     Integer,
     VARCHAR,
     Boolean,
-    String,
     Enum as SqlEnum,
 )
-from sqlalchemy.dialects.postgresql import ARRAY
 
 from src.domain.entities.client import Client
 from src.domain.enums.training import SportExperience
@@ -98,6 +96,7 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             age=self.age,
             sport_experience=self.sport_experience,
             is_active=self.is_active,
+            created_at=self.created_at,
         )
 
     def update_model(self, entity: "Client") -> None:

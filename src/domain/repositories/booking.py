@@ -2,6 +2,7 @@ from datetime import date
 from typing import Protocol
 
 from src.domain.entities.booking import Booking
+from src.domain.enums.booking import BookingStatus
 
 
 class BookingRepository(Protocol):
@@ -29,7 +30,13 @@ class BookingRepository(Protocol):
         self, recurring_booking_id: int
     ) -> Booking | None: ...
 
+    async def get_upcoming_by_recurring_booking_id(
+        self, recurring_booking_id: int
+    ) -> list[Booking]: ...
+
     async def get_past_confirmed(self, before_date: date) -> list[Booking]: ...
+
+    async def get_latest_completed_by_client(self, client_id: int) -> Booking | None: ...
 
     async def count_completed_by_trainer_in_period(
         self,
@@ -44,6 +51,10 @@ class BookingRepository(Protocol):
         date_from: date,
         date_to: date,
     ) -> int: ...
+
+    async def count_by_trainer_and_status(
+        self, date_from: date, date_to: date
+    ) -> dict[tuple[int, BookingStatus], int]: ...
 
     async def get_history_by_trainer(
         self, trainer_id: int, limit: int = 50

@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.entities.client_answer import ClientAnswer
@@ -34,3 +34,9 @@ class SQLAlchemyClientAnswerRepo(ClientAnswerRepository):
         for answer in answers:
             saved.append(await self.save(answer))
         return saved
+
+    async def delete_by_client_id(self, client_id: int) -> None:
+        await self._session.execute(
+            delete(ClientAnswerModel).where(ClientAnswerModel.client_id == client_id)
+        )
+        await self._session.flush()

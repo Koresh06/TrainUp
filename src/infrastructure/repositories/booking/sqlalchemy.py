@@ -1,9 +1,10 @@
-from datetime import date
+from datetime import date, datetime, time, timedelta
 
 from sqlalchemy import desc, exists, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.domain.constants import PROJECT_TIMEZONE
 from src.domain.entities.booking import Booking
 from src.domain.enums.booking import BookingStatus
 from src.domain.exception.booking import (
@@ -11,8 +12,8 @@ from src.domain.exception.booking import (
     SlotAlreadyBookedException,
 )
 from src.domain.repositories.booking import BookingRepository
+from src.domain.utils import get_project_today
 from src.infrastructure.database.models import BookingModel, CalendarSlotModel
-from src.utils.get_datetime_utc_now import get_datetime_utc_now
 
 
 class SQLAlchemyBookingRepo(BookingRepository):
@@ -31,7 +32,7 @@ class SQLAlchemyBookingRepo(BookingRepository):
         return model.to_entity() if model is not None else None
 
     async def get_upcoming_by_client(self, client_id: int) -> list[Booking]:
-        today = get_datetime_utc_now().date()
+        today = get_project_today()
         query = (
             select(BookingModel)
             .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
@@ -48,7 +49,7 @@ class SQLAlchemyBookingRepo(BookingRepository):
         return [model.to_entity() for model in result.scalars().all()]
 
     async def get_upcoming_by_trainer(self, trainer_id: int) -> list[Booking]:
-        today = get_datetime_utc_now().date()
+        today = get_project_today()
         query = (
             select(BookingModel)
             .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
@@ -145,6 +146,23 @@ class SQLAlchemyBookingRepo(BookingRepository):
         model = result.scalar_one_or_none()
         return model.to_entity() if model is not None else None
 
+    async def get_upcoming_by_recurring_booking_id(
+        self, recurring_booking_id: int
+    ) -> list[Booking]:
+        query = (
+            select(BookingModel)
+            .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
+            .where(
+                BookingModel.recurring_booking_id == recurring_booking_id,
+                BookingModel.status.in_(
+                    [BookingStatus.PENDING, BookingStatus.CONFIRMED]
+                ),
+                CalendarSlotModel.slot_date >= get_project_today(),
+            )
+        )
+        result = await self._session.execute(query)
+        return [model.to_entity() for model in result.scalars().all()]
+
     async def get_past_confirmed(self, before_date: date) -> list[Booking]:
         query = (
             select(BookingModel)
@@ -156,6 +174,23 @@ class SQLAlchemyBookingRepo(BookingRepository):
         )
         result = await self._session.execute(query)
         return [model.to_entity() for model in result.scalars().all()]
+
+    async def get_latest_completed_by_client(self, client_id: int) -> Booking | None:
+        query = (
+            select(BookingModel)
+            .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
+            .where(
+                BookingModel.client_id == client_id,
+                BookingModel.status == BookingStatus.COMPLETED,
+            )
+            .order_by(
+                CalendarSlotModel.slot_date.desc(), CalendarSlotModel.start_time.desc()
+            )
+            .limit(1)
+        )
+        result = await self._session.execute(query)
+        model = result.scalar_one_or_none()
+        return model.to_entity() if model is not None else None
 
     async def count_completed_by_trainer_in_period(
         self, trainer_id: int, date_from: date, date_to: date
@@ -184,12 +219,34 @@ class SQLAlchemyBookingRepo(BookingRepository):
             .where(
                 BookingModel.trainer_id == trainer_id,
                 BookingModel.status == BookingStatus.CANCELLED,
-                BookingModel.updated_at >= date_from,
-                BookingModel.updated_at <= date_to,
+                # updated_at — timestamptz: сравнение с голой датой date_to
+                # отрезало бы весь сегодняшний день, поэтому берём [начало date_from;
+                # начало дня после date_to) в часовом поясе проекта
+                BookingModel.updated_at >= datetime.combine(
+                    date_from, time.min, tzinfo=PROJECT_TIMEZONE
+                ),
+                BookingModel.updated_at < datetime.combine(
+                    date_to + timedelta(days=1), time.min, tzinfo=PROJECT_TIMEZONE
+                ),
             )
         )
         result = await self._session.execute(query)
         return result.scalar_one()
+
+    async def count_by_trainer_and_status(
+        self, date_from: date, date_to: date
+    ) -> dict[tuple[int, BookingStatus], int]:
+        query = (
+            select(BookingModel.trainer_id, BookingModel.status, func.count())
+            .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
+            .where(
+                CalendarSlotModel.slot_date >= date_from,
+                CalendarSlotModel.slot_date <= date_to,
+            )
+            .group_by(BookingModel.trainer_id, BookingModel.status)
+        )
+        result = await self._session.execute(query)
+        return {(trainer_id, status): count for trainer_id, status, count in result.all()}
 
     async def get_history_by_trainer(
         self, trainer_id: int, limit: int = 50

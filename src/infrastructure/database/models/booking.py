@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import (
     ForeignKey,
-    ForeignKey,
     Integer,
     VARCHAR,
     Enum as SqlEnum,
@@ -76,6 +75,7 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             trainer_id=entity.trainer_id,
             slot_id=entity.slot_id,
             status=entity.status,
+            price=entity.price,
             reminder_job_id=entity.reminder_job_id,
             recurring_booking_id=entity.recurring_booking_id,
             completion_job_id=entity.completion_job_id,
@@ -88,9 +88,11 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             trainer_id=self.trainer_id,
             slot_id=self.slot_id,
             status=self.status,
+            price=self.price,
             reminder_job_id=self.reminder_job_id,
             recurring_booking_id=self.recurring_booking_id,
             completion_job_id=self.completion_job_id,
+            created_at=self.created_at,
         )
 
     def update_model(self, entity: "Booking") -> None:
@@ -98,6 +100,7 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.trainer_id = entity.trainer_id
         self.slot_id = entity.slot_id
         self.status = entity.status
+        self.price = entity.price
         self.reminder_job_id = entity.reminder_job_id
         self.recurring_booking_id = entity.recurring_booking_id
         self.completion_job_id = entity.completion_job_id

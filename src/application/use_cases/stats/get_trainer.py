@@ -1,18 +1,10 @@
 from dataclasses import dataclass
-from datetime import date, timedelta
-from enum import Enum
 
 from src.application.use_cases.base import UseCase, UseCaseRequest
+from src.application.use_cases.stats.period import StatsPeriod, period_dates
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.recurring_booking import RecurringBookingRepository
-
-
-class StatsPeriod(str, Enum):
-    TODAY = "today"
-    WEEK = "week"
-    MONTH = "month"
-    ALL = "all"
 
 
 @dataclass(frozen=True, eq=False)
@@ -37,16 +29,7 @@ class GetTrainerStatsUseCase(UseCase[GetTrainerStatsRequest, TrainerStatsDTO]):
     recurring_repo: RecurringBookingRepository
 
     async def __call__(self, command: GetTrainerStatsRequest) -> TrainerStatsDTO:
-        today = date.today()
-
-        if command.period == StatsPeriod.TODAY:
-            date_from = today
-        elif command.period == StatsPeriod.WEEK:
-            date_from = today - timedelta(days=today.weekday())
-        elif command.period == StatsPeriod.MONTH:
-            date_from = today.replace(day=1)
-        else:
-            date_from = date(2000, 1, 1)
+        date_from, today = period_dates(command.period)
 
         clients = await self.client_repo.get_by_trainer_id(command.trainer_id)
         upcoming = await self.booking_repo.get_upcoming_by_trainer(command.trainer_id)

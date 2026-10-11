@@ -4,12 +4,14 @@ from aiogram_dialog.widgets.text import Const, Format
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.kbd import Button, Column, Cancel, Back, Next
 from aiogram_dialog.widgets.input import TextInput, MessageInput
+from aiogram_dialog.widgets.link_preview import LinkPreview
 
 from src.presentation.telegram.features.error_handler import on_input_error
 
 from .states import TrainerProfileSG
 from .getters import trainer_profile_getter
 from .handlers import (
+    on_renew_subscription_click,
     on_photo_received,
     on_profile_edit_click,
     on_social_links_success,
@@ -26,10 +28,15 @@ trainer_profile_dialog = Dialog(
         ),
         DynamicMedia(selector="photo"),
         Next(Const("✏️ Редактировать")),
+        Button(
+            Const("💳 Продлить подписку"),
+            id="renew_subscription",
+            on_click=on_renew_subscription_click,
+        ),
         Cancel(Const("⬅️ Назад")),
+        LinkPreview(is_disabled=True),
         state=TrainerProfileSG.main,
         getter=trainer_profile_getter,
-        disable_web_page_preview=True,
     ),
     Window(
         Const("Что меняем?"),
@@ -72,8 +79,8 @@ trainer_profile_dialog = Dialog(
             on_error=on_input_error,
         ),
         Back(Const("⬅️ Назад")),
+        LinkPreview(is_disabled=True),
         state=TrainerProfileSG.social_links,
         getter=trainer_profile_getter,
-        disable_web_page_preview=True,
     ),
 )

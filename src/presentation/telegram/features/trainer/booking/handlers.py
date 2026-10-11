@@ -1,7 +1,7 @@
 from datetime import date
 
 from dishka.integrations.aiogram_dialog import inject, FromDishka
-from aiogram_dialog import ChatEvent, DialogManager, ShowMode
+from aiogram_dialog import ChatEvent, DialogManager
 from aiogram.types import CallbackQuery
 from aiogram_dialog.widgets.kbd import ManagedCalendar, Select, Button
 
@@ -11,7 +11,11 @@ from src.application.use_cases.booking.cancel import (
     CancelInitiator,
 )
 from src.application.use_cases.booking.reschedule import RescheduleBookingRequest
-from src.domain.exception.calendar_slot import SlotFullException
+from src.domain.exception.booking import (
+    BookingStatusTransitionException,
+    SlotAlreadyBookedException,
+)
+from src.domain.exception.calendar_slot import SlotFullException, SlotInPastException
 from src.presentation.telegram.widgets.booking_calendar import AVAILABILITY_CACHE_KEY
 
 from .states import TrainerBookingsSG
@@ -64,12 +68,17 @@ async def on_cancel_booking_from_list(
     mediator: FromDishka[Mediator],
 ) -> None:
     booking_id: int = dialog_manager.dialog_data["editing_booking_id"]
-    await mediator.handle(
-        CancelBookingRequest(
-            booking_id=booking_id,
-            initiated_by=CancelInitiator.TRAINER,
+    try:
+        await mediator.handle(
+            CancelBookingRequest(
+                booking_id=booking_id,
+                initiated_by=CancelInitiator.TRAINER,
+            )
         )
-    )
+    except BookingStatusTransitionException:
+        await callback.answer("Запись уже отменена или завершена", show_alert=True)
+        await dialog_manager.switch_to(TrainerBookingsSG.list)
+        return
     await callback.answer("Отменено")
     await dialog_manager.switch_to(TrainerBookingsSG.list)
 
@@ -120,6 +129,13 @@ async def on_reschedule_confirm(
         )
     except SlotFullException:
         await callback.answer("Мест не осталось на этом слоте", show_alert=True)
+        return
+    except (SlotAlreadyBookedException, SlotInPastException):
+        await callback.answer("Этот слот уже недоступен", show_alert=True)
+        return
+    except BookingStatusTransitionException:
+        await callback.answer("Запись уже отменена или завершена", show_alert=True)
+        await dialog_manager.switch_to(TrainerBookingsSG.list)
         return
 
     await callback.answer("Перенесено!", show_alert=True)

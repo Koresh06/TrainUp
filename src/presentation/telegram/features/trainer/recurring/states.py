@@ -12,3 +12,4 @@ class TrainerRecurringSG(StatesGroup):
     edit_day = State()
     edit_time = State()
     edit_confirm = State()
+    deactivate_confirm = State()

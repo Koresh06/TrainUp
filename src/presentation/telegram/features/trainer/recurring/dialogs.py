@@ -155,10 +155,10 @@ trainer_recurring_dialog = Dialog(
             id="edit_recurring_time",
             state=TrainerRecurringSG.edit_day,
         ),
-        Button(
+        SwitchTo(
             Const("🛑 Остановить постоянную запись"),
-            id="deactivate_recurring",
-            on_click=on_deactivate_recurring_click,
+            id="to_deactivate_confirm",
+            state=TrainerRecurringSG.deactivate_confirm,
             style=Style(style=ButtonStyle.DANGER),
         ),
         SwitchTo(
@@ -209,5 +209,23 @@ trainer_recurring_dialog = Dialog(
         Back(Const("⬅️ Назад")),
         state=TrainerRecurringSG.edit_confirm,
         getter=edit_recurring_confirm_getter,
+    ),
+    Window(
+        Format(
+            "🛑 Остановить постоянную запись?\n\n"
+            "👤 {client_name}\n"
+            "📅 Каждую неделю: {weekday_label} в {time}\n\n"
+            "Все будущие тренировки по ней будут отменены, клиент получит уведомление.\n"
+            "Если нужно просто сменить дни/время — используйте «Изменить день/время»."
+        ),
+        Button(
+            Const("🛑 Да, остановить"),
+            id="deactivate_recurring",
+            on_click=on_deactivate_recurring_click,
+            style=Style(style=ButtonStyle.DANGER),
+        ),
+        SwitchTo(Const("⬅️ Назад"), id="back_to_detail", state=TrainerRecurringSG.detail),
+        state=TrainerRecurringSG.deactivate_confirm,
+        getter=recurring_detail_getter,
     ),
 )

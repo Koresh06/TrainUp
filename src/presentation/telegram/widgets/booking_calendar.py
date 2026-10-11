@@ -26,6 +26,7 @@ from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
 from src.application.use_cases.trainer_booking_settings.get_by_id import (
     GetTrainerBookingSettingsRequest,
 )
+from src.domain.utils import get_project_today
 
 from .dynamic_style import DynamicStyle
 
@@ -70,7 +71,7 @@ class MonthNavText(Text):
 
 
 def _is_day_in_window(current_date: date, manager: DialogManager) -> bool:
-    today = date.today()
+    today = get_project_today()
     horizon_days: int = manager.dialog_data.get(
         HORIZON_CACHE_KEY,
         DEFAULT_CALENDAR_HORIZON_DAYS,
@@ -146,7 +147,7 @@ class BookingCalendar(Calendar):
             GetTrainerBookingSettingsRequest(trainer_id=trainer_id)
         )
 
-        today = date.today()
+        today = get_project_today()
         return CalendarUserConfig(
             min_date=today,
             max_date=today + timedelta(days=settings.calendar_horizon_days),

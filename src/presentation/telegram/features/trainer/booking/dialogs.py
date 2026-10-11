@@ -28,7 +28,6 @@ from .getters import (
     reschedule_times_getter,
 )
 from .handlers import (
-    is_not_recurring,
     on_booking_selected,
     on_bookings_mode_selected,
     on_cancel_booking_from_list,

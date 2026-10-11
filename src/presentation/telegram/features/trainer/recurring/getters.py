@@ -34,6 +34,7 @@ from src.domain.entities.client import Client
 from src.domain.entities.recurring_booking import RecurringBooking
 from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
 from src.domain.enums.slot import SlotStatus
+from src.domain.utils import is_slot_in_past
 from src.presentation.telegram.widgets.booking_calendar import (
     AVAILABILITY_CACHE_KEY,
     HORIZON_CACHE_KEY,
@@ -159,7 +160,10 @@ async def recurring_times_getter(
     slots: list[CalendarSlot] = await mediator.handle(
         GetDaySlotsRequest(trainer_id=trainer_id, slot_date=selected_day)
     )
-    slots = [s for s in slots if s.status != SlotStatus.BLOCKED]
+    slots = [
+        s for s in slots
+        if s.status != SlotStatus.BLOCKED and not is_slot_in_past(s)
+    ]
     slots.sort(key=lambda s: s.start_time)
 
     slot_ids = [s.id for s in slots]
@@ -256,7 +260,10 @@ async def edit_recurring_times_getter(
     slots: list[CalendarSlot] = await mediator.handle(
         GetDaySlotsRequest(trainer_id=trainer_id, slot_date=selected_day)
     )
-    slots = [s for s in slots if s.status != SlotStatus.BLOCKED]
+    slots = [
+        s for s in slots
+        if s.status != SlotStatus.BLOCKED and not is_slot_in_past(s)
+    ]
     slots.sort(key=lambda s: s.start_time)
 
     slot_ids = [s.id for s in slots]

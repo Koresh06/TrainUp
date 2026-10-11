@@ -7,7 +7,10 @@ from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.application.use_cases.recurring_booking._shared import _create_recurring_occurrence
 from src.domain.entities.booking import Booking
 from src.domain.entities.recurring_booking import RecurringBooking
-from src.domain.exception.calendar_slot import CalendarSlotNotFoundException
+from src.domain.exception.calendar_slot import (
+    CalendarSlotNotFoundException,
+    SlotInPastException,
+)
 from src.domain.exception.recurring_booking import RecurringBookingAlreadyExistsException
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
@@ -17,6 +20,7 @@ from src.domain.repositories.trainer import TrainerRepository
 from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
 from src.domain.repositories.trainer_reminder_settings import TrainerReminderSettingsRepository
 from src.domain.services.calendar_service import CalendarService
+from src.domain.utils import is_slot_in_past
 from src.infrastructure.database.transaction_manager.base import TransactionManager
 
 
@@ -45,6 +49,9 @@ class AddRecurringBookingUseCase(UseCase[AddRecurringBookingRequest, Booking]):
         slot = await self.slot_repo.get_by_id(command.slot_id)
         if slot is None:
             raise CalendarSlotNotFoundException(command.slot_id)
+        # проверяем до сохранения шаблона, чтобы не осталось постоянки без тренировки
+        if is_slot_in_past(slot):
+            raise SlotInPastException(command.slot_id)
     
         already_exists = await self.recurring_repo.exists_active(
             trainer_id=command.trainer_id,

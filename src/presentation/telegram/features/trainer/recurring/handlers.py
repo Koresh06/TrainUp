@@ -14,7 +14,8 @@ from src.application.use_cases.recurring_booking.change import (
 from src.application.use_cases.recurring_booking.deactivate import (
     DeactivateRecurringBookingRequest,
 )
-from src.domain.exception.calendar_slot import SlotFullException
+from src.domain.exception.booking import SlotAlreadyBookedException
+from src.domain.exception.calendar_slot import SlotInPastException
 from src.domain.exception.recurring_booking import (
     RecurringBookingAlreadyExistsException,
 )
@@ -86,6 +87,9 @@ async def on_recurring_confirm(
             "У этого клиента уже есть постоянная запись на это время.",
             show_alert=True,
         )
+        return
+    except (SlotAlreadyBookedException, SlotInPastException):
+        await callback.answer("Этот слот уже недоступен", show_alert=True)
         return
 
     await callback.answer("Постоянная тренировка добавлена!", show_alert=True)
@@ -172,8 +176,14 @@ async def on_edit_recurring_confirm(
                 new_slot_id=new_slot_id,
             )
         )
-    except SlotFullException:
-        await callback.answer("Мест не осталось на этом слоте", show_alert=True)
+    except RecurringBookingAlreadyExistsException:
+        await callback.answer(
+            "У этого клиента уже есть постоянная запись на это время.",
+            show_alert=True,
+        )
+        return
+    except (SlotAlreadyBookedException, SlotInPastException):
+        await callback.answer("Этот слот уже недоступен", show_alert=True)
         return
 
     await callback.answer("Расписание обновлено!", show_alert=True)

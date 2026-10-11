@@ -1,10 +1,10 @@
 import logging
-from datetime import date
 from dataclasses import dataclass
 
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.domain.repositories.booking import BookingRepository
 from src.infrastructure.database.transaction_manager.base import TransactionManager
+from src.domain.utils import get_project_today
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class MarkPastBookingsCompletedUseCase(UseCase[MarkPastBookingsCompletedRequest,
     transaction_manager: TransactionManager
 
     async def __call__(self, command: MarkPastBookingsCompletedRequest) -> None:
-        today = date.today()
+        today = get_project_today()
         past_bookings = await self.booking_repo.get_past_confirmed(today)
 
         for booking in past_bookings:

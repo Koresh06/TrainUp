@@ -11,6 +11,7 @@ from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
 from src.domain.entities.trainer_pricing_rule import TrainerPricingRule
 from src.domain.enums.slot import SlotStatus
+from src.domain.utils import is_slot_in_past
 from src.application.mediator import Mediator
 from src.application.use_cases.calendar.get_day_availability_map import (
     GetDayAvailabilityMapRequest,
@@ -70,9 +71,8 @@ async def times_getter(
     slots: list[CalendarSlot] = await mediator.handle(
         GetDaySlotsRequest(trainer_id=trainer_id, slot_date=selected_day)
     )
-    logger.info(
-        "[DEBUG] times_getter slots=%s selected_day=%s", len(slots), selected_day
-    )
+    # уже начавшиеся сегодняшние слоты не показываем вовсе
+    slots = [s for s in slots if not is_slot_in_past(s)]
     slots.sort(key=lambda s: s.start_time)
 
     slot_ids = [s.id for s in slots]
@@ -103,8 +103,6 @@ async def times_getter(
         if any(s.capacity > 1 for s in slots)
         else ""
     )
-
-    logger.info("[DEBUG] times_getter result times=%s", times)
 
     return {
         "times": times,

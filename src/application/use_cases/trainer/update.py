@@ -10,7 +10,6 @@ from src.infrastructure.database.transaction_manager.base import TransactionMana
 @dataclass(frozen=True, eq=False)
 class UpdateTrainerProfileRequest(UseCaseRequest):
     trainer_id: int
-    location: str | None = None
     photo_file_id: str | None = None
     social_links: dict[str, str] | None = None
 
@@ -25,8 +24,6 @@ class UpdateTrainerProfileUseCase(UseCase[UpdateTrainerProfileRequest, Trainer])
         if trainer is None:
             raise TrainerNotFoundException(trainer_id=command.trainer_id)
 
-        if command.location is not None:
-            trainer.location = command.location
         if command.photo_file_id is not None:
             trainer.photo_file_id = command.photo_file_id
         if command.social_links is not None:

@@ -51,6 +51,7 @@ class CancelBookingUseCase(UseCase[CancelBookingRequest, Booking]):
 
         if booking.completion_job_id:
             await self.booking_scheduler.cancel_booking_completion(booking_id=booking.id)
+        await self.transaction_manager.commit()
 
         if command.initiated_by == CancelInitiator.TRAINER:
             trainer = await self.trainer_repo.get_by_id(booking.trainer_id)

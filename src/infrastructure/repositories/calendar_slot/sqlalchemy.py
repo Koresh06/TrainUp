@@ -151,3 +151,10 @@ class SQLAlchemyCalendarSlotRepo(CalendarSlotRepository):
         result = await self._session.execute(query)
         model = result.scalar_one_or_none()
         return model.to_entity() if model is not None else None
+
+    async def get_by_ids(self, slot_ids: list[int]) -> list[CalendarSlot]:
+        if not slot_ids:
+            return []
+        query = select(CalendarSlotModel).where(CalendarSlotModel.id.in_(slot_ids))
+        result = await self._session.execute(query)
+        return [model.to_entity() for model in result.scalars().all()]

@@ -6,10 +6,19 @@ from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.client import Client
 from src.domain.entities.trainer import Trainer
 from src.domain.enums.booking import BookingStatus
-from src.domain.exception.booking import ClientAlreadyBookedThisSlotException
+from src.domain.constants import DEFAULT_MAX_ACTIVE_BOOKINGS
+from src.domain.exception.booking import (
+    ActiveBookingsLimitExceededException,
+    ClientAlreadyBookedThisSlotException,
+)
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.client import ClientRepository
+from src.domain.repositories.client_answer import ClientAnswerRepository
+from src.domain.repositories.registration_question import RegistrationQuestionRepository
 from src.domain.repositories.trainer import TrainerRepository
+from src.domain.repositories.trainer_booking_settings import (
+    TrainerBookingSettingsRepository,
+)
 from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
 from src.domain.services.calendar_service import CalendarService
 from src.application.use_cases.base import UseCase, UseCaseRequest
@@ -36,6 +45,9 @@ class CreateBookingUseCase(UseCase[CreateBookingRequest, Booking]):
     trainer_repo: TrainerRepository
     client_repo: ClientRepository
     pricing_rule_repo: TrainerPricingRuleRepository
+    booking_settings_repo: TrainerBookingSettingsRepository
+    answer_repo: ClientAnswerRepository
+    question_repo: RegistrationQuestionRepository
     notification_service: NotificationService
     transaction_manager: TransactionManager
 
@@ -55,6 +67,8 @@ class CreateBookingUseCase(UseCase[CreateBookingRequest, Booking]):
                 client_id=command.client_id,
                 slot_id=command.slot_id,
             )
+
+        await self._ensure_active_bookings_limit(command)
 
         slot: CalendarSlot = await self.calendar_service.book_slot(command.slot_id)
 
@@ -91,8 +105,35 @@ class CreateBookingUseCase(UseCase[CreateBookingRequest, Booking]):
                     client_username=client.username,
                     client_phone=client.phone,
                     client_age=client.age,
+                    client_answers=await self._client_answers(client.id, trainer.id),
                 )
             )
 
         logger.info("[CreateBooking:done] booking_id=%s", saved.id)
         return saved
+
+    async def _ensure_active_bookings_limit(self, command: CreateBookingRequest) -> None:
+        settings = await self.booking_settings_repo.get_by_trainer_id(command.trainer_id)
+        limit = (
+            settings.max_active_bookings_per_client
+            if settings is not None
+            else DEFAULT_MAX_ACTIVE_BOOKINGS
+        )
+        upcoming = await self.booking_repo.get_upcoming_by_client(command.client_id)
+        # тренировки постоянного клиента назначает тренер — в лимит самостоятельных
+        # записей клиента они не входят
+        own_active = [b for b in upcoming if b.recurring_booking_id is None]
+        if len(own_active) >= limit:
+            raise ActiveBookingsLimitExceededException(
+                client_id=command.client_id, limit=limit
+            )
+
+    async def _client_answers(self, client_id: int, trainer_id: int) -> list[tuple[str, str]]:
+        questions = await self.question_repo.get_all_by_trainer_id(trainer_id)
+        answers = await self.answer_repo.get_by_client_id(client_id)
+        answers_by_question = {a.question_id: a.value for a in answers}
+        return [
+            (q.label, ", ".join(answers_by_question[q.id]))
+            for q in questions
+            if answers_by_question.get(q.id)
+        ]

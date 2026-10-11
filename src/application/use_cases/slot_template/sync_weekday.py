@@ -1,21 +1,18 @@
 import logging
 from dataclasses import dataclass
-from datetime import date, time, timedelta
+from datetime import time, timedelta
 
 from src.domain.constants import (
-    DEFAULT_CALENDAR_HORIZON_DAYS,
+    CALENDAR_BUFFER_DAYS,
     SLOT_DURATION_MINUTES,
     add_minutes,
 )
 from src.domain.entities.slot_template import SlotTemplate
-from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.slot_template import SlotTemplateRepository
-from src.domain.repositories.trainer_booking_settings import (
-    TrainerBookingSettingsRepository,
-)
 from src.domain.services.calendar_service import CalendarService
 from src.application.use_cases.base import UseCase, UseCaseRequest
+from src.domain.utils import get_project_today
 from src.infrastructure.database.transaction_manager.base import TransactionManager
 
 logger = logging.getLogger(__name__)
@@ -33,7 +30,6 @@ class SyncWeekdaySlotTemplatesUseCase(UseCase[SyncWeekdaySlotTemplatesRequest, N
     template_repo: SlotTemplateRepository
     slot_repo: CalendarSlotRepository
     calendar_service: CalendarService
-    booking_settings_repo: TrainerBookingSettingsRepository
     transaction_manager: TransactionManager
 
     async def __call__(self, command: SyncWeekdaySlotTemplatesRequest) -> None:
@@ -69,52 +65,50 @@ class SyncWeekdaySlotTemplatesUseCase(UseCase[SyncWeekdaySlotTemplatesRequest, N
 
         await self.transaction_manager.commit()
 
-        settings: TrainerBookingSettings | None = (
-            await self.booking_settings_repo.get_by_trainer_id(command.trainer_id)
-        )
-        horizon_days = (
-            settings.calendar_horizon_days
-            if settings is not None
-            else DEFAULT_CALENDAR_HORIZON_DAYS
-        )
-
+        # слоты материализуются на весь буфер (CALENDAR_BUFFER_DAYS), а не только
+        # на горизонт клиента — иначе при увеличении горизонта всплывут слоты со
+        # старой вместимостью/убранным временем
         new_slots = await self.calendar_service.generate_slots_for_period(
-            command.trainer_id, days_ahead=horizon_days
+            command.trainer_id, days_ahead=CALENDAR_BUFFER_DAYS
         )
         await self.transaction_manager.commit()
         logger.info("[SyncWeekdaySlotTemplates] new_slots created: %s", len(new_slots))
 
-        # синхронизация capacity на уже существующих слотах — теперь по каждому времени своя цифра
-        today = date.today()
+        today = get_project_today()
         all_future_slots = await self.slot_repo.get_slots_for_range(
-            command.trainer_id, today, today + timedelta(days=horizon_days)
+            command.trainer_id, today, today + timedelta(days=CALENDAR_BUFFER_DAYS)
         )
         updated_count = 0
         for slot in all_future_slots:
             if slot.slot_date.weekday() != command.weekday:
                 continue
+
             new_capacity = selected.get(slot.start_time)
-            if new_capacity is not None and slot.capacity != new_capacity:
+            if new_capacity is not None:
+                # время есть в шаблоне: синхронизируем вместимость и возвращаем
+                # слот, если раньше это время убирали из расписания
+                changed = slot.capacity != new_capacity or not slot.is_active
                 slot.capacity = new_capacity
+                slot.is_active = True
+            else:
+                # время убрали из шаблона: слот скрывается у клиентов, но уже
+                # существующие записи на нём сохраняются — тренер видит их в
+                # «Бронированиях» и сам решает, отменить или перенести.
+                # Ручную блокировку (status=BLOCKED) не трогаем.
+                changed = slot.is_active
+                slot.is_active = False
+
+            if changed:
+                slot.touch()
                 await self.slot_repo.save(slot)
                 updated_count += 1
 
         await self.transaction_manager.commit()
         logger.info(
-            "[SyncWeekdaySlotTemplates] capacity synced on %s slots", updated_count
+            "[SyncWeekdaySlotTemplates] slots synced: %s (deactivated times: %s)",
+            updated_count,
+            len(deactivated_times),
         )
-
-        if deactivated_times:
-            free_slots = await self.slot_repo.get_free_slots(
-                command.trainer_id,
-                today,
-                today + timedelta(days=horizon_days),
-            )
-            for slot in free_slots:
-                if slot.start_time in deactivated_times:
-                    slot.block()
-                    await self.slot_repo.save(slot)
-            await self.transaction_manager.commit()
 
         logger.info(
             "[SyncWeekdaySlotTemplates:done] trainer_id=%s weekday=%s times=%s",

@@ -1,7 +1,10 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
-MOSCOW_TZ = timezone(timedelta(hours=3))
+from src.domain.constants import PROJECT_TIMEZONE
 
 
 def to_moscow(dt: datetime) -> datetime:
-    return dt.astimezone(MOSCOW_TZ)
+    """Перевод в часовой пояс проекта для отображения (naive считаем UTC)."""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(PROJECT_TIMEZONE)

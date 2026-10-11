@@ -11,11 +11,11 @@ from src.application.mediator import Mediator
 from src.application.use_cases.client.get_by_tg_id import GetClientByTgIdRequest
 from src.application.use_cases.booking.create import CreateBookingRequest
 from src.domain.exception.booking import (
+    ActiveBookingsLimitExceededException,
     ClientAlreadyBookedThisSlotException,
     SlotAlreadyBookedException,
 )
-from src.domain.exception.calendar_slot import SlotFullException
-from src.presentation.telegram.features.client.booking.states import BookingSG
+from src.domain.exception.calendar_slot import SlotFullException, SlotInPastException
 from src.presentation.telegram.widgets.booking_calendar import AVAILABILITY_CACHE_KEY
 
 
@@ -86,8 +86,15 @@ async def on_confirm_booking(
             show_alert=True,
         )
         return
-    except SlotAlreadyBookedException:
+    except (SlotAlreadyBookedException, SlotInPastException):
         await callback.answer("Слот больше недоступен", show_alert=True)
+        return
+    except ActiveBookingsLimitExceededException as error:
+        await callback.answer(
+            f"У вас уже есть активные записи (максимум {error.limit}). "
+            f"Дождитесь прошедшей тренировки или свяжитесь с тренером.",
+            show_alert=True,
+        )
         return
 
     await callback.answer(

@@ -1,18 +1,9 @@
 from collections.abc import Callable
 
-from aiogram_dialog.api.internal import StyleWidget
-
 from aiogram.enums import ButtonStyle
 from aiogram_dialog import DialogManager
-
-
-from typing import Callable
-
-from aiogram_dialog import DialogManager
-from aiogram_dialog.widgets.style import BaseStyle
-
 from aiogram_dialog.widgets.common import WhenCondition
-
+from aiogram_dialog.widgets.style import BaseStyle
 
 
 class DynamicStyle(BaseStyle):

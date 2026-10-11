@@ -4,6 +4,7 @@ from datetime import date
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.domain.enums.slot import SlotStatus
 from src.domain.services.calendar_service import CalendarService
+from src.domain.utils import is_slot_in_past
 
 
 @dataclass(frozen=True, eq=False)
@@ -25,7 +26,10 @@ class GetDayAvailabilityMapForAssignmentUseCase(
             trainer_id=command.trainer_id,
             days_ahead=command.days_ahead,
         )
-        open_slots = [s for s in all_slots if s.status != SlotStatus.BLOCKED]
+        open_slots = [
+            s for s in all_slots
+            if s.status != SlotStatus.BLOCKED and not is_slot_in_past(s)
+        ]
 
         result: dict[date, int] = {}
         for slot in open_slots:
