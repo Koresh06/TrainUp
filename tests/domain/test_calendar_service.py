@@ -6,8 +6,16 @@ from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.slot_template import SlotTemplate
 from src.domain.enums.slot import SlotSource, SlotStatus
 from src.domain.exception.booking import SlotAlreadyBookedException
-from src.domain.exception.calendar_slot import CalendarSlotNotFoundException
+from src.domain.entities.booking import Booking
+from src.domain.enums.booking import BookingStatus
+from src.domain.exception.calendar_slot import (
+    CalendarSlotNotFoundException,
+    SlotFullException,
+    SlotInPastException,
+)
 from src.domain.services.calendar_service import CalendarService
+from src.domain.utils import get_project_today
+from tests.fakes.booking import FakeBookingRepository
 from tests.fakes.calendar import FakeCalendarSlotRepository, FakeSlotTemplateRepository
 
 TRAINER_ID = 1
@@ -30,11 +38,36 @@ def template_repo() -> FakeSlotTemplateRepository:
 
 
 @pytest.fixture
+def booking_repo(slot_repo: FakeCalendarSlotRepository) -> FakeBookingRepository:
+    return FakeBookingRepository(slot_repo)
+
+
+@pytest.fixture
 def service(
     slot_repo: FakeCalendarSlotRepository,
     template_repo: FakeSlotTemplateRepository,
+    booking_repo: FakeBookingRepository,
 ) -> CalendarService:
-    return CalendarService(slot_repo=slot_repo, template_repo=template_repo)
+    return CalendarService(
+        slot_repo=slot_repo, template_repo=template_repo, booking_repo=booking_repo
+    )
+
+
+def tomorrow() -> date:
+    return get_project_today() + timedelta(days=1)
+
+
+async def add_active_booking(
+    booking_repo: FakeBookingRepository, slot: CalendarSlot, client_id: int = 1
+) -> Booking:
+    return await booking_repo.save(
+        Booking(
+            client_id=client_id,
+            trainer_id=slot.trainer_id,
+            slot_id=slot.id,
+            status=BookingStatus.CONFIRMED,
+        )
+    )
 
 
 def make_template(
@@ -60,6 +93,8 @@ def make_slot(
     end: time = time(11, 0),
     status: SlotStatus = SlotStatus.FREE,
     source: SlotSource = SlotSource.MANUAL,
+    capacity: int = 1,
+    is_active: bool = True,
 ) -> CalendarSlot:
     return CalendarSlot(
         trainer_id=trainer_id,
@@ -68,6 +103,8 @@ def make_slot(
         end_time=end,
         status=status,
         source=source,
+        capacity=capacity,
+        is_active=is_active,
     )
 
 
@@ -78,7 +115,7 @@ class TestGenerateSlotsForPeriod:
         slot_repo: FakeCalendarSlotRepository,
         template_repo: FakeSlotTemplateRepository,
     ) -> None:
-        today = date.today()
+        today = get_project_today()
         weekday_a = today.weekday()
         weekday_b = other_weekday(weekday_a)
 
@@ -119,7 +156,7 @@ class TestGenerateSlotsForPeriod:
         service: CalendarService,
         template_repo: FakeSlotTemplateRepository,
     ) -> None:
-        today = date.today()
+        today = get_project_today()
         template_repo._templates.append(
             make_template(
                 TRAINER_ID, today.weekday(), time(10, 0), time(11, 0), is_active=False
@@ -136,7 +173,7 @@ class TestGenerateSlotsForPeriod:
         slot_repo: FakeCalendarSlotRepository,
         template_repo: FakeSlotTemplateRepository,
     ) -> None:
-        today = date.today()
+        today = get_project_today()
         template_repo._templates.append(
             make_template(TRAINER_ID, today.weekday(), time(10, 0), time(11, 0))
         )
@@ -164,7 +201,7 @@ class TestGenerateSlotsForPeriod:
         service: CalendarService,
         template_repo: FakeSlotTemplateRepository,
     ) -> None:
-        today = date.today()
+        today = get_project_today()
         weekday = today.weekday()
         template_repo._templates.append(
             make_template(TRAINER_ID, weekday, time(10, 0), time(11, 0))
@@ -187,7 +224,7 @@ class TestGetFreeSlots:
         service: CalendarService,
         slot_repo: FakeCalendarSlotRepository,
     ) -> None:
-        today = date.today()
+        today = get_project_today()
         await slot_repo.save(make_slot(TRAINER_ID, today, status=SlotStatus.FREE))
         await slot_repo.save(make_slot(TRAINER_ID, today, status=SlotStatus.BOOKED))
         await slot_repo.save(make_slot(TRAINER_ID, today, status=SlotStatus.BLOCKED))
@@ -202,7 +239,7 @@ class TestGetFreeSlots:
         service: CalendarService,
         slot_repo: FakeCalendarSlotRepository,
     ) -> None:
-        today = date.today()
+        today = get_project_today()
         await slot_repo.save(make_slot(TRAINER_ID, today, status=SlotStatus.FREE))
         await slot_repo.save(make_slot(OTHER_TRAINER_ID, today, status=SlotStatus.FREE))
 
@@ -216,7 +253,7 @@ class TestGetFreeSlots:
         service: CalendarService,
         slot_repo: FakeCalendarSlotRepository,
     ) -> None:
-        today = date.today()
+        today = get_project_today()
         in_range = await slot_repo.save(
             make_slot(TRAINER_ID, today + timedelta(days=2), status=SlotStatus.FREE)
         )
@@ -232,14 +269,12 @@ class TestGetFreeSlots:
 
 
 class TestBookSlot:
-    async def test_books_free_slot(
+    async def test_books_last_free_place_marks_slot_booked(
         self,
         service: CalendarService,
         slot_repo: FakeCalendarSlotRepository,
     ) -> None:
-        slot = await slot_repo.save(
-            make_slot(TRAINER_ID, date.today(), status=SlotStatus.FREE)
-        )
+        slot = await slot_repo.save(make_slot(TRAINER_ID, tomorrow()))
 
         result = await service.book_slot(slot.id)
 
@@ -248,6 +283,17 @@ class TestBookSlot:
         assert stored is not None
         assert stored.status == SlotStatus.BOOKED
 
+    async def test_keeps_slot_free_while_places_left(
+        self,
+        service: CalendarService,
+        slot_repo: FakeCalendarSlotRepository,
+    ) -> None:
+        slot = await slot_repo.save(make_slot(TRAINER_ID, tomorrow(), capacity=3))
+
+        result = await service.book_slot(slot.id)
+
+        assert result.status == SlotStatus.FREE
+
     async def test_raises_when_slot_not_found(
         self,
         service: CalendarService,
@@ -255,17 +301,60 @@ class TestBookSlot:
         with pytest.raises(CalendarSlotNotFoundException):
             await service.book_slot(999)
 
-    async def test_raises_when_slot_already_booked(
+    async def test_raises_when_slot_full(
+        self,
+        service: CalendarService,
+        slot_repo: FakeCalendarSlotRepository,
+        booking_repo: FakeBookingRepository,
+    ) -> None:
+        slot = await slot_repo.save(make_slot(TRAINER_ID, tomorrow(), capacity=1))
+        await add_active_booking(booking_repo, slot)
+
+        with pytest.raises(SlotFullException):
+            await service.book_slot(slot.id)
+
+    @pytest.mark.parametrize(
+        "status, is_active",
+        [(SlotStatus.BLOCKED, True), (SlotStatus.FREE, False)],
+    )
+    async def test_raises_when_slot_blocked_or_inactive(
+        self,
+        service: CalendarService,
+        slot_repo: FakeCalendarSlotRepository,
+        status: SlotStatus,
+        is_active: bool,
+    ) -> None:
+        slot = await slot_repo.save(
+            make_slot(TRAINER_ID, tomorrow(), status=status, is_active=is_active)
+        )
+
+        with pytest.raises(SlotAlreadyBookedException):
+            await service.book_slot(slot.id)
+
+    async def test_raises_when_slot_in_past(
         self,
         service: CalendarService,
         slot_repo: FakeCalendarSlotRepository,
     ) -> None:
         slot = await slot_repo.save(
-            make_slot(TRAINER_ID, date.today(), status=SlotStatus.BOOKED)
+            make_slot(TRAINER_ID, get_project_today() - timedelta(days=1))
         )
 
-        with pytest.raises(SlotAlreadyBookedException):
+        with pytest.raises(SlotInPastException):
             await service.book_slot(slot.id)
+
+    async def test_forced_booking_ignores_capacity(
+        self,
+        service: CalendarService,
+        slot_repo: FakeCalendarSlotRepository,
+        booking_repo: FakeBookingRepository,
+    ) -> None:
+        slot = await slot_repo.save(make_slot(TRAINER_ID, tomorrow(), capacity=1))
+        await add_active_booking(booking_repo, slot)
+
+        result = await service.book_slot_forced(slot.id)
+
+        assert result.status == SlotStatus.BOOKED
 
 
 class TestReleaseSlot:
@@ -275,7 +364,7 @@ class TestReleaseSlot:
         slot_repo: FakeCalendarSlotRepository,
     ) -> None:
         slot = await slot_repo.save(
-            make_slot(TRAINER_ID, date.today(), status=SlotStatus.BOOKED)
+            make_slot(TRAINER_ID, get_project_today(), status=SlotStatus.BOOKED)
         )
 
         result = await service.release_slot(slot.id)
@@ -288,7 +377,7 @@ class TestReleaseSlot:
         slot_repo: FakeCalendarSlotRepository,
     ) -> None:
         slot = await slot_repo.save(
-            make_slot(TRAINER_ID, date.today(), status=SlotStatus.BOOKED)
+            make_slot(TRAINER_ID, get_project_today(), status=SlotStatus.BOOKED)
         )
         updated_at_before = slot.updated_at
 
@@ -316,7 +405,7 @@ class TestBlockSlot:
         initial_status: SlotStatus,
     ) -> None:
         slot = await slot_repo.save(
-            make_slot(TRAINER_ID, date.today(), status=initial_status)
+            make_slot(TRAINER_ID, get_project_today(), status=initial_status)
         )
 
         result = await service.block_slot(slot.id)
@@ -329,3 +418,52 @@ class TestBlockSlot:
     ) -> None:
         with pytest.raises(CalendarSlotNotFoundException):
             await service.block_slot(999)
+
+
+class TestUnblockSlot:
+    async def test_unblocked_slot_with_free_places_becomes_free(
+        self,
+        service: CalendarService,
+        slot_repo: FakeCalendarSlotRepository,
+    ) -> None:
+        slot = await slot_repo.save(
+            make_slot(TRAINER_ID, tomorrow(), status=SlotStatus.BLOCKED, capacity=2)
+        )
+
+        result = await service.unblock_slot(slot.id)
+
+        assert result.status == SlotStatus.FREE
+
+    async def test_unblocked_full_slot_stays_booked(
+        self,
+        service: CalendarService,
+        slot_repo: FakeCalendarSlotRepository,
+        booking_repo: FakeBookingRepository,
+    ) -> None:
+        slot = await slot_repo.save(
+            make_slot(TRAINER_ID, tomorrow(), status=SlotStatus.BLOCKED, capacity=1)
+        )
+        await add_active_booking(booking_repo, slot)
+
+        result = await service.unblock_slot(slot.id)
+
+        assert result.status == SlotStatus.BOOKED
+
+
+class TestSlotsForCalendar:
+    async def test_inactive_slots_are_hidden(
+        self,
+        service: CalendarService,
+        slot_repo: FakeCalendarSlotRepository,
+    ) -> None:
+        day = tomorrow()
+        visible = await slot_repo.save(make_slot(TRAINER_ID, day, start=time(10, 0)))
+        await slot_repo.save(
+            make_slot(TRAINER_ID, day, start=time(12, 0), is_active=False)
+        )
+
+        by_date = await service.get_slots_for_date(TRAINER_ID, day)
+        by_range = await service.get_week_grid_slots(TRAINER_ID, 3)
+
+        assert [s.id for s in by_date] == [visible.id]
+        assert [s.id for s in by_range] == [visible.id]

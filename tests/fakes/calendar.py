@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, time
 
 from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.slot_template import SlotTemplate
@@ -16,6 +16,9 @@ class FakeCalendarSlotRepository:
     async def get_by_id(self, slot_id: int) -> CalendarSlot | None:
         return self._slots.get(slot_id)
 
+    async def get_by_id_for_update(self, slot_id: int) -> CalendarSlot | None:
+        return self._slots.get(slot_id)
+
     async def get_free_slots(
         self,
         trainer_id: int,
@@ -27,16 +30,51 @@ class FakeCalendarSlotRepository:
             for slot in self._slots.values()
             if slot.trainer_id == trainer_id
             and slot.status == SlotStatus.FREE
+            and slot.is_active
             and date_from <= slot.slot_date <= date_to
         ]
         result.sort(key=lambda slot: (slot.slot_date, slot.start_time))
         return result
 
-    async def exists_for_date(self, trainer_id: int, date: date) -> bool:
+    async def exists_for_datetime(
+        self, trainer_id: int, slot_date: date, start_time: time
+    ) -> bool:
         return any(
-            slot.trainer_id == trainer_id and slot.slot_date == date
+            slot.trainer_id == trainer_id
+            and slot.slot_date == slot_date
+            and slot.start_time == start_time
             for slot in self._slots.values()
         )
+
+    async def get_slots_for_date(
+        self, trainer_id: int, slot_date: date
+    ) -> list[CalendarSlot]:
+        return [
+            slot
+            for slot in self._slots.values()
+            if slot.trainer_id == trainer_id and slot.slot_date == slot_date
+        ]
+
+    async def get_slots_for_range(
+        self, trainer_id: int, date_from: date, date_to: date
+    ) -> list[CalendarSlot]:
+        return [
+            slot
+            for slot in self._slots.values()
+            if slot.trainer_id == trainer_id and date_from <= slot.slot_date <= date_to
+        ]
+
+    async def get_by_date_and_time(
+        self, trainer_id: int, slot_date: date, start_time: time
+    ) -> CalendarSlot | None:
+        for slot in self._slots.values():
+            if (
+                slot.trainer_id == trainer_id
+                and slot.slot_date == slot_date
+                and slot.start_time == start_time
+            ):
+                return slot
+        return None
 
     async def save(self, slot: CalendarSlot) -> CalendarSlot:
         if slot.id == 0:

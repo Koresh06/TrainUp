@@ -69,6 +69,23 @@ services:
         condition: service_healthy
     restart: always
 
+  # webhook ЮKassa + страница возврата после оплаты; наружу — через HTTPS-прокси
+  # (nginx/caddy) на домен из APP_CONFIG__PAYMENT__YOOKASSA__RETURN_URL
+  webhook:
+    image: ghcr.io/koresh06/trainup:latest
+    container_name: trainup_webhook
+    command: uvicorn src.presentation.web.app:create_app --host 0.0.0.0 --port 8080 --factory
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+
 volumes:
   postgres_data:
   redis_data:
