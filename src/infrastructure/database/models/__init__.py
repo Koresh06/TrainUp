@@ -17,6 +17,7 @@ from .registration_question import RegistrationQuestionModel
 from .client_answer import ClientAnswerModel
 from .recurring_booking import RecurringBookingModel
 from .trainer_reminder_settings import TrainerReminderSettingsModel
+from .payment import PaymentModel
 
 
 __all__ = [
@@ -39,4 +40,5 @@ __all__ = [
     "ClientAnswerModel",
     "RecurringBookingModel",
     "TrainerReminderSettingsModel",
+    "PaymentModel",
 ]
