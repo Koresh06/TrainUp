@@ -1,11 +1,20 @@
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
 
-from src.domain.enums.training import HealthCondition, TrainingGoal
+from src.domain.enums.consultation import ConsultationType
+from src.domain.enums.program import ProgramType
+from src.domain.enums.request import ClientRequestKind, RequestStatus
+from src.domain.enums.training import HealthCondition, TrainingDirection, TrainingGoal
 
 from zoneinfo import ZoneInfo
 
-PROJECT_TIMEZONE = ZoneInfo("Europe/Moscow")
+from src.core.config import settings
+
+# Значения, которые меняются между тестом/продом, берутся из .env
+# (APP_CONFIG__BUSINESS__*, см. src/core/config/business.py)
+_business = settings.business
+
+PROJECT_TIMEZONE = ZoneInfo(_business.timezone)
 
 # --- Слоты календаря: длительность и генерация сетки времён ---
 
@@ -25,6 +34,16 @@ WEEKDAY_LABELS_FULL = [
     "Суббота",
     "Воскресенье",
 ]  # порядок соответствует Python date.weekday(): 0=Понедельник ... 6=Воскресенье
+
+WEEKDAY_LABELS_EVERY = [
+    "по понедельникам",
+    "по вторникам",
+    "по средам",
+    "по четвергам",
+    "по пятницам",
+    "по субботам",
+    "по воскресеньям",
+]
 
 
 def generate_time_options() -> list[time]:
@@ -50,16 +69,16 @@ def add_minutes(t: time, minutes: int) -> time:
 # --- Дефолты для настроек тренера (используются при регистрации тренера / если
 # у тренера ещё нет собственной записи настроек в БД) ---
 
-DEFAULT_CALENDAR_HORIZON_DAYS = 14  # на сколько дней вперёд генерируется календарь и виден клиенту при записи
-REMINDER_HOURS_BEFORE_TRAINING = 2  # за сколько часов до тренировки отправляется напоминание клиенту (боевое значение)
-DEFAULT_MAX_ACTIVE_BOOKINGS = 1     # сколько активных записей одновременно может иметь один клиент у тренера (пока не подключено к реальной проверке)
+DEFAULT_CALENDAR_HORIZON_DAYS = _business.default_calendar_horizon_days  # на сколько дней вперёд календарь виден клиенту при записи
+CALENDAR_BUFFER_DAYS = _business.calendar_buffer_days  # на сколько дней вперёд cron держит материализованные слоты (не меньше максимального горизонта 8 нед.)
+REMINDER_HOURS_BEFORE_TRAINING = _business.reminder_hours_before_training  # дефолт, если тренер не настроил своё
+DEFAULT_MAX_ACTIVE_BOOKINGS = _business.default_max_active_bookings  # сколько активных самостоятельных записей может иметь клиент
 
 # --- Тестовый режим напоминаний ---
-# ВРЕМЕННО для теста — напоминание придёт через REMINDER_TEST_DELAY_MINUTES после
-# подтверждения брони, а не за REMINDER_HOURS_BEFORE_TRAINING до тренировки.
-# Перед деплоем в прод — выставить обратно в False!
-REMINDER_TEST_MODE = False
-REMINDER_TEST_DELAY_MINUTES = 1
+# напоминание придёт через REMINDER_TEST_DELAY_MINUTES после подтверждения брони,
+# а не за REMINDER_HOURS_BEFORE_TRAINING до тренировки. В проде — False в .env
+REMINDER_TEST_MODE = _business.reminder_test_mode
+REMINDER_TEST_DELAY_MINUTES = _business.reminder_test_delay_minutes
 
 # --- Дефолты для TrainerPricingRule (если тренер ещё не настроил свои цены) ---
 
@@ -88,14 +107,66 @@ GOAL_LABELS: dict[TrainingGoal, str] = {
     TrainingGoal.BASIC: "Базовая (Целевые мышцы)",
     TrainingGoal.WEIGHT_LOSS: "Похудение (+консультация)",
     TrainingGoal.WEIGHT_GAIN: "Набор (+консультация)",
-    TrainingGoal.CUSTOM_GOAL: "Другое (указать самостоятельно)",
+    TrainingGoal.CUSTOM_GOAL: "Другое",
 }
 
+# Вариант «Другое» в любом MULTI_SELECT-вопросе анкеты: клиент обязан вписать
+# свой текст, в ответ сохраняется «Другое: <текст>»
+OTHER_OPTION_LABEL = "Другое"
+OTHER_OPTION_TEXT_MAX_LENGTH = 200
+
+# --- Заявки клиентов: программа тренировок / консультация / обратная связь ---
+
+PROGRAM_TYPE_LABELS: dict[ProgramType, str] = {
+    ProgramType.SINGLE_SESSION: "Разовое занятие",
+    ProgramType.WEEK_3: "Неделя (3 занятия)",
+    ProgramType.MONTH_2_PER_WEEK: "Месяц (2 раза в неделю)",
+    ProgramType.MONTH_3_PER_WEEK: "Месяц (3 раза в неделю)",
+}
+
+TRAINING_DIRECTION_LABELS: dict[TrainingDirection, str] = {
+    TrainingDirection.STRENGTH: "Силовые тренировки",
+    TrainingDirection.CARDIO: "Кардио",
+    TrainingDirection.ENDURANCE: "Выносливость",
+    TrainingDirection.OFP: "ОФП",
+    TrainingDirection.WEIGHT_LOSS: "Снижение веса",
+    TrainingDirection.CUSTOM_GOAL: "Конкретная цель",
+}
+
+CONSULTATION_TYPE_LABELS: dict[ConsultationType, str] = {
+    ConsultationType.FREE: "Бесплатная",
+    ConsultationType.PAID: "Платная",
+}
+
+CLIENT_REQUEST_KIND_LABELS: dict[ClientRequestKind, str] = {
+    ClientRequestKind.PROGRAM: "🏋 Программа тренировок",
+    ClientRequestKind.CONSULTATION: "💬 Консультация",
+    ClientRequestKind.FEEDBACK: "✉️ Обратная связь",
+}
+
+REQUEST_STATUS_LABELS: dict[RequestStatus, str] = {
+    RequestStatus.NEW: "🆕 Новая",
+    RequestStatus.IN_PROGRESS: "🛠 В работе",
+    RequestStatus.DONE: "✅ Закрыта",
+    RequestStatus.REJECTED: "🚫 Отклонена",
+}
+
+REQUEST_COMMENT_MAX_LENGTH = 255    # comment у program/consultation — VARCHAR(255)
+FEEDBACK_MESSAGE_MAX_LENGTH = 1000  # message у feedback_messages — VARCHAR(1000)
+
+# --- Напоминание «запланируйте следующую тренировку» ---
+# через сколько дней после завершённой тренировки напомнить клиенту записаться,
+# если у него нет будущих записей и он не постоянный клиент
+PLAN_NEXT_TRAINING_REMINDER_DAYS = _business.plan_next_training_reminder_days
+
+# --- Подписка тренера ---
+# за сколько часов до окончания предупреждать тренера (по убыванию: 48 → 3)
+SUBSCRIPTION_WARNING_HOURS: list[int] = sorted(_business.subscription_warning_hours, reverse=True)
+
 # --- Тестовый режим постоянных клиентов ---
-# ВРЕМЕННО для теста — cron maintain_recurring_bookings бежит раз в 2 минуты
-# вместо раз в сутки, чтобы быстро проверить авто-создание следующей недели.
-# Перед деплоем в прод — выставить обратно в False!
-RECURRING_BOOKINGS_TEST_MODE = False
+# cron maintain_recurring_bookings бежит раз в 2 минуты вместо раза в сутки,
+# чтобы быстро проверить авто-создание следующей недели. В проде — False в .env
+RECURRING_BOOKINGS_TEST_MODE = _business.recurring_bookings_test_mode
 
 # --- Опции для напоминаний (в часах) ---
 REMINDER_HOUR_OPTIONS = [1, 2, 3, 4, 6, 12, 24]

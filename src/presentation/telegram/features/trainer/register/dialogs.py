@@ -12,6 +12,8 @@ from aiogram_dialog.widgets.kbd import (
     Back,
     Next,
     RequestContact,
+    SwitchTo,
+    Url,
 )
 from aiogram_dialog.widgets.markup.reply_keyboard import ReplyKeyboardFactory
 
@@ -22,19 +24,24 @@ from src.presentation.telegram.features.handlers_phone import (
     validate_phone_number,
 )
 
+from src.presentation.telegram.widgets.request_chat import RequestChat
+
 from .handlers import (
+    on_back_to_cabinet,
     on_delete_photo,
+    on_group_chat_shared,
     on_group_message_forwarded,
     on_onboarding_confirm,
     on_photo_received,
     on_plan_selected,
-    on_confirm_purchase,
+    on_payment_method_selected,
 )
 from .getters import (
     getter_media,
     onboarding_final_getter,
     select_plan_getter,
-    confirm_plan_getter,
+    select_method_getter,
+    payment_getter,
 )
 from .validaters import validate_trainer_name, validate_trainer_bio
 from .states import SubscriptionSG, TrainerOnboardingSG
@@ -133,16 +140,27 @@ trainer_onboarding_dialog = Dialog(
     Window(
         Const(
             "🔔 <b>Уведомления</b>\n\n"
-            "Последний шаг — куда слать уведомления о новых записях:\n\n"
-            "1. Создай группу или канал в Telegram\n"
-            "2. Добавь туда бота как администратора\n"
-            "3. Перешли сюда любое сообщение из этой группы/канала"
+            "Последний шаг — куда слать уведомления о новых записях и заявках.\n\n"
+            "Нажми кнопку ниже и выбери рабочую группу или канал — Telegram сам "
+            "добавит туда бота администратором.\n\n"
+            "Можно и по-старому: добавь бота админом в канал и перешли сюда "
+            "любое сообщение из канала."
+        ),
+        RequestChat(Const("👥 Выбрать группу"), request_id=1, chat_is_channel=False),
+        RequestChat(Const("📢 Выбрать канал"), request_id=2, chat_is_channel=True),
+        MessageInput(
+            func=on_group_chat_shared,
+            content_types=[ContentType.CHAT_SHARED],
         ),
         MessageInput(
             func=on_group_message_forwarded,
-            content_types=[ContentType.TEXT],
+            content_types=[ContentType.ANY],
         ),
         Back(Const("⬅️ Назад")),
+        markup_factory=ReplyKeyboardFactory(
+            one_time_keyboard=True,
+            resize_keyboard=True,
+        ),
         state=TrainerOnboardingSG.group,
     ),
     Window(
@@ -171,8 +189,9 @@ subscription_dialog = Dialog(
     Window(
         Const(
             "💳 <b>Подписка</b>\n\n"
-            "У тебя нет активной подписки. Чтобы открыть кабинет тренера "
-            "и доступ к боту для клиентов — выбери тариф:"
+            "Подписка открывает кабинет тренера и запись для твоих клиентов. "
+            "Если она ещё действует — новый срок добавится к текущему.\n\n"
+            "Выбери тариф:"
         ),
         Column(
             Select(
@@ -183,23 +202,41 @@ subscription_dialog = Dialog(
                 on_click=on_plan_selected,
             ),
         ),
+        Button(Const("⬅️ В кабинет"), id="to_cabinet", on_click=on_back_to_cabinet),
         state=SubscriptionSG.select_plan,
         getter=select_plan_getter,
     ),
     Window(
         Format(
-            "🧾 <b>Подтверждение оплаты</b>\n\n"
+            "🧾 <b>Оплата подписки</b>\n\n"
             "Тариф: {plan_label}\n"
-            "Стоимость: {price} BLR\n\n"
-            "⚠️ <i>Это тестовая оплата — реальное списание не производится.</i>"
+            "Стоимость: <b>{price}</b>\n\n"
+            "Выберите способ оплаты:"
         ),
-        Button(
-            Const("💳 Оплатить"),
-            id="confirm_purchase",
-            on_click=on_confirm_purchase,
+        Const("⚠️ Онлайн-оплата пока не подключена — обратитесь к администратору.", when="no_methods"),
+        Column(
+            Select(
+                Format("{item[label]}"),
+                id="payment_method_select",
+                items="methods",
+                item_id_getter=lambda item: item["id"],
+                on_click=on_payment_method_selected,
+            ),
         ),
         Back(Const("⬅️ Назад")),
-        state=SubscriptionSG.confirm,
-        getter=confirm_plan_getter,
+        state=SubscriptionSG.select_method,
+        getter=select_method_getter,
+    ),
+    Window(
+        Format("{instructions}"),
+        Url(Const("💳 Оплатить"), Format("{payment_url}"), when="has_url"),
+        Button(Const("🏋 В кабинет"), id="paid_to_cabinet", on_click=on_back_to_cabinet, when="is_paid"),
+        SwitchTo(
+            Const("🔁 Другой способ оплаты"),
+            id="to_methods",
+            state=SubscriptionSG.select_method,
+        ),
+        state=SubscriptionSG.payment,
+        getter=payment_getter,
     ),
 )

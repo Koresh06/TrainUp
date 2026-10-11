@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import cast, or_, select, String
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -53,3 +53,22 @@ class SQLAlchemyClientRepo(ClientRepository):
             raise ClientAlreadyExistsException(tg_id=client.tg_id) from error
 
         return model.to_entity()
+
+    async def search(self, query: str, limit: int = 20) -> list[Client]:
+        pattern = f"%{query.strip().lstrip('@')}%"
+        stmt = (
+            select(ClientModel)
+            .where(
+                or_(
+                    ClientModel.first_name.ilike(pattern),
+                    ClientModel.last_name.ilike(pattern),
+                    ClientModel.username.ilike(pattern),
+                    ClientModel.phone.ilike(pattern),
+                    cast(ClientModel.tg_id, String).ilike(pattern),
+                )
+            )
+            .order_by(ClientModel.id.desc())
+            .limit(limit)
+        )
+        result = await self._session.execute(stmt)
+        return [model.to_entity() for model in result.scalars().all()]

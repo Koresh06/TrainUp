@@ -6,16 +6,17 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import (
     DateTime,
     ForeignKey,
-    BigInteger,
     Integer,
-    VARCHAR,
-    Boolean,
     Enum as SqlEnum,
     Numeric,
 )
 
 from src.domain.entities.trainer_subscription import TrainerSubscription
-from src.domain.enums.subscription import SubscriptionPlan, SubscriptionStatus
+from src.domain.enums.subscription import (
+    SubscriptionPlan,
+    SubscriptionSource,
+    SubscriptionStatus,
+)
 
 from .base import BaseModel, CreatedAtMixin, UpdatedAtMixin
 
@@ -40,6 +41,12 @@ class TrainerSubscriptionModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     )
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     expired_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    source: Mapped[SubscriptionSource] = mapped_column(
+        SqlEnum(SubscriptionSource),
+        default=SubscriptionSource.PURCHASE,
+        server_default=SubscriptionSource.PURCHASE.name,
+    )
+    notified_stage: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     trainer: Mapped["TrainerModel"] = relationship(
         "TrainerModel",
@@ -55,6 +62,8 @@ class TrainerSubscriptionModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             status=entity.status,
             started_at=entity.started_at,
             expired_at=entity.expired_at,
+            source=entity.source,
+            notified_stage=entity.notified_stage,
         )
 
     def to_entity(self) -> "TrainerSubscription":
@@ -66,6 +75,9 @@ class TrainerSubscriptionModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             status=self.status,
             started_at=self.started_at,
             expired_at=self.expired_at,
+            source=self.source,
+            notified_stage=self.notified_stage,
+            created_at=self.created_at,
         )
 
     def update_model(self, entity: "TrainerSubscription") -> None:
@@ -75,3 +87,5 @@ class TrainerSubscriptionModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.status = entity.status
         self.started_at = entity.started_at
         self.expired_at = entity.expired_at
+        self.source = entity.source
+        self.notified_stage = entity.notified_stage

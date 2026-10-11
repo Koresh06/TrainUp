@@ -7,16 +7,13 @@ from src.application.mediator import Mediator
 from src.application.use_cases.subscription.get_active_price_plans import (
     GetActivePricePlansRequest,
 )
+from src.application.use_cases.payment._shared import SUBSCRIPTION_PLAN_LABELS, usd
+from src.application.use_cases.payment.get_methods import GetPaymentMethodsRequest
 from src.domain.entities.subscription_price_plan import SubscriptionPricePlan
-from src.domain.enums.subscription import SubscriptionPlan
+from src.domain.enums.payment import PaymentMethod
 from src.presentation.telegram.build_media import build_media_attachment
 
-PLAN_LABELS: dict[SubscriptionPlan, str] = {
-    SubscriptionPlan.ONE_MONTH: "1 месяц",
-    SubscriptionPlan.THREE_MONTHS: "3 месяца",
-    SubscriptionPlan.SIX_MONTHS: "6 месяцев",
-    SubscriptionPlan.TWELVE_MONTHS: "12 месяцев",
-}
+PLAN_LABELS = SUBSCRIPTION_PLAN_LABELS
 
 
 @inject
@@ -33,7 +30,7 @@ async def select_plan_getter(
         "plans": [
             {
                 "id": str(p.id),
-                "label": f"{PLAN_LABELS.get(p.plan, p.plan.value)} — {p.price:.0f} BLR",
+                "label": f"{PLAN_LABELS.get(p.plan, p.plan.value)} — {usd(p.price)}",
             }
             for p in plans
         ]
@@ -41,20 +38,32 @@ async def select_plan_getter(
 
 
 @inject
-async def confirm_plan_getter(
+async def select_method_getter(
     dialog_manager: DialogManager,
     mediator: FromDishka[Mediator],
     **kwargs,
 ) -> dict:
     price_plan_id: int = dialog_manager.dialog_data["price_plan_id"]
-    plans: list[SubscriptionPricePlan] = await mediator.handle(
-        GetActivePricePlansRequest()
-    )
+    plans: list[SubscriptionPricePlan] = await mediator.handle(GetActivePricePlansRequest())
     plan = next(p for p in plans if p.id == price_plan_id)
+    methods: list[PaymentMethod] = await mediator.handle(GetPaymentMethodsRequest())
+    print(methods)
 
     return {
         "plan_label": PLAN_LABELS.get(plan.plan, plan.plan.value),
-        "price": f"{plan.price:.0f}",
+        "price": usd(plan.price),
+        "methods": [{"id": m.value, "label": m.label()} for m in methods],
+        "no_methods": not methods,
+    }
+
+
+async def payment_getter(dialog_manager: DialogManager, **kwargs) -> dict:
+    data = dialog_manager.dialog_data
+    return {
+        "instructions": data.get("payment_instructions", ""),
+        "payment_url": data.get("payment_url") or "",
+        "has_url": bool(data.get("payment_url")),
+        "is_paid": data.get("payment_paid", False),
     }
 
 

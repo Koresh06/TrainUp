@@ -3,7 +3,8 @@ from aiogram.fsm.state import State, StatesGroup
 
 class SubscriptionSG(StatesGroup):
     select_plan = State()
-    confirm = State()
+    select_method = State()
+    payment = State()
 
 
 class TrainerOnboardingSG(StatesGroup):

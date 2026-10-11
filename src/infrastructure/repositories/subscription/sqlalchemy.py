@@ -22,6 +22,8 @@ class SQLAlchemyTrainerSubscriptionRepo(TrainerSubscriptionRepository):
                 TrainerSubscriptionModel.status == SubscriptionStatus.ACTIVE,
                 TrainerSubscriptionModel.expired_at > datetime.now(timezone.utc),
             )
+            # при продлении активных записей несколько — берём ту, что дольше длится
+            .order_by(TrainerSubscriptionModel.expired_at.desc())
             .limit(1)
         )
         result = await self._session.execute(query)
@@ -52,3 +54,25 @@ class SQLAlchemyTrainerSubscriptionRepo(TrainerSubscriptionRepository):
 
         await self._session.flush()
         return model.to_entity()
+
+    async def get_by_trainer_id(self, trainer_id: int) -> list[TrainerSubscription]:
+        query = (
+            select(TrainerSubscriptionModel)
+            .where(TrainerSubscriptionModel.trainer_id == trainer_id)
+            .order_by(TrainerSubscriptionModel.created_at.desc())
+        )
+        result = await self._session.execute(query)
+        return [model.to_entity() for model in result.scalars().all()]
+
+    async def get_all_by_status(
+        self, status: SubscriptionStatus
+    ) -> list[TrainerSubscription]:
+        query = select(TrainerSubscriptionModel).where(
+            TrainerSubscriptionModel.status == status
+        )
+        result = await self._session.execute(query)
+        return [model.to_entity() for model in result.scalars().all()]
+
+    async def get_all(self) -> list[TrainerSubscription]:
+        result = await self._session.execute(select(TrainerSubscriptionModel))
+        return [model.to_entity() for model in result.scalars().all()]
