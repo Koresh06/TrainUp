@@ -5,6 +5,7 @@ from src.presentation.telegram.features import (
     CLIENT_DIALOGS,
     TRAINER_CABINET_DIALOGS,
 )
+from src.presentation.telegram.middlewares.activity import ActivityTrackingMiddleware
 from src.presentation.telegram.middlewares.access import (
     AdminGuard,
     ClientTrainerGuard,
@@ -15,6 +16,11 @@ from src.presentation.telegram.middlewares.access import (
 
 def setup_middlewares(dp: Dispatcher) -> None:
     """Вызывать ПОСЛЕ setup_dishka: UserAccessMiddleware берёт контейнер из data."""
+    # активность — раньше проверки доступа: заблокированный админом тоже «заходил»
+    activity = ActivityTrackingMiddleware()
+    dp.message.outer_middleware(activity)
+    dp.callback_query.outer_middleware(activity)
+
     access = UserAccessMiddleware()
     dp.message.outer_middleware(access)
     dp.callback_query.outer_middleware(access)

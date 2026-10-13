@@ -1,6 +1,18 @@
 from dishka import Provider, provide, Scope
 
 from src.application.mediator import Mediator
+from src.application.use_cases.admin.get_analytics import (
+    GetAdminAnalyticsRequest,
+    GetAdminAnalyticsUseCase,
+)
+from src.application.use_cases.bot_user.set_bot_blocked import (
+    SetBotBlockedByUserRequest,
+    SetBotBlockedByUserUseCase,
+)
+from src.application.use_cases.bot_user.track_activity import (
+    TrackUserActivityRequest,
+    TrackUserActivityUseCase,
+)
 from src.application.use_cases.booking.cancel import (
     CancelBookingRequest,
     CancelBookingUseCase,
@@ -460,6 +472,9 @@ class MediatorProvider(Provider):
         reject_payment_use_case: RejectPaymentUseCase,
         get_payment_methods_use_case: GetPaymentMethodsUseCase,
         get_payment_by_external_id_use_case: GetPaymentByExternalIdUseCase,
+        get_admin_analytics_use_case: GetAdminAnalyticsUseCase,
+        track_user_activity_use_case: TrackUserActivityUseCase,
+        set_bot_blocked_by_user_use_case: SetBotBlockedByUserUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -617,5 +632,9 @@ class MediatorProvider(Provider):
         mediator.register(RejectPaymentRequest, reject_payment_use_case)
         mediator.register(GetPaymentMethodsRequest, get_payment_methods_use_case)
         mediator.register(GetPaymentByExternalIdRequest, get_payment_by_external_id_use_case)
+
+        mediator.register(GetAdminAnalyticsRequest, get_admin_analytics_use_case)
+        mediator.register(TrackUserActivityRequest, track_user_activity_use_case)
+        mediator.register(SetBotBlockedByUserRequest, set_bot_blocked_by_user_use_case)
 
         return mediator

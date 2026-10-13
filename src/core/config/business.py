@@ -26,3 +26,6 @@ class BusinessSettings(BaseSettings):
 
     # за сколько часов до окончания подписки предупреждать тренера (по убыванию)
     subscription_warning_hours: list[int] = [48, 3]
+
+    # бесплатный пробный период новому тренеру сразу после регистрации (0 — выключен)
+    trainer_trial_days: int = 7

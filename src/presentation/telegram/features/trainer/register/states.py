@@ -5,6 +5,7 @@ class SubscriptionSG(StatesGroup):
     select_plan = State()
     select_method = State()
     payment = State()
+    benefits = State()
 
 
 class TrainerOnboardingSG(StatesGroup):
@@ -15,3 +16,5 @@ class TrainerOnboardingSG(StatesGroup):
     photo = State()
     group = State()
     final = State()
+    trial_started = State()
+    benefits = State()

@@ -18,6 +18,7 @@ from dishka.integrations.aiogram import CONTAINER_NAME
 
 from src.presentation.telegram.dialog_ids import patch_dialog_intent_ids
 from src.presentation.telegram.features import get_all_dialogs, get_all_routers
+from src.presentation.telegram.middlewares.activity import ActivityTrackingMiddleware
 from src.presentation.telegram.middlewares.setup import setup_middlewares
 
 BOT_CALLS: list = []
@@ -84,7 +85,10 @@ class UI:
 
     @property
     def text(self) -> str:
-        return self.last.text if self.last else ""
+        if self.last is None:
+            return ""
+        # у окон с картинкой (графики, фото) текст уходит в подпись
+        return self.last.text or getattr(self.last, "caption", None) or ""
 
     @property
     def buttons(self) -> list[str]:
@@ -123,4 +127,47 @@ def ui(ui_env, container) -> UI:
     ui_env.mm.reset_history()
     ui_env.dp.storage.storage.clear()  # MemoryStorage: стек диалогов между тестами не нужен
     BOT_CALLS.clear()
+    # диспетчер общий на сессию, а БД чистится после каждого теста —
+    # кэш «уже отмечен сегодня» не должен переживать тест
+    for middleware in ui_env.dp.message.outer_middleware:
+        if isinstance(middleware, ActivityTrackingMiddleware):
+            middleware.reset()
     return UI(ui_env)
+
+
+# --- Общий тренер с расписанием на завтра (для сценариев кабинета/админки) ---
+
+from datetime import time, timedelta, timezone  # noqa: E402
+
+from src.application.use_cases.invite_link.get_active import GetActiveInviteLinkRequest  # noqa: E402
+from src.application.use_cases.slot_template.sync_weekday import (  # noqa: E402
+    SyncWeekdaySlotTemplatesRequest,
+)
+from src.application.use_cases.trainer.register import RegisterTrainerRequest  # noqa: E402
+from src.domain.utils import get_project_today  # noqa: E402
+from src.infrastructure.database.seed import (  # noqa: E402
+    seed_faq_items,
+    seed_subscription_price_plans,
+)
+
+TRAINER_TG = 5001
+CLIENT_TG = 6001
+ADMIN_TG = 777000  # tests/conftest.py
+
+
+@pytest.fixture
+async def trainer_setup(run, container):
+    await seed_subscription_price_plans(container)
+    await seed_faq_items(container)
+    trainer = await run(
+        RegisterTrainerRequest(tg_id=TRAINER_TG, name="Тренер", bio="Био", notification_chat_id=-100)
+    )
+    tomorrow = get_project_today() + timedelta(days=1)
+    await run(
+        SyncWeekdaySlotTemplatesRequest(
+            trainer_id=trainer.id, weekday=tomorrow.weekday(),
+            time_capacities={time(10, 0, tzinfo=timezone.utc): 2},
+        )
+    )
+    link = await run(GetActiveInviteLinkRequest(trainer_id=trainer.id))
+    return {"trainer": trainer, "token": link.token, "tomorrow": tomorrow}

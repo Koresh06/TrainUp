@@ -2,6 +2,8 @@ from dishka import Provider, provide, Scope
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.repositories.client import ClientRepository
+from src.domain.repositories.bot_user import BotUserRepository
+from src.infrastructure.repositories.bot_user.sqlalchemy import SQLAlchemyBotUserRepo
 from src.domain.repositories.payment import PaymentRepository
 from src.infrastructure.repositories.payment.sqlalchemy import SQLAlchemyPaymentRepo
 from src.domain.repositories.client_answer import ClientAnswerRepository
@@ -163,3 +165,7 @@ class RepositoriesProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_payment_repository(self, session: AsyncSession) -> PaymentRepository:
         return SQLAlchemyPaymentRepo(session=session)
+
+    @provide(scope=Scope.REQUEST)
+    def get_bot_user_repository(self, session: AsyncSession) -> BotUserRepository:
+        return SQLAlchemyBotUserRepo(session=session)

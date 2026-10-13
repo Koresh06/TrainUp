@@ -63,6 +63,8 @@ class SubscriptionNotificationDTO:
     event: SubscriptionEvent
     expired_at: datetime
     hours_left: int = 0
+    # заканчивается бесплатный пробный период — другой текст: тренер ещё ни разу не платил
+    is_trial: bool = False
 
 
 @dataclass(frozen=True)

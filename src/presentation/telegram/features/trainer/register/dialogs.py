@@ -35,6 +35,7 @@ from .handlers import (
     on_photo_received,
     on_plan_selected,
     on_payment_method_selected,
+    on_trial_open_cabinet,
 )
 from .getters import (
     getter_media,
@@ -42,25 +43,30 @@ from .getters import (
     select_plan_getter,
     select_method_getter,
     payment_getter,
+    trial_started_getter,
+    welcome_getter,
 )
+from .texts import BENEFITS_FULL
 from .validaters import validate_trainer_name, validate_trainer_bio
 from .states import SubscriptionSG, TrainerOnboardingSG
 
 trainer_onboarding_dialog = Dialog(
     Window(
-        Const(
+        Format(
             "👋 <b>Добро пожаловать в TrainUp!</b>\n\n"
             "Бот берёт на себя запись клиентов, расписание и напоминания — "
             "тебе останется только проводить тренировки.\n\n"
             "<b>Что дальше:</b>\n"
             "1️⃣ Заполним профиль — имя, описание и группу для уведомлений\n"
-            "2️⃣ Выберешь тариф и оплатишь подписку\n\n"
+            "{welcome_step_two}\n\n"
             "После этого откроется твой кабинет, и клиенты смогут "
             "записываться по персональной ссылке.\n\n"
             "⏱ Это займёт пару минут."
         ),
+        SwitchTo(Const("💎 Что умеет TrainUp"), id="welcome_benefits", state=TrainerOnboardingSG.benefits),
         Next(Const("🚀 Начать")),
         state=TrainerOnboardingSG.welcome,
+        getter=welcome_getter,
     ),
     Window(
         Const(
@@ -182,15 +188,39 @@ trainer_onboarding_dialog = Dialog(
         state=TrainerOnboardingSG.final,
         getter=onboarding_final_getter,
     ),
+    Window(
+        Format(
+            "🎉 <b>Профиль создан — пробный период активирован!</b>\n\n"
+            "🎁 {trial_days} бесплатно, до <b>{trial_until}</b>. Все возможности "
+            "открыты, оплата не нужна.\n\n"
+            "<b>Чтобы клиенты начали записываться:</b>\n"
+            "1️⃣ «⚙️ Настройки» → расписание: отметь дни и время тренировок\n"
+            "2️⃣ «🔗 Тренерская ссылка»: отправь её клиентам или закрепи в соцсетях\n"
+            "3️⃣ Новые записи придут в рабочую группу — подтверждай одной кнопкой\n\n"
+            "{warning_line}"
+        ),
+        Button(Const("🏋 Открыть кабинет"), id="trial_to_cabinet", on_click=on_trial_open_cabinet),
+        state=TrainerOnboardingSG.trial_started,
+        getter=trial_started_getter,
+    ),
+    # окна вне основного пути — в конце: Next/Back ходят по порядку окон
+    Window(
+        Const(BENEFITS_FULL),
+        SwitchTo(Const("🚀 Начать регистрацию"), id="benefits_start", state=TrainerOnboardingSG.name),
+        SwitchTo(Const("⬅️ Назад"), id="benefits_back", state=TrainerOnboardingSG.welcome),
+        state=TrainerOnboardingSG.benefits,
+    ),
 )
 
 
 subscription_dialog = Dialog(
     Window(
-        Const(
-            "💳 <b>Подписка</b>\n\n"
-            "Подписка открывает кабинет тренера и запись для твоих клиентов. "
-            "Если она ещё действует — новый срок добавится к текущему.\n\n"
+        Format(
+            "💳 <b>Подписка TrainUp</b>\n\n"
+            "{status_line}\n\n"
+            "<b>Что входит:</b>\n{benefits}\n\n"
+            "{per_day_line}"
+            "Если подписка ещё действует — новый срок добавится к текущему.\n\n"
             "Выбери тариф:"
         ),
         Column(
@@ -202,6 +232,7 @@ subscription_dialog = Dialog(
                 on_click=on_plan_selected,
             ),
         ),
+        SwitchTo(Const("💎 Подробнее о возможностях"), id="to_benefits", state=SubscriptionSG.benefits),
         Button(Const("⬅️ В кабинет"), id="to_cabinet", on_click=on_back_to_cabinet),
         state=SubscriptionSG.select_plan,
         getter=select_plan_getter,
@@ -238,5 +269,11 @@ subscription_dialog = Dialog(
         ),
         state=SubscriptionSG.payment,
         getter=payment_getter,
+    ),
+    # вне основного пути — в конце: Back/next() ходят по порядку окон
+    Window(
+        Const(BENEFITS_FULL),
+        SwitchTo(Const("💳 Выбрать тариф"), id="benefits_to_plans", state=SubscriptionSG.select_plan),
+        state=SubscriptionSG.benefits,
     ),
 )

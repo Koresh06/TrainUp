@@ -11,7 +11,7 @@ from src.domain.exception.booking import (
     BookingNotFoundException,
     SlotAlreadyBookedException,
 )
-from src.domain.repositories.booking import BookingRepository
+from src.domain.repositories.booking import BookingRepository, BookingStatRow
 from src.domain.utils import get_project_today
 from src.infrastructure.database.models import BookingModel, CalendarSlotModel
 
@@ -267,3 +267,38 @@ class SQLAlchemyBookingRepo(BookingRepository):
         )
         result = await self._session.execute(query)
         return [model.to_entity() for model in result.scalars().all()]
+
+    async def get_stat_rows(
+        self, date_from: date, date_to: date, trainer_id: int | None = None
+    ) -> list[BookingStatRow]:
+        query = (
+            select(
+                BookingModel.id,
+                BookingModel.trainer_id,
+                BookingModel.client_id,
+                BookingModel.status,
+                BookingModel.price,
+                CalendarSlotModel.slot_date,
+                CalendarSlotModel.start_time,
+            )
+            .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
+            .where(
+                CalendarSlotModel.slot_date >= date_from,
+                CalendarSlotModel.slot_date <= date_to,
+            )
+        )
+        if trainer_id is not None:
+            query = query.where(BookingModel.trainer_id == trainer_id)
+        result = await self._session.execute(query)
+        return [
+            BookingStatRow(
+                booking_id=row[0],
+                trainer_id=row[1],
+                client_id=row[2],
+                status=row[3],
+                price=row[4],
+                slot_date=row[5],
+                start_time=row[6],
+            )
+            for row in result.all()
+        ]

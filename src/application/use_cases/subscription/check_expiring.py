@@ -10,7 +10,7 @@ from src.application.interfaces.notification_service import (
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.domain.constants import SUBSCRIPTION_WARNING_HOURS
 from src.domain.entities.trainer_subscription import TrainerSubscription
-from src.domain.enums.subscription import SubscriptionStatus
+from src.domain.enums.subscription import SubscriptionSource, SubscriptionStatus
 from src.domain.repositories.subscription import TrainerSubscriptionRepository
 from src.domain.repositories.trainer import TrainerRepository
 from src.infrastructure.database.transaction_manager.base import TransactionManager
@@ -101,5 +101,6 @@ class CheckExpiringSubscriptionsUseCase(UseCase[CheckExpiringSubscriptionsReques
                 event=event,
                 expired_at=subscription.expired_at,
                 hours_left=max(int((subscription.expired_at - now).total_seconds() // 3600), 0),
+                is_trial=subscription.source == SubscriptionSource.TRIAL,
             )
         )

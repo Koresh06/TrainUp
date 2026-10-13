@@ -52,6 +52,11 @@ trainer_main_dialog = Dialog(
                 on_click=on_menu_item_click,
             ),
             Button(
+                Const("💎 Подписка"),
+                id="subscription",
+                on_click=on_menu_item_click,
+            ),
+            Button(
                 Const("❓ Помощь"),
                 id="help",
                 on_click=on_menu_item_click,

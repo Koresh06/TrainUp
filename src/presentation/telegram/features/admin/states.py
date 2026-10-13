@@ -7,6 +7,8 @@ class AdminMenuSG(StatesGroup):
 
 class AdminStatsSG(StatesGroup):
     main = State()
+    users = State()
+    charts = State()
 
 
 class AdminTrainersSG(StatesGroup):

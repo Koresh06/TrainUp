@@ -29,7 +29,7 @@ from src.domain.exception.payment import (
 )
 from src.presentation.telegram.features.trainer.main.states import TrainerMainSG
 
-from .states import SubscriptionSG
+from .states import SubscriptionSG, TrainerOnboardingSG
 
 
 async def on_photo_received(
@@ -138,10 +138,29 @@ async def on_onboarding_confirm(
         return
 
     await callback.answer()
+    # пробный период выдаётся при регистрации (если включён в конфиге) —
+    # тогда сразу в кабинет через экран «что делать дальше», иначе к оплате
+    subscription = await mediator.handle(GetActiveSubscriptionRequest(trainer_id=trainer.id))
+    if subscription is not None:
+        dialog_manager.dialog_data["trainer_id"] = trainer.id
+        await dialog_manager.switch_to(TrainerOnboardingSG.trial_started)
+        return
     await dialog_manager.start(
         state=SubscriptionSG.select_plan,
         mode=StartMode.RESET_STACK,
         data={"trainer_id": trainer.id},
+    )
+
+
+async def on_trial_open_cabinet(
+    callback: CallbackQuery,
+    button: Button,
+    dialog_manager: DialogManager,
+) -> None:
+    await dialog_manager.start(
+        state=TrainerMainSG.main,
+        mode=StartMode.RESET_STACK,
+        data={"trainer_id": dialog_manager.dialog_data["trainer_id"]},
     )
 
 

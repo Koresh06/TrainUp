@@ -16,6 +16,9 @@ os.environ.update(
         "APP_CONFIG__BUSINESS__DEFAULT_MAX_ACTIVE_BOOKINGS": "1",
         "APP_CONFIG__BUSINESS__PLAN_NEXT_TRAINING_REMINDER_DAYS": "3",
         "APP_CONFIG__BUSINESS__SUBSCRIPTION_WARNING_HOURS": "[48, 3]",
+        # база тестов — без триала: старые сценарии ждут тренера без подписки,
+        # пробный период проверяется отдельно с явным trial_days
+        "APP_CONFIG__BUSINESS__TRAINER_TRIAL_DAYS": "0",
         "APP_CONFIG__TELEGRAM__ADMIN_IDS": "[777000]",
         "APP_CONFIG__TELEGRAM__BOT_TOKEN": "123456:TEST-TOKEN-not-real",
         # способы оплаты в тестах: ручная + тестовая; ЮKassa/Stars — фейками в тестах

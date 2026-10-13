@@ -1,8 +1,24 @@
-from datetime import date
+from dataclasses import dataclass
+from datetime import date, time
+from decimal import Decimal
 from typing import Protocol
 
 from src.domain.entities.booking import Booking
 from src.domain.enums.booking import BookingStatus
+
+
+@dataclass(frozen=True)
+class BookingStatRow:
+    """Плоская строка «запись + дата/время слота» для статистики и графиков —
+    чтобы не тянуть сущности и не делать N запросов за слотами."""
+
+    booking_id: int
+    trainer_id: int
+    client_id: int
+    status: BookingStatus
+    price: Decimal | None
+    slot_date: date
+    start_time: time
 
 
 class BookingRepository(Protocol):
@@ -59,3 +75,9 @@ class BookingRepository(Protocol):
     async def get_history_by_trainer(
         self, trainer_id: int, limit: int = 50
     ) -> list[Booking]: ...
+
+    async def get_stat_rows(
+        self, date_from: date, date_to: date, trainer_id: int | None = None
+    ) -> list[BookingStatRow]:
+        """Записи с датой слота в [date_from; date_to]; trainer_id=None — все тренеры."""
+        ...

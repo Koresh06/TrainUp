@@ -39,3 +39,61 @@ def current_period(dialog_manager: DialogManager, scope: ScopePrivate) -> StatsP
         f"period_{scope.value}", StatsPeriod.MONTH.value
     )
     return StatsPeriod(raw)
+
+
+# --- Переключатель графиков (общий для тренера и админки) ---
+
+CHART_KEY = "chart"
+
+
+class TrainerChart(str, Enum):
+    TRAININGS = "trainings"
+    INCOME = "income"
+    LOAD = "load"
+
+
+TRAINER_CHART_LABELS: dict[TrainerChart, str] = {
+    TrainerChart.TRAININGS: "🏋 Тренировки",
+    TrainerChart.INCOME: "💰 Доход",
+    TrainerChart.LOAD: "🗓 Загрузка",
+}
+
+
+def selected_label(label: str, selected: bool) -> str:
+    return ("🟢 " if selected else "") + label
+
+
+def chart_flags(chart: Enum, labels: dict | None = None) -> dict:
+    """lbl_chart_<id> для кнопок переключателя графиков."""
+    labels = labels or TRAINER_CHART_LABELS
+    return {
+        f"lbl_chart_{item.value}": selected_label(label, item == chart)
+        for item, label in labels.items()
+    }
+
+
+def chart_row(labels: dict, on_chart_selected: Callable) -> Row:
+    return Row(
+        *(
+            Button(
+                Format(f"{{lbl_chart_{item.value}}}"),
+                id=f"chart_{item.value}",
+                on_click=on_chart_selected,
+            )
+            for item in labels
+        )
+    )
+
+
+def current_chart(
+    dialog_manager: DialogManager, chart_type: type[Enum] = TrainerChart
+) -> Enum:
+    raw = dialog_manager.dialog_data.get(CHART_KEY)
+    try:
+        return chart_type(raw)
+    except ValueError:
+        return next(iter(chart_type))
+
+
+async def on_chart_selected(callback, button: Button, dialog_manager: DialogManager) -> None:
+    dialog_manager.dialog_data[CHART_KEY] = button.widget_id.removeprefix("chart_")

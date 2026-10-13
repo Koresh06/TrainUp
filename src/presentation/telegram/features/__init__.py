@@ -18,6 +18,7 @@ from src.presentation.telegram.features.trainer.requests.router import (
     router as trainer_requests_router,
 )
 from src.presentation.telegram.features.admin.router import router as admin_router
+from src.presentation.telegram.features.bot_status.router import router as bot_status_router
 from src.presentation.telegram.features.trainer.register.router import (
     router as trainer_subscription_router,
 )
@@ -112,6 +113,7 @@ def get_all_routers() -> list[Router]:
         trainer_requests_router,
         admin_router,
         trainer_subscription_router,
+        bot_status_router,
     ]
 
 

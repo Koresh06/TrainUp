@@ -1,45 +1,14 @@
-from datetime import time, timedelta, timezone
 
-import pytest
 
-from src.application.use_cases.invite_link.get_active import GetActiveInviteLinkRequest
-from src.application.use_cases.slot_template.sync_weekday import (
-    SyncWeekdaySlotTemplatesRequest,
-)
 from src.application.use_cases.subscription.grant import GrantSubscriptionRequest
-from src.application.use_cases.trainer.register import RegisterTrainerRequest
 from src.application.use_cases.faq.get_active import GetActiveFaqItemsRequest
 from src.domain.enums.faq import FaqAudience
 from src.domain.enums.subscription import SubscriptionSource
-from src.domain.utils import get_project_today
-from src.infrastructure.database.seed import seed_faq_items, seed_subscription_price_plans
-from tests.presentation.conftest import BOT_CALLS
-
-TRAINER_TG = 5001
-CLIENT_TG = 6001
-ADMIN_TG = 777000  # tests/conftest.py
-
-
-@pytest.fixture
-async def trainer_setup(run, container):
-    await seed_subscription_price_plans(container)
-    await seed_faq_items(container)
-    trainer = await run(
-        RegisterTrainerRequest(tg_id=TRAINER_TG, name="Тренер", bio="Био", notification_chat_id=-100)
-    )
-    tomorrow = get_project_today() + timedelta(days=1)
-    await run(
-        SyncWeekdaySlotTemplatesRequest(
-            trainer_id=trainer.id, weekday=tomorrow.weekday(),
-            time_capacities={time(10, 0, tzinfo=timezone.utc): 2},
-        )
-    )
-    link = await run(GetActiveInviteLinkRequest(trainer_id=trainer.id))
-    return {"trainer": trainer, "token": link.token, "tomorrow": tomorrow}
+from tests.presentation.conftest import ADMIN_TG, BOT_CALLS, CLIENT_TG, TRAINER_TG
 
 
 async def activate_subscription(run, trainer_id: int, days: int = 30) -> None:
-    await run(GrantSubscriptionRequest(trainer_id=trainer_id, source=SubscriptionSource.TRIAL, days=days))
+    await run(GrantSubscriptionRequest(trainer_id=trainer_id, source=SubscriptionSource.CASH, days=days))
 
 
 async def register_client(ui, token: str) -> None:

@@ -191,17 +191,36 @@ class TelegramNotificationService(NotificationService):
             return
 
         kb = InlineKeyboardBuilder()
-        kb.button(text="💳 Продлить подписку", callback_data=RenewSubscriptionCD().pack())
+        kb.button(
+            text="💳 Оформить подписку" if data.is_trial else "💳 Продлить подписку",
+            callback_data=RenewSubscriptionCD().pack(),
+        )
         if data.event == SubscriptionEvent.WARNING:
             left = (
                 f"{data.hours_left // 24} {self.pluralize_days(data.hours_left // 24)}"
                 if data.hours_left >= 24
                 else f"{max(data.hours_left, 1)} {self.pluralize_hours(max(data.hours_left, 1))}"
             )
+            if data.is_trial:
+                text = (
+                    f"⏳ <b>Пробный период заканчивается через {left}</b>\n\n"
+                    f"Действует до {until}. Чтобы клиенты и дальше записывались "
+                    f"сами, а напоминания и постоянные записи не остановились — "
+                    f"оформите подписку. Срок начнётся после пробного периода, "
+                    f"ни один день не пропадёт."
+                )
+            else:
+                text = (
+                    f"⏳ <b>Подписка заканчивается через {left}</b>\n\n"
+                    f"Действует до {until}. После окончания кабинет и запись ваших "
+                    f"клиентов будут приостановлены до продления."
+                )
+        elif data.is_trial:
             text = (
-                f"⏳ <b>Подписка заканчивается через {left}</b>\n\n"
-                f"Действует до {until}. После окончания кабинет и запись ваших "
-                f"клиентов будут приостановлены до продления."
+                "⛔ <b>Пробный период закончился</b>\n\n"
+                "Кабинет и запись ваших клиентов приостановлены. Расписание, "
+                "клиенты и история сохранены — оформите подписку, и всё сразу "
+                "заработает как раньше."
             )
         else:
             text = (

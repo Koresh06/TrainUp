@@ -171,6 +171,11 @@ from src.application.use_cases.payment.get_methods import GetPaymentMethodsUseCa
 from src.application.use_cases.payment.get_by_external_id import GetPaymentByExternalIdUseCase
 from src.application.services.payment_provider_registry import PaymentProviderRegistry
 from src.domain.repositories.payment import PaymentRepository
+from src.domain.repositories.bot_user import BotUserRepository
+from src.domain.constants import TRAINER_TRIAL_DAYS
+from src.application.use_cases.admin.get_analytics import GetAdminAnalyticsUseCase
+from src.application.use_cases.bot_user.track_activity import TrackUserActivityUseCase
+from src.application.use_cases.bot_user.set_bot_blocked import SetBotBlockedByUserUseCase
 
 
 class UseCasesProvider(Provider):
@@ -434,6 +439,7 @@ class UseCasesProvider(Provider):
         invite_link_repo: TrainerInviteLinkRepository,
         booking_settings_repo: TrainerBookingSettingsRepository,
         question_repo: RegistrationQuestionRepository,
+        subscription_repo: TrainerSubscriptionRepository,
         transaction_manager: TransactionManager,
     ) -> RegisterTrainerUseCase:
         return RegisterTrainerUseCase(
@@ -441,6 +447,8 @@ class UseCasesProvider(Provider):
             invite_link_repo=invite_link_repo,
             booking_settings_repo=booking_settings_repo,
             question_repo=question_repo,
+            subscription_repo=subscription_repo,
+            trial_days=TRAINER_TRIAL_DAYS,
             transaction_manager=transaction_manager,
         )
 
@@ -795,11 +803,17 @@ class UseCasesProvider(Provider):
         client_repo: ClientRepository,
         booking_repo: BookingRepository,
         recurring_repo: RecurringBookingRepository,
+        program_repo: ProgramRequestRepository,
+        consultation_repo: ConsultationRequestRepository,
+        feedback_repo: FeedbackRepository,
     ) -> GetTrainerStatsUseCase:
         return GetTrainerStatsUseCase(
             client_repo=client_repo,
             booking_repo=booking_repo,
             recurring_repo=recurring_repo,
+            program_repo=program_repo,
+            consultation_repo=consultation_repo,
+            feedback_repo=feedback_repo,
         )
 
     @provide
@@ -1329,4 +1343,43 @@ class UseCasesProvider(Provider):
     ) -> GetPaymentByExternalIdUseCase:
         return GetPaymentByExternalIdUseCase(
             payment_repo=payment_repo,
+        )
+
+    @provide
+    def get_admin_analytics_use_case(
+        self,
+        bot_user_repo: BotUserRepository,
+        trainer_repo: TrainerRepository,
+        client_repo: ClientRepository,
+        subscription_repo: TrainerSubscriptionRepository,
+        booking_repo: BookingRepository,
+    ) -> GetAdminAnalyticsUseCase:
+        return GetAdminAnalyticsUseCase(
+            bot_user_repo=bot_user_repo,
+            trainer_repo=trainer_repo,
+            client_repo=client_repo,
+            subscription_repo=subscription_repo,
+            booking_repo=booking_repo,
+        )
+
+    @provide
+    def track_user_activity_use_case(
+        self,
+        bot_user_repo: BotUserRepository,
+        transaction_manager: TransactionManager,
+    ) -> TrackUserActivityUseCase:
+        return TrackUserActivityUseCase(
+            bot_user_repo=bot_user_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def set_bot_blocked_by_user_use_case(
+        self,
+        bot_user_repo: BotUserRepository,
+        transaction_manager: TransactionManager,
+    ) -> SetBotBlockedByUserUseCase:
+        return SetBotBlockedByUserUseCase(
+            bot_user_repo=bot_user_repo,
+            transaction_manager=transaction_manager,
         )
