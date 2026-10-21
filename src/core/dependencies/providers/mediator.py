@@ -401,6 +401,10 @@ from src.application.use_cases.booking.attendance import SendAttendanceRequestsR
 
 from src.application.use_cases.booking.attendance import ConfirmAttendanceRequest, ConfirmAttendanceUseCase
 
+from src.application.use_cases.client.get_inactive import GetInactiveClientsRequest, GetInactiveClientsUseCase
+
+from src.application.use_cases.client.invite_back import InviteClientBackRequest, InviteClientBackUseCase
+
 
 class MediatorProvider(Provider):
     scope = Scope.REQUEST
@@ -519,6 +523,8 @@ class MediatorProvider(Provider):
         mark_bookings_paid_use_case: MarkBookingsPaidUseCase,
         send_attendance_requests_use_case: SendAttendanceRequestsUseCase,
         confirm_attendance_use_case: ConfirmAttendanceUseCase,
+        get_inactive_clients_use_case: GetInactiveClientsUseCase,
+        invite_client_back_use_case: InviteClientBackUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -693,4 +699,6 @@ class MediatorProvider(Provider):
         mediator.register(MarkBookingsPaidRequest, mark_bookings_paid_use_case)
         mediator.register(SendAttendanceRequestsRequest, send_attendance_requests_use_case)
         mediator.register(ConfirmAttendanceRequest, confirm_attendance_use_case)
+        mediator.register(GetInactiveClientsRequest, get_inactive_clients_use_case)
+        mediator.register(InviteClientBackRequest, invite_client_back_use_case)
         return mediator

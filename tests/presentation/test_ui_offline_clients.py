@@ -44,3 +44,24 @@ async def test_trainer_adds_and_books_offline_client(ui, run, trainer_setup) -> 
     client = await run(GetClientByTgIdRequest(tg_id=CLIENT_TG))
     assert client.full_name == "Олег Ким"
     assert "Мои записи" in "".join(ui.buttons)
+
+
+async def test_inactive_clients_screen(ui, run, trainer_setup, session, notifications) -> None:
+    from datetime import time, timedelta
+
+    from src.domain.enums.booking import BookingStatus
+    from src.domain.utils import get_project_today
+    from tests.factories import make_booking, make_client, make_slot
+
+    trainer = trainer_setup["trainer"]
+    await activate_subscription(run, trainer.id)
+    lost = await make_client(session, trainer.id, tg_id=CLIENT_TG, first_name="Пропал")
+    slot = await make_slot(session, trainer.id, get_project_today() - timedelta(days=40), time(10, 0))
+    await make_booking(session, lost, slot, BookingStatus.COMPLETED)
+
+    await ui.send(TRAINER_TG, "/trainer")
+    await ui.click(TRAINER_TG, "👥 Мои клиенты")
+    assert "Ходили, но уже больше" in await ui.click(TRAINER_TG, "😴 Давно не были (1)")
+    await ui.click(TRAINER_TG, "Пропал — 40 дн.")
+    await ui.click(TRAINER_TG, "📣 Позвать на тренировку")
+    assert len(notifications.of("notify_plan_next_training")) == 1

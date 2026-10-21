@@ -188,3 +188,6 @@ REMINDER_HOUR_OPTIONS = [1, 2, 3, 4, 6, 12, 24]
 DEFAULT_MORNING_DIGEST_HOUR = _business.morning_digest_hour
 MORNING_DIGEST_HOUR_OPTIONS = [6, 7, 8, 9, 10, 11]
 EVENING_DIGEST_HOUR_OPTIONS = [18, 19, 20, 21, 22]
+
+# --- «😴 Давно не были»: клиенты без тренировок дольше N дней и без записей ---
+INACTIVE_CLIENT_DAYS = _business.inactive_client_days

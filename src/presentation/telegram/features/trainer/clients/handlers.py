@@ -21,6 +21,7 @@ from src.application.use_cases.package.manage import (
 )
 from src.application.use_cases.client.create_offline import CreateOfflineClientRequest
 from src.application.use_cases.client.delete_offline import DeleteOfflineClientRequest
+from src.application.use_cases.client.invite_back import InviteClientBackRequest
 from src.application.use_cases.client.update_by_trainer import UpdateClientFieldRequest
 from src.domain.entities.client import Client
 from src.domain.enums.client import ClientEditableField
@@ -424,3 +425,17 @@ async def on_debtor_selected(
 ) -> None:
     dialog_manager.dialog_data["viewing_client_id"] = int(item_id)
     await dialog_manager.switch_to(TrainerClientsSG.detail)
+
+
+@inject
+async def on_invite_back(
+    callback: CallbackQuery, button: Button, dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+) -> None:
+    await mediator.handle(
+        InviteClientBackRequest(
+            trainer_id=dialog_manager.start_data["trainer_id"],
+            client_id=dialog_manager.dialog_data["viewing_client_id"],
+        )
+    )
+    await callback.answer("📣 Клиенту отправлено приглашение записаться", show_alert=True)

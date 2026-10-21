@@ -21,6 +21,7 @@ from src.presentation.telegram.widgets.booking_calendar import BookingCalendar
 
 from .getters import (
     debtors_getter,
+    inactive_getter,
     package_detail_getter,
     package_paid_getter,
     package_sessions_getter,
@@ -39,6 +40,7 @@ from .getters import (
 from .handlers import (
     on_all_paid,
     on_debtor_selected,
+    on_invite_back,
     on_package_close,
     on_package_create_paid,
     on_package_create_unpaid,
@@ -93,6 +95,12 @@ clients_trainer_dialog = Dialog(
             hide_on_single_page=True,
         ),
         SwitchTo(
+            Format("😴 Давно не были ({inactive_count})"),
+            id="inactive",
+            state=TrainerClientsSG.inactive,
+            when="has_inactive",
+        ),
+        SwitchTo(
             Format("💵 Должники ({debtors_count})"),
             id="debtors",
             state=TrainerClientsSG.debtors,
@@ -113,6 +121,12 @@ clients_trainer_dialog = Dialog(
             Const("📅 Записать на тренировку"),
             id="book",
             state=TrainerClientsSG.book_day,
+        ),
+        Button(
+            Const("📣 Позвать на тренировку"),
+            id="invite_back",
+            on_click=on_invite_back,
+            when="can_invite_back",
         ),
         Row(
             SwitchTo(Const("🎫 Абонементы"), id="packages", state=TrainerClientsSG.packages),
@@ -452,6 +466,29 @@ clients_trainer_dialog = Dialog(
         SwitchTo(Const("⬅️ К списку"), id="debtors_back", state=TrainerClientsSG.list),
         state=TrainerClientsSG.debtors,
         getter=debtors_getter,
+    ),
+    Window(
+        Format(
+            "😴 <b>Давно не были</b>\n\n"
+            "Ходили, но уже больше {days} дней без тренировок и никуда не записаны. "
+            "Откройте карточку — там кнопка «📣 Позвать на тренировку»."
+        ),
+        ScrollingGroup(
+            Select(
+                Format("{item[label]}"),
+                id="inactive_select",
+                item_id_getter=lambda item: item["id"],
+                items="clients",
+                on_click=on_debtor_selected,
+            ),
+            id="inactive_scroll",
+            width=1,
+            height=8,
+            hide_on_single_page=True,
+        ),
+        SwitchTo(Const("⬅️ К списку"), id="inactive_back", state=TrainerClientsSG.list),
+        state=TrainerClientsSG.inactive,
+        getter=inactive_getter,
     ),
     on_start=on_clients_start,
 )

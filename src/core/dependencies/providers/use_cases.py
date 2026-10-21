@@ -211,6 +211,10 @@ from src.application.use_cases.booking.attendance import SendAttendanceRequestsU
 
 from src.application.use_cases.booking.attendance import ConfirmAttendanceUseCase
 
+from src.application.use_cases.client.get_inactive import GetInactiveClientsUseCase
+
+from src.application.use_cases.client.invite_back import InviteClientBackUseCase
+
 
 class UseCasesProvider(Provider):
     scope = Scope.REQUEST
@@ -1645,4 +1649,32 @@ class UseCasesProvider(Provider):
         return ConfirmAttendanceUseCase(
             booking_repo=booking_repo,
             transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_inactive_clients_use_case(
+        self,
+        client_repo: ClientRepository,
+        booking_repo: BookingRepository,
+        recurring_repo: RecurringBookingRepository,
+    ) -> GetInactiveClientsUseCase:
+        return GetInactiveClientsUseCase(
+            client_repo=client_repo,
+            booking_repo=booking_repo,
+            recurring_repo=recurring_repo,
+        )
+
+    @provide
+    def invite_client_back_use_case(
+        self,
+        client_repo: ClientRepository,
+        trainer_repo: TrainerRepository,
+        booking_repo: BookingRepository,
+        notification_service: NotificationService,
+    ) -> InviteClientBackUseCase:
+        return InviteClientBackUseCase(
+            client_repo=client_repo,
+            trainer_repo=trainer_repo,
+            booking_repo=booking_repo,
+            notification_service=notification_service,
         )

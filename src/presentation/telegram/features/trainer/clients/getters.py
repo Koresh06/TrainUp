@@ -13,6 +13,10 @@ from src.application.use_cases.calendar.get_day_availability_map import (
 from src.application.use_cases.calendar.get_slot_by_id import GetSlotByIdRequest
 from src.application.use_cases.client.get_answers_by_id import GetClientAnswersRequest
 from src.application.use_cases.client.get_by_id import GetClientByIdRequest
+from src.application.use_cases.client.get_inactive import (
+    GetInactiveClientsRequest,
+    InactiveClientDTO,
+)
 from src.application.use_cases.client.get_clients_by_trainer import (
     GetClientsByTrainerIdRequest,
 )
@@ -27,7 +31,7 @@ from src.application.use_cases.registration_questions.get_all import (
 )
 from src.core.config import settings
 from src.application.use_cases.client._shared import CLIENT_INVITE_PREFIX
-from src.domain.constants import CALENDAR_BUFFER_DAYS
+from src.domain.constants import CALENDAR_BUFFER_DAYS, INACTIVE_CLIENT_DAYS
 from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.client import Client
 from src.domain.entities.client_answer import ClientAnswer
@@ -99,6 +103,9 @@ async def clients_list_getter(
         GetClientBalancesRequest(trainer_id=trainer_id)
     )
     debtors = sum(1 for b in balances.values() if b.debt > 0)
+    inactive: list[InactiveClientDTO] = await mediator.handle(
+        GetInactiveClientsRequest(trainer_id=trainer_id)
+    )
 
     offline = sum(1 for c in clients if not c.has_telegram)
     summary = f"Всего: {len(clients)}"
@@ -109,6 +116,32 @@ async def clients_list_getter(
         "summary": summary if clients else "Клиентов пока нет — пригласите по ссылке или добавьте вручную.",
         "debtors_count": debtors,
         "has_debtors": debtors > 0,
+        "inactive_count": len(inactive),
+        "has_inactive": bool(inactive),
+    }
+
+
+@inject
+async def inactive_getter(
+    dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+    **kwargs,
+) -> dict:
+    inactive: list[InactiveClientDTO] = await mediator.handle(
+        GetInactiveClientsRequest(trainer_id=dialog_manager.start_data["trainer_id"])
+    )
+    return {
+        "days": INACTIVE_CLIENT_DAYS,
+        "clients": [
+            {
+                "id": str(dto.client.id),
+                "label": (
+                    f"{'📵 ' if not dto.client.has_telegram else ''}{dto.client.full_name}"
+                    f" — {dto.days_since} дн."
+                ),
+            }
+            for dto in inactive
+        ],
     }
 
 
@@ -155,7 +188,7 @@ def _contacts(client: Client) -> str:
 
 async def _client_card_lines(
     mediator: Mediator, trainer_id: int, client: Client
-) -> list[str]:
+) -> tuple[list[str], bool]:
     today = get_project_today()
     views: list[BookingView] = await mediator.handle(
         GetBookingViewsRequest(trainer_id=trainer_id, client_id=client.id)
@@ -185,7 +218,7 @@ async def _client_card_lines(
         last: date = max(v.slot_date for v in completed)
         stats += f"\n🕓 Последняя тренировка: {last.strftime('%d.%m.%Y')}"
     lines.append(stats)
-    return lines
+    return lines, bool(upcoming)
 
 
 @inject
@@ -252,7 +285,8 @@ async def client_detail_getter(
         )
     if balance.active_packages or balance.unpaid_bookings:
         lines.append("")
-    lines.extend(await _client_card_lines(mediator, trainer_id, client))
+    card_lines, has_upcoming = await _client_card_lines(mediator, trainer_id, client)
+    lines.extend(card_lines)
     if answers_lines:
         lines.append("\n📋 <b>Анкета:</b>\n" + "\n".join(answers_lines))
 
@@ -261,6 +295,8 @@ async def client_detail_getter(
         "is_offline": not client.has_telegram,
         "from_outside": dialog_manager.dialog_data.get("from_outside", False),
         "has_unpaid": bool(balance.unpaid_bookings),
+        # позвать на тренировку можно того, кто в Telegram и никуда не записан
+        "can_invite_back": client.has_telegram and not has_upcoming and not client_recurring,
     }
 
 

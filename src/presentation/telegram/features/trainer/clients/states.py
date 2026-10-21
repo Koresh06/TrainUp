@@ -26,3 +26,4 @@ class TrainerClientsSG(StatesGroup):
     package_paid = State()
     unpaid = State()
     debtors = State()
+    inactive = State()
