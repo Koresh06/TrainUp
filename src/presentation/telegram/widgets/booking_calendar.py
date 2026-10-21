@@ -117,8 +117,34 @@ class BookingDaysView(CalendarDaysView):
         rows = await super().render(config, offset, data, manager)
         return rows[1:]
 
+    async def _render_pager(
+        self,
+        config: CalendarConfig,
+        offset: date,
+        data: dict,
+        manager: DialogManager,
+    ) -> list[InlineKeyboardButton]:
+        # без средней кнопки «🔍» (переход к выбору месяцев) — только стрелки
+        buttons = await super()._render_pager(config, offset, data, manager)
+        return [buttons[0], buttons[-1]] if buttons else []
 
-class BookingCalendar(Calendar):
+
+class DaysOnlyCalendar(Calendar):
+    """
+    Календарь только с видом «дни». У стандартного Calendar кнопка с названием
+    месяца внизу переключает на выбор месяцев/лет — у нас этих видов нет, и
+    нажатие роняло диалог с KeyError: CalendarScope.MONTHS. Месяцы листаются
+    стрелками, поэтому переключение вида просто игнорируем.
+    """
+
+    def get_scope(self, manager: DialogManager) -> CalendarScope:
+        return CalendarScope.DAYS
+
+    def set_scope(self, new_scope: CalendarScope, manager: DialogManager) -> None:
+        return None
+
+
+class BookingCalendar(DaysOnlyCalendar):
     def _init_views(self) -> dict[CalendarScope, CalendarScopeView]:
         return {
             CalendarScope.DAYS: BookingDaysView(
@@ -168,7 +194,7 @@ def _schedule_day_style(data: dict, manager: DialogManager) -> ButtonStyle | Non
     return ButtonStyle.PRIMARY if busy.get(data["date"].isoformat()) else None
 
 
-class ScheduleCalendar(Calendar):
+class ScheduleCalendar(DaysOnlyCalendar):
     """Все дни кликабельны (и прошедшие), дни с тренировками подсвечены."""
 
     def _init_views(self) -> dict[CalendarScope, CalendarScopeView]:

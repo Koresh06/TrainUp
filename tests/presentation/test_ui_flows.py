@@ -204,3 +204,11 @@ async def test_admin_blocks_client(ui, run, trainer_setup) -> None:
 async def test_admin_is_hidden_from_others(ui, trainer_setup) -> None:
     await ui.send(CLIENT_TG, "/admin")
     assert ui.last is None
+
+
+async def test_calendar_has_no_month_zoom(ui, run, trainer_setup) -> None:
+    # регресс: «🔍» под календарём переключал на выбор месяцев → KeyError MONTHS
+    await activate_subscription(run, trainer_setup["trainer"].id)
+    await register_client(ui, trainer_setup["token"])
+    await ui.click(CLIENT_TG, "📅 Записаться на занятия")
+    assert "🔍" not in ui.buttons
