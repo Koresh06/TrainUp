@@ -30,6 +30,7 @@ client_profile_dialog = Dialog(
     Window(
         Format(
             "📝 <b>Моя анкета</b>\n\n"
+            "{packages_block}"
             "👤 {full_name}\n"
             "📞 {phone}\n"
             "🎂 {age}\n"

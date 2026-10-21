@@ -61,6 +61,8 @@ from src.infrastructure.repositories.trainer_booking_settings.sqlalchemy import 
 from src.infrastructure.repositories.trainer_pricing_rule.sqlalchemy import SQLAlchemyTrainerPricingRuleRepo
 from src.infrastructure.repositories.client_answer.sqlalchemy import SQLAlchemyClientAnswerRepo
 from src.infrastructure.repositories.trainer_reminder_settings.sqlalchemy import SQLAlchemyTrainerReminderSettingsRepo
+from src.domain.repositories.client_package import ClientPackageRepository
+from src.infrastructure.repositories.client_package.sqlalchemy import SQLAlchemyClientPackageRepo
 
 
 class RepositoriesProvider(Provider):
@@ -169,3 +171,7 @@ class RepositoriesProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_bot_user_repository(self, session: AsyncSession) -> BotUserRepository:
         return SQLAlchemyBotUserRepo(session=session)
+
+    @provide(scope=Scope.REQUEST)
+    def get_client_package_repository(self, session: AsyncSession) -> ClientPackageRepository:
+        return SQLAlchemyClientPackageRepo(session=session)

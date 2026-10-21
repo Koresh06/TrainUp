@@ -193,6 +193,20 @@ from src.application.use_cases.digest.send_trainer_digests import SendTrainerDig
 
 from src.application.use_cases.trainer_reminder_settings.update_digest import UpdateTrainerDigestSettingsUseCase
 
+from src.domain.repositories.client_package import ClientPackageRepository
+
+from src.application.use_cases.package.create import CreateClientPackageUseCase
+
+from src.application.use_cases.package.manage import ManageClientPackageUseCase
+
+from src.application.use_cases.package.get_by_client import GetClientPackagesUseCase
+
+from src.application.use_cases.package.get_balances import GetClientBalancesUseCase
+
+from src.application.use_cases.booking.mark_paid import MarkBookingsPaidUseCase
+
+from src.application.services.package_charge import PackageChargeService
+
 
 class UseCasesProvider(Provider):
     scope = Scope.REQUEST
@@ -798,10 +812,12 @@ class UseCasesProvider(Provider):
     def mark_past_bookings_completed_use_case(
         self,
         booking_repo: BookingRepository,
+        package_charge: PackageChargeService,
         transaction_manager: TransactionManager,
     ) -> MarkPastBookingsCompletedUseCase:
         return MarkPastBookingsCompletedUseCase(
             booking_repo=booking_repo,
+            package_charge=package_charge,
             transaction_manager=transaction_manager,
         )
 
@@ -858,11 +874,13 @@ class UseCasesProvider(Provider):
         self,
         booking_repo: BookingRepository,
         booking_scheduler: BookingScheduler,
+        package_charge: PackageChargeService,
         transaction_manager: TransactionManager,
     ) -> MarkBookingCompletedUseCase:
         return MarkBookingCompletedUseCase(
             booking_repo=booking_repo,
             booking_scheduler=booking_scheduler,
+            package_charge=package_charge,
             transaction_manager=transaction_manager,
         )
 
@@ -1487,12 +1505,14 @@ class UseCasesProvider(Provider):
         booking_repo: BookingRepository,
         slot_repo: CalendarSlotRepository,
         booking_scheduler: BookingScheduler,
+        package_charge: PackageChargeService,
         transaction_manager: TransactionManager,
     ) -> MarkBookingAttendanceUseCase:
         return MarkBookingAttendanceUseCase(
             booking_repo=booking_repo,
             slot_repo=slot_repo,
             booking_scheduler=booking_scheduler,
+            package_charge=package_charge,
             transaction_manager=transaction_manager,
         )
 
@@ -1525,5 +1545,66 @@ class UseCasesProvider(Provider):
     ) -> UpdateTrainerDigestSettingsUseCase:
         return UpdateTrainerDigestSettingsUseCase(
             settings_repo=settings_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def create_client_package_use_case(
+        self,
+        package_repo: ClientPackageRepository,
+        client_repo: ClientRepository,
+        trainer_repo: TrainerRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> CreateClientPackageUseCase:
+        return CreateClientPackageUseCase(
+            package_repo=package_repo,
+            client_repo=client_repo,
+            trainer_repo=trainer_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def manage_client_package_use_case(
+        self,
+        package_repo: ClientPackageRepository,
+        transaction_manager: TransactionManager,
+    ) -> ManageClientPackageUseCase:
+        return ManageClientPackageUseCase(
+            package_repo=package_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_client_packages_use_case(
+        self,
+        package_repo: ClientPackageRepository,
+    ) -> GetClientPackagesUseCase:
+        return GetClientPackagesUseCase(
+            package_repo=package_repo,
+        )
+
+    @provide
+    def get_client_balances_use_case(
+        self,
+        booking_repo: BookingRepository,
+        package_repo: ClientPackageRepository,
+        booking_settings_repo: TrainerBookingSettingsRepository,
+    ) -> GetClientBalancesUseCase:
+        return GetClientBalancesUseCase(
+            booking_repo=booking_repo,
+            package_repo=package_repo,
+            booking_settings_repo=booking_settings_repo,
+        )
+
+    @provide
+    def mark_bookings_paid_use_case(
+        self,
+        booking_repo: BookingRepository,
+        transaction_manager: TransactionManager,
+    ) -> MarkBookingsPaidUseCase:
+        return MarkBookingsPaidUseCase(
+            booking_repo=booking_repo,
             transaction_manager=transaction_manager,
         )

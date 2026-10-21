@@ -17,3 +17,12 @@ class TrainerClientsSG(StatesGroup):
     book_day = State()
     book_time = State()
     book_confirm = State()
+    # абонементы и оплаты
+    packages = State()
+    package_detail = State()
+    package_sessions = State()
+    package_price = State()
+    package_valid = State()
+    package_paid = State()
+    unpaid = State()
+    debtors = State()

@@ -387,6 +387,16 @@ from src.application.use_cases.digest.send_trainer_digests import SendTrainerDig
 
 from src.application.use_cases.trainer_reminder_settings.update_digest import UpdateTrainerDigestSettingsRequest, UpdateTrainerDigestSettingsUseCase
 
+from src.application.use_cases.package.create import CreateClientPackageRequest, CreateClientPackageUseCase
+
+from src.application.use_cases.package.manage import ManageClientPackageRequest, ManageClientPackageUseCase
+
+from src.application.use_cases.package.get_by_client import GetClientPackagesRequest, GetClientPackagesUseCase
+
+from src.application.use_cases.package.get_balances import GetClientBalancesRequest, GetClientBalancesUseCase
+
+from src.application.use_cases.booking.mark_paid import MarkBookingsPaidRequest, MarkBookingsPaidUseCase
+
 
 class MediatorProvider(Provider):
     scope = Scope.REQUEST
@@ -498,6 +508,11 @@ class MediatorProvider(Provider):
         mark_booking_attendance_use_case: MarkBookingAttendanceUseCase,
         send_trainer_digests_use_case: SendTrainerDigestsUseCase,
         update_trainer_digest_settings_use_case: UpdateTrainerDigestSettingsUseCase,
+        create_client_package_use_case: CreateClientPackageUseCase,
+        manage_client_package_use_case: ManageClientPackageUseCase,
+        get_client_packages_use_case: GetClientPackagesUseCase,
+        get_client_balances_use_case: GetClientBalancesUseCase,
+        mark_bookings_paid_use_case: MarkBookingsPaidUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -665,4 +680,9 @@ class MediatorProvider(Provider):
         mediator.register(MarkBookingAttendanceRequest, mark_booking_attendance_use_case)
         mediator.register(SendTrainerDigestsRequest, send_trainer_digests_use_case)
         mediator.register(UpdateTrainerDigestSettingsRequest, update_trainer_digest_settings_use_case)
+        mediator.register(CreateClientPackageRequest, create_client_package_use_case)
+        mediator.register(ManageClientPackageRequest, manage_client_package_use_case)
+        mediator.register(GetClientPackagesRequest, get_client_packages_use_case)
+        mediator.register(GetClientBalancesRequest, get_client_balances_use_case)
+        mediator.register(MarkBookingsPaidRequest, mark_bookings_paid_use_case)
         return mediator

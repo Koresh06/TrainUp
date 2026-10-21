@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass
 
+from src.application.services.package_charge import PackageChargeService
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.domain.repositories.booking import BookingRepository
 from src.infrastructure.database.transaction_manager.base import TransactionManager
@@ -17,6 +18,7 @@ class MarkPastBookingsCompletedRequest(UseCaseRequest):
 @dataclass(kw_only=True)
 class MarkPastBookingsCompletedUseCase(UseCase[MarkPastBookingsCompletedRequest, None]):
     booking_repo: BookingRepository
+    package_charge: PackageChargeService
     transaction_manager: TransactionManager
 
     async def __call__(self, command: MarkPastBookingsCompletedRequest) -> None:
@@ -25,6 +27,7 @@ class MarkPastBookingsCompletedUseCase(UseCase[MarkPastBookingsCompletedRequest,
 
         for booking in past_bookings:
             booking.complete()
+            await self.package_charge.sync(booking)
             await self.booking_repo.save(booking)
 
         if past_bookings:

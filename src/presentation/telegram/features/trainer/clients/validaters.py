@@ -1,4 +1,5 @@
 import re
+from decimal import Decimal, InvalidOperation
 
 NAME_MAX_LENGTH = 255
 NOTE_MAX_LENGTH = 1000
@@ -30,3 +31,26 @@ def validate_note(value: str) -> str:
     if len(value) > NOTE_MAX_LENGTH:
         raise ValueError(f"Не длиннее {NOTE_MAX_LENGTH} символов")
     return value
+
+
+MAX_PACKAGE_SESSIONS = 100
+
+
+def validate_sessions(value: str) -> int:
+    try:
+        n = int(value.strip())
+    except ValueError:
+        raise ValueError("Введите число занятий, например <code>8</code>") from None
+    if not 1 <= n <= MAX_PACKAGE_SESSIONS:
+        raise ValueError(f"От 1 до {MAX_PACKAGE_SESSIONS} занятий")
+    return n
+
+
+def validate_price(value: str) -> Decimal:
+    try:
+        price = Decimal(value.strip().replace(",", ".").replace(" ", ""))
+    except InvalidOperation:
+        raise ValueError("Введите сумму числом, например <code>250</code>") from None
+    if price <= 0 or price > Decimal("1000000"):
+        raise ValueError("Сумма должна быть больше нуля")
+    return price.quantize(Decimal("0.01"))

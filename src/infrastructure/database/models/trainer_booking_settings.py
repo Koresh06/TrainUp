@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, Integer
+from sqlalchemy import Boolean, ForeignKey, Integer
 
 from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
 
@@ -24,6 +24,9 @@ class TrainerBookingSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     )
     calendar_horizon_days: Mapped[int] = mapped_column(Integer)
     max_active_bookings_per_client: Mapped[int] = mapped_column(Integer)
+    no_show_charges_package: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true"
+    )
 
     trainer: Mapped["TrainerModel"] = relationship(
         "TrainerModel",
@@ -36,6 +39,7 @@ class TrainerBookingSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             trainer_id=entity.trainer_id,
             calendar_horizon_days=entity.calendar_horizon_days,
             max_active_bookings_per_client=entity.max_active_bookings_per_client,
+            no_show_charges_package=entity.no_show_charges_package,
         )
 
     def to_entity(self) -> "TrainerBookingSettings":
@@ -44,9 +48,11 @@ class TrainerBookingSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             trainer_id=self.trainer_id,
             calendar_horizon_days=self.calendar_horizon_days,
             max_active_bookings_per_client=self.max_active_bookings_per_client,
+            no_show_charges_package=self.no_show_charges_package,
         )
 
     def update_model(self, entity: "TrainerBookingSettings") -> None:
         self.trainer_id = entity.trainer_id
         self.calendar_horizon_days = entity.calendar_horizon_days
         self.max_active_bookings_per_client = entity.max_active_bookings_per_client
+        self.no_show_charges_package = entity.no_show_charges_package

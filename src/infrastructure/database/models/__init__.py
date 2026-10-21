@@ -19,6 +19,7 @@ from .recurring_booking import RecurringBookingModel
 from .trainer_reminder_settings import TrainerReminderSettingsModel
 from .payment import PaymentModel
 from .bot_user import BotUserActivityModel, BotUserModel
+from .client_package import ClientPackageModel
 
 
 __all__ = [
@@ -44,4 +45,5 @@ __all__ = [
     "PaymentModel",
     "BotUserModel",
     "BotUserActivityModel",
+    "ClientPackageModel",
 ]

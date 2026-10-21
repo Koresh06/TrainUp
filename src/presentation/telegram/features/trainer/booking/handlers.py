@@ -19,6 +19,7 @@ from src.application.use_cases.booking.get_by_id import GetBookingByIdRequest
 from src.application.use_cases.booking.mark_attendance import (
     MarkBookingAttendanceRequest,
 )
+from src.application.use_cases.booking.mark_paid import MarkBookingsPaidRequest
 from src.application.use_cases.booking.reschedule import RescheduleBookingRequest
 from src.domain.entities.booking import Booking
 from src.domain.enums.booking import HistoryFilter
@@ -225,6 +226,22 @@ async def on_attended(
     mediator: FromDishka[Mediator],
 ) -> None:
     await _mark_attendance(callback, dialog_manager, mediator, attended=True)
+
+
+@inject
+async def on_mark_paid(
+    callback: CallbackQuery,
+    button: Button,
+    dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+) -> None:
+    await mediator.handle(
+        MarkBookingsPaidRequest(
+            trainer_id=dialog_manager.start_data["trainer_id"],
+            booking_ids=(dialog_manager.dialog_data[BOOKING_KEY],),
+        )
+    )
+    await callback.answer("✅ Оплата отмечена")
 
 
 @inject

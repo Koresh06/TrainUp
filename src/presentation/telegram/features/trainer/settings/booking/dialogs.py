@@ -1,6 +1,6 @@
 from aiogram_dialog import Window, Dialog
 from aiogram_dialog.widgets.text import Const, Format
-from aiogram_dialog.widgets.kbd import SwitchTo, Back, Cancel, Group, Select
+from aiogram_dialog.widgets.kbd import Button, SwitchTo, Back, Cancel, Group, Select
 from aiogram_dialog.widgets.input import TextInput
 
 from src.presentation.telegram.features.error_handler import on_input_error
@@ -12,6 +12,7 @@ from .getters import booking_settings_getter, horizon_weeks_getter
 from .handlers import (
     on_horizon_weeks_selected,
     on_max_bookings_entered,
+    on_toggle_no_show_charges,
 )
 from .validaters import validate_max_bookings
 
@@ -20,7 +21,8 @@ trainer_booking_settings_dialog = Dialog(
         Format(
             "⚙️ <b>Настройки записи</b>\n\n"
             "📅 Горизонт календаря: {horizon_weeks} нед.\n"
-            "🔢 Максимум активных записей на клиента: {max_bookings}\n\n"
+            "🔢 Максимум активных записей на клиента: {max_bookings}\n"
+            "🎫 Неявка списывает занятие с абонемента: {no_show_charges}\n\n"
             "Что изменить?"
         ),
         SwitchTo(
@@ -32,6 +34,11 @@ trainer_booking_settings_dialog = Dialog(
             Const("🔢 Лимит записей"),
             id="edit_max_bookings",
             state=TrainerBookingSettingsSG.edit_max_bookings,
+        ),
+        Button(
+            Format("{no_show_charges} Неявка списывает занятие"),
+            id="toggle_no_show",
+            on_click=on_toggle_no_show_charges,
         ),
         Cancel(Const("⬅️ Назад")),
         state=TrainerBookingSettingsSG.main,

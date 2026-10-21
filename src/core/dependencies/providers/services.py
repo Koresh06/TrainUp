@@ -5,7 +5,12 @@ from redis.asyncio import Redis
 from dishka import Provider, Scope, provide
 
 from src.application.interfaces.mailing_progress import MailingProgressStore
+from src.application.services.package_charge import PackageChargeService
 from src.application.services.payment_provider_registry import PaymentProviderRegistry
+from src.domain.repositories.client import ClientRepository
+from src.domain.repositories.client_package import ClientPackageRepository
+from src.domain.repositories.trainer import TrainerRepository
+from src.domain.repositories.trainer_booking_settings import TrainerBookingSettingsRepository
 from src.core.config import settings
 from src.infrastructure.payment.providers.manual import ManualPaymentProvider
 from src.infrastructure.payment.providers.telegram_stars import TelegramStarsProvider
@@ -24,6 +29,23 @@ logger = logging.getLogger(__name__)
 
 
 class ServicesProvider(Provider):
+    @provide(scope=Scope.REQUEST)
+    def get_package_charge_service(
+        self,
+        package_repo: ClientPackageRepository,
+        booking_settings_repo: TrainerBookingSettingsRepository,
+        client_repo: ClientRepository,
+        trainer_repo: TrainerRepository,
+        notification_service: NotificationService,
+    ) -> PackageChargeService:
+        return PackageChargeService(
+            package_repo=package_repo,
+            booking_settings_repo=booking_settings_repo,
+            client_repo=client_repo,
+            trainer_repo=trainer_repo,
+            notification_service=notification_service,
+        )
+
     @provide(scope=Scope.REQUEST)
     def get_calendar_service(
         self,

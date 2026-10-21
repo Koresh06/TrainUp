@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 
 from src.application.interfaces.booking_scheduler import BookingScheduler
+from src.application.services.package_charge import PackageChargeService
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.domain.constants import PLAN_NEXT_TRAINING_REMINDER_DAYS
 from src.domain.enums.booking import BookingStatus
@@ -22,6 +23,7 @@ class MarkBookingCompletedRequest(UseCaseRequest):
 class MarkBookingCompletedUseCase(UseCase[MarkBookingCompletedRequest, None]):
     booking_repo: BookingRepository
     booking_scheduler: BookingScheduler
+    package_charge: PackageChargeService
     transaction_manager: TransactionManager
 
     async def __call__(self, command: MarkBookingCompletedRequest) -> None:
@@ -31,6 +33,7 @@ class MarkBookingCompletedUseCase(UseCase[MarkBookingCompletedRequest, None]):
 
         booking.complete()
         booking.completion_job_id = None
+        await self.package_charge.sync(booking)
         await self.booking_repo.save(booking)
         await self.transaction_manager.commit()
 

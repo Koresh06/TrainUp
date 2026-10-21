@@ -11,6 +11,8 @@ class UpdateTrainerBookingSettingsRequest(UseCaseRequest):
     trainer_id: int
     calendar_horizon_days: int
     max_active_bookings_per_client: int
+    # None — не менять
+    no_show_charges_package: bool | None = None
 
 
 @dataclass(kw_only=True)
@@ -28,12 +30,19 @@ class UpdateTrainerBookingSettingsUseCase(
         if existing is not None:
             existing.calendar_horizon_days = command.calendar_horizon_days
             existing.max_active_bookings_per_client = command.max_active_bookings_per_client
+            if command.no_show_charges_package is not None:
+                existing.no_show_charges_package = command.no_show_charges_package
             saved = await self.settings_repo.save(existing)
         else:
             new_settings = TrainerBookingSettings(
                 trainer_id=command.trainer_id,
                 calendar_horizon_days=command.calendar_horizon_days,
                 max_active_bookings_per_client=command.max_active_bookings_per_client,
+                no_show_charges_package=(
+                    command.no_show_charges_package
+                    if command.no_show_charges_package is not None
+                    else True
+                ),
             )
             saved = await self.settings_repo.save(new_settings)
 

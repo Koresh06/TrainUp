@@ -2,7 +2,7 @@ from dishka.integrations.aiogram_dialog import inject, FromDishka
 from aiogram.types import Message, CallbackQuery
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import ManagedTextInput
-from aiogram_dialog.widgets.kbd import Select
+from aiogram_dialog.widgets.kbd import Button, Select
 from aiogram_dialog.widgets.kbd.select import OnItemClick
 
 from src.application.mediator import Mediator
@@ -68,3 +68,24 @@ async def on_max_bookings_entered(
     )
     await message.answer(f"✅ Лимит записей обновлён: {value}")
     await dialog_manager.switch_to(TrainerBookingSettingsSG.main)
+
+
+@inject
+async def on_toggle_no_show_charges(
+    callback: CallbackQuery,
+    button: Button,
+    dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+) -> None:
+    trainer_id: int = dialog_manager.start_data["trainer_id"]
+    current: TrainerBookingSettings = await mediator.handle(
+        GetTrainerBookingSettingsRequest(trainer_id=trainer_id)
+    )
+    await mediator.handle(
+        UpdateTrainerBookingSettingsRequest(
+            trainer_id=trainer_id,
+            calendar_horizon_days=current.calendar_horizon_days,
+            max_active_bookings_per_client=current.max_active_bookings_per_client,
+            no_show_charges_package=not current.no_show_charges_package,
+        )
+    )

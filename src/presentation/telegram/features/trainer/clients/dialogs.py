@@ -20,6 +20,13 @@ from src.presentation.telegram.features.error_handler import on_input_error
 from src.presentation.telegram.widgets.booking_calendar import BookingCalendar
 
 from .getters import (
+    debtors_getter,
+    package_detail_getter,
+    package_paid_getter,
+    package_sessions_getter,
+    package_valid_getter,
+    packages_getter,
+    unpaid_getter,
     book_confirm_getter,
     book_day_getter,
     book_time_getter,
@@ -30,6 +37,19 @@ from .getters import (
     invite_getter,
 )
 from .handlers import (
+    on_all_paid,
+    on_debtor_selected,
+    on_package_close,
+    on_package_create_paid,
+    on_package_create_unpaid,
+    on_package_mark_paid,
+    on_package_price_input,
+    on_package_price_skip,
+    on_package_selected,
+    on_package_sessions_input,
+    on_package_sessions_selected,
+    on_package_valid_selected,
+    on_unpaid_booking_selected,
     on_add_name_success,
     on_add_note_skip,
     on_add_note_success,
@@ -46,7 +66,13 @@ from .handlers import (
     on_edit_value_input,
 )
 from .states import TrainerClientsSG
-from .validaters import validate_any_phone, validate_client_name, validate_note
+from .validaters import (
+    validate_any_phone,
+    validate_client_name,
+    validate_note,
+    validate_price,
+    validate_sessions,
+)
 
 to_card = SwitchTo(Const("⬅️ К карточке"), id="to_card", state=TrainerClientsSG.detail)
 
@@ -67,6 +93,12 @@ clients_trainer_dialog = Dialog(
             hide_on_single_page=True,
         ),
         SwitchTo(
+            Format("💵 Должники ({debtors_count})"),
+            id="debtors",
+            state=TrainerClientsSG.debtors,
+            when="has_debtors",
+        ),
+        SwitchTo(
             Const("➕ Добавить клиента без Telegram"),
             id="add_client",
             state=TrainerClientsSG.add_name,
@@ -81,6 +113,12 @@ clients_trainer_dialog = Dialog(
             Const("📅 Записать на тренировку"),
             id="book",
             state=TrainerClientsSG.book_day,
+        ),
+        Row(
+            SwitchTo(Const("🎫 Абонементы"), id="packages", state=TrainerClientsSG.packages),
+            SwitchTo(
+                Const("💵 Оплаты"), id="unpaid", state=TrainerClientsSG.unpaid, when="has_unpaid"
+            ),
         ),
         Row(
             SwitchTo(Const("✏️ Изменить"), id="edit", state=TrainerClientsSG.edit_menu),
@@ -260,6 +298,160 @@ clients_trainer_dialog = Dialog(
         SwitchTo(Const("⬅️ Назад"), id="back_to_time", state=TrainerClientsSG.book_time),
         state=TrainerClientsSG.book_confirm,
         getter=book_confirm_getter,
+    ),
+    # --- абонементы ---
+    Window(
+        Format("🎫 <b>Абонементы · {full_name}</b>{empty_hint}"),
+        ScrollingGroup(
+            Select(
+                Format("{item[label]}"),
+                id="packages_select",
+                item_id_getter=lambda item: item["id"],
+                items="packages",
+                on_click=on_package_selected,
+            ),
+            id="packages_scroll",
+            width=1,
+            height=6,
+            hide_on_single_page=True,
+        ),
+        SwitchTo(
+            Const("➕ Новый абонемент"), id="new_package", state=TrainerClientsSG.package_sessions
+        ),
+        to_card,
+        state=TrainerClientsSG.packages,
+        getter=packages_getter,
+    ),
+    Window(
+        Format("{card}"),
+        Button(
+            Const("💵 Отметить оплату"),
+            id="package_paid",
+            on_click=on_package_mark_paid,
+            when="can_pay",
+        ),
+        Button(
+            Const("🗄 Закрыть абонемент"),
+            id="package_close",
+            on_click=on_package_close,
+            when="can_close",
+        ),
+        SwitchTo(Const("⬅️ К абонементам"), id="to_packages", state=TrainerClientsSG.packages),
+        state=TrainerClientsSG.package_detail,
+        getter=package_detail_getter,
+    ),
+    Window(
+        Const("🎫 Сколько занятий в абонементе?\n<i>Или введите своё число</i>"),
+        Group(
+            Select(
+                Format("{item[label]}"),
+                id="package_sessions_select",
+                item_id_getter=lambda item: item["id"],
+                items="options",
+                on_click=on_package_sessions_selected,
+            ),
+            width=5,
+        ),
+        TextInput(
+            id="package_sessions_input",
+            type_factory=validate_sessions,
+            on_success=on_package_sessions_input,
+            on_error=on_input_error,
+        ),
+        SwitchTo(Const("⬅️ Назад"), id="back_to_packages", state=TrainerClientsSG.packages),
+        state=TrainerClientsSG.package_sessions,
+        getter=package_sessions_getter,
+    ),
+    Window(
+        Const("💰 Стоимость абонемента (BYN)?"),
+        TextInput(
+            id="package_price_input",
+            type_factory=validate_price,
+            on_success=on_package_price_input,
+            on_error=on_input_error,
+        ),
+        Button(Const("Без цены ➡️"), id="package_no_price", on_click=on_package_price_skip),
+        SwitchTo(Const("⬅️ Назад"), id="back_to_sessions", state=TrainerClientsSG.package_sessions),
+        state=TrainerClientsSG.package_price,
+    ),
+    Window(
+        Const("📅 Срок действия абонемента:"),
+        Group(
+            Select(
+                Format("{item[label]}"),
+                id="package_valid_select",
+                item_id_getter=lambda item: item["id"],
+                items="options",
+                on_click=on_package_valid_selected,
+            ),
+            width=2,
+        ),
+        SwitchTo(Const("⬅️ Назад"), id="back_to_price", state=TrainerClientsSG.package_price),
+        state=TrainerClientsSG.package_valid,
+        getter=package_valid_getter,
+    ),
+    Window(
+        Format("{summary}\n\nАбонемент уже оплачен?"),
+        Button(
+            Const("✅ Да, оплачен"),
+            id="package_create_paid",
+            on_click=on_package_create_paid,
+            style=Style(style=ButtonStyle.SUCCESS),
+        ),
+        Button(
+            Const("⏳ Оплатит позже"),
+            id="package_create_unpaid",
+            on_click=on_package_create_unpaid,
+            when="has_price",
+        ),
+        SwitchTo(Const("⬅️ Назад"), id="back_to_valid", state=TrainerClientsSG.package_valid),
+        state=TrainerClientsSG.package_paid,
+        getter=package_paid_getter,
+    ),
+    # --- оплаты ---
+    Window(
+        Format(
+            "💵 <b>Неоплаченные тренировки</b>\nИтого: {total}\n\n"
+            "Нажмите на тренировку, чтобы отметить её оплаченной."
+        ),
+        ScrollingGroup(
+            Select(
+                Format("{item[label]}"),
+                id="unpaid_select",
+                item_id_getter=lambda item: item["id"],
+                items="bookings",
+                on_click=on_unpaid_booking_selected,
+            ),
+            id="unpaid_scroll",
+            width=1,
+            height=8,
+            hide_on_single_page=True,
+        ),
+        Button(
+            Const("✅ Оплачено всё"), id="all_paid", on_click=on_all_paid, when="has_unpaid"
+        ),
+        to_card,
+        state=TrainerClientsSG.unpaid,
+        getter=unpaid_getter,
+    ),
+    Window(
+        Format("💵 <b>Должники</b>\nВсего не оплачено: {total}"),
+        ScrollingGroup(
+            Select(
+                Format("{item[label]}"),
+                id="debtors_select",
+                item_id_getter=lambda item: item["id"],
+                items="clients",
+                on_click=on_debtor_selected,
+            ),
+            id="debtors_scroll",
+            width=1,
+            height=8,
+            hide_on_single_page=True,
+        ),
+        SwitchTo(Const("⬅️ К списку"), id="debtors_back", state=TrainerClientsSG.list),
+        state=TrainerClientsSG.debtors,
+        getter=debtors_getter,
     ),
     on_start=on_clients_start,
 )
