@@ -421,6 +421,10 @@ from src.application.use_cases.progress.measurements import DeleteMeasurementReq
 
 from src.application.use_cases.booking.rate import RateBookingRequest, RateBookingUseCase
 
+from src.application.use_cases.client.referral import GetReferralInfoRequest, GetReferralInfoUseCase
+
+from src.application.use_cases.client.referral import ResolveReferralCodeRequest, ResolveReferralCodeUseCase
+
 
 class MediatorProvider(Provider):
     scope = Scope.REQUEST
@@ -549,6 +553,8 @@ class MediatorProvider(Provider):
         get_measurements_use_case: GetMeasurementsUseCase,
         delete_measurement_use_case: DeleteMeasurementUseCase,
         rate_booking_use_case: RateBookingUseCase,
+        get_referral_info_use_case: GetReferralInfoUseCase,
+        resolve_referral_code_use_case: ResolveReferralCodeUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -733,4 +739,6 @@ class MediatorProvider(Provider):
         mediator.register(GetMeasurementsRequest, get_measurements_use_case)
         mediator.register(DeleteMeasurementRequest, delete_measurement_use_case)
         mediator.register(RateBookingRequest, rate_booking_use_case)
+        mediator.register(GetReferralInfoRequest, get_referral_info_use_case)
+        mediator.register(ResolveReferralCodeRequest, resolve_referral_code_use_case)
         return mediator

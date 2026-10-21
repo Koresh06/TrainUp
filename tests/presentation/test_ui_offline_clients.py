@@ -65,3 +65,32 @@ async def test_inactive_clients_screen(ui, run, trainer_setup, session, notifica
     await ui.click(TRAINER_TG, "Пропал — 40 дн.")
     await ui.click(TRAINER_TG, "📣 Позвать на тренировку")
     assert len(notifications.of("notify_plan_next_training")) == 1
+
+
+async def test_referral_link_registration(ui, run, trainer_setup) -> None:
+    import re
+
+    from tests.presentation.test_ui_flows import register_client
+
+    await activate_subscription(run, trainer_setup["trainer"].id)
+    await register_client(ui, trainer_setup["token"])
+    await ui.send(CLIENT_TG, "/start")
+    text = await ui.click(CLIENT_TG, "🎁 Пригласить друга")
+    code = re.search(r"start=(ref_[0-9a-f]+)", text).group(1)
+    assert "📤 Поделиться" in ui.buttons
+
+    friend_tg = CLIENT_TG + 1
+    assert "Привет" in await ui.send(friend_tg, f"/start {code}")
+    await ui.click(friend_tg, "Начать →")
+    for value in ["Анна Друг", "25", "+375291234568"]:
+        await ui.send(friend_tg, value)
+    await ui.click(friend_tg, "Нет опыта")
+    await ui.click(friend_tg, "⬜ Полностью здоров(-а)")
+    await ui.click(friend_tg, "Далее ➡️")
+    await ui.click(friend_tg, "⬜ Базовая (Целевые мышцы)")
+    await ui.click(friend_tg, "Далее ➡️")
+    await ui.click(friend_tg, "✅ Всё верно")
+
+    friend = await run(GetClientByTgIdRequest(tg_id=friend_tg))
+    me = await run(GetClientByTgIdRequest(tg_id=CLIENT_TG))
+    assert friend.referred_by_client_id == me.id

@@ -14,3 +14,6 @@ class TrainerBookingSettings(Entity):
     ask_attendance_confirmation: bool = True
     # после тренировки просить клиента оценить её (1–5 ⭐)
     ask_rating: bool = True
+    # реферальная программа: сколько бесплатных занятий получает клиент,
+    # когда приглашённый им друг сходил на первую тренировку (0 — без бонуса)
+    referral_bonus_sessions: int = 0

@@ -27,6 +27,11 @@ async def booking_settings_getter(
         "no_show_charges": "✅" if settings.no_show_charges_package else "❌",
         "ask_attendance": "✅" if settings.ask_attendance_confirmation else "❌",
         "ask_rating": "✅" if settings.ask_rating else "❌",
+        "referral_bonus": (
+            f"{settings.referral_bonus_sessions} зан."
+            if settings.referral_bonus_sessions
+            else "выключен"
+        ),
     }
 
 

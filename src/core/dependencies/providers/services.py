@@ -6,6 +6,7 @@ from dishka import Provider, Scope, provide
 
 from src.application.interfaces.mailing_progress import MailingProgressStore
 from src.application.services.package_charge import PackageChargeService
+from src.application.services.referral_reward import ReferralRewardService
 from src.application.services.payment_provider_registry import PaymentProviderRegistry
 from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.client_package import ClientPackageRepository
@@ -30,6 +31,21 @@ logger = logging.getLogger(__name__)
 
 
 class ServicesProvider(Provider):
+    @provide(scope=Scope.REQUEST)
+    def get_referral_reward_service(
+        self,
+        client_repo: ClientRepository,
+        package_repo: ClientPackageRepository,
+        booking_settings_repo: TrainerBookingSettingsRepository,
+        notification_service: NotificationService,
+    ) -> ReferralRewardService:
+        return ReferralRewardService(
+            client_repo=client_repo,
+            package_repo=package_repo,
+            booking_settings_repo=booking_settings_repo,
+            notification_service=notification_service,
+        )
+
     @provide(scope=Scope.REQUEST)
     def get_package_charge_service(
         self,

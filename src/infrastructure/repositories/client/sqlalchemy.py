@@ -44,6 +44,17 @@ class SQLAlchemyClientRepo(ClientRepository):
         model = result.scalar_one_or_none()
         return model.to_entity() if model is not None else None
 
+    async def get_by_referral_code(self, code: str) -> Client | None:
+        query = select(ClientModel).where(ClientModel.referral_code == code)
+        result = await self._session.execute(query)
+        model = result.scalar_one_or_none()
+        return model.to_entity() if model is not None else None
+
+    async def get_referred_by(self, client_id: int) -> list[Client]:
+        query = select(ClientModel).where(ClientModel.referred_by_client_id == client_id)
+        result = await self._session.execute(query)
+        return [m.to_entity() for m in result.scalars().all()]
+
     async def delete(self, client_id: int) -> None:
         await self._session.execute(delete(ClientModel).where(ClientModel.id == client_id))
         await self._session.flush()

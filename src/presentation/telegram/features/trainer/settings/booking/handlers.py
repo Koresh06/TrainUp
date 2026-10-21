@@ -131,3 +131,30 @@ async def on_toggle_ask_rating(
             ask_rating=not current.ask_rating,
         )
     )
+
+
+# бонус за приглашённого друга: 0 → 1 → 2 → 0 (бесплатных занятий)
+REFERRAL_BONUS_OPTIONS = [0, 1, 2]
+
+
+@inject
+async def on_cycle_referral_bonus(
+    callback: CallbackQuery,
+    button: Button,
+    dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+) -> None:
+    trainer_id: int = dialog_manager.start_data["trainer_id"]
+    current: TrainerBookingSettings = await mediator.handle(
+        GetTrainerBookingSettingsRequest(trainer_id=trainer_id)
+    )
+    options = REFERRAL_BONUS_OPTIONS
+    index = options.index(current.referral_bonus_sessions) if current.referral_bonus_sessions in options else 0
+    await mediator.handle(
+        UpdateTrainerBookingSettingsRequest(
+            trainer_id=trainer_id,
+            calendar_horizon_days=current.calendar_horizon_days,
+            max_active_bookings_per_client=current.max_active_bookings_per_client,
+            referral_bonus_sessions=options[(index + 1) % len(options)],
+        )
+    )

@@ -15,6 +15,7 @@ class UpdateTrainerBookingSettingsRequest(UseCaseRequest):
     no_show_charges_package: bool | None = None
     ask_attendance_confirmation: bool | None = None
     ask_rating: bool | None = None
+    referral_bonus_sessions: int | None = None
 
 
 @dataclass(kw_only=True)
@@ -38,6 +39,8 @@ class UpdateTrainerBookingSettingsUseCase(
                 existing.ask_attendance_confirmation = command.ask_attendance_confirmation
             if command.ask_rating is not None:
                 existing.ask_rating = command.ask_rating
+            if command.referral_bonus_sessions is not None:
+                existing.referral_bonus_sessions = command.referral_bonus_sessions
             saved = await self.settings_repo.save(existing)
         else:
             new_settings = TrainerBookingSettings(

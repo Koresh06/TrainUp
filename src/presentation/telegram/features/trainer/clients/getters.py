@@ -231,6 +231,9 @@ async def client_detail_getter(
     trainer_id: int = dialog_manager.start_data["trainer_id"]
 
     client: Client = await mediator.handle(GetClientByIdRequest(client_id=client_id))
+    all_clients: list[Client] = await mediator.handle(
+        GetClientsByTrainerIdRequest(trainer_id=trainer_id)
+    )
 
     questions: list[RegistrationQuestion] = await mediator.handle(
         GetAllRegistrationQuestionsRequest(trainer_id=trainer_id)
@@ -263,6 +266,14 @@ async def client_detail_getter(
         lines.append(" · ".join(profile))
     if client.trainer_note:
         lines.append(f"📝 <i>{escape(client.trainer_note)}</i>")
+    if client.referred_by_client_id is not None:
+        referrer: Client = await mediator.handle(
+            GetClientByIdRequest(client_id=client.referred_by_client_id)
+        )
+        lines.append(f"🎁 Пришёл по приглашению: {escape(referrer.full_name)}")
+    invited = [c for c in all_clients if c.referred_by_client_id == client.id]
+    if invited:
+        lines.append(f"🎁 Привёл друзей: {len(invited)}")
     if client_recurring:
         lines.append(
             "🔁 Постоянно: "

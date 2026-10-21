@@ -18,6 +18,10 @@ from src.application.use_cases.client.get_by_invite_token import (
     GetClientByInviteTokenRequest,
 )
 from src.application.use_cases.client.get_by_tg_id import GetClientByTgIdRequest
+from src.application.use_cases.client.referral import (
+    REFERRAL_PREFIX,
+    ResolveReferralCodeRequest,
+)
 from src.application.use_cases.trainer.get_by_id import GetTrainerByIdRequest
 from src.application.use_cases.invite_link.resolve import ResolveInviteLinkRequest
 from src.domain.entities.client import Client
@@ -111,6 +115,39 @@ async def on_claim_client_click(
     await _open_client_menu(dialog_manager, client.trainer_id)
 
 
+async def _start_by_referral(
+    message: Message, code: str, dialog_manager: DialogManager, mediator: Mediator
+) -> None:
+    """Ссылка «пригласить друга»: новый человек регистрируется у тренера
+    пригласившего, а тот потом получает бонус."""
+    try:
+        existing: Client = await mediator.handle(
+            GetClientByTgIdRequest(tg_id=message.from_user.id)
+        )
+    except ClientNotFoundException:
+        existing = None
+    if existing is not None:
+        await message.answer("ℹ️ Вы уже зарегистрированы — открываю ваше меню.")
+        await _open_client_menu(dialog_manager, existing.trainer_id)
+        return
+
+    try:
+        referrer: Client = await mediator.handle(ResolveReferralCodeRequest(code=code))
+    except ClientInviteNotFoundException:
+        await message.answer(
+            "🚫 Эта ссылка недействительна. Попросите друга прислать её ещё раз."
+        )
+        return
+    if not await mediator.handle(IsTrainerAvailableRequest(trainer_id=referrer.trainer_id)):
+        await message.answer(TRAINER_UNAVAILABLE_TEXT)
+        return
+    await dialog_manager.start(
+        state=ClientRegisterSG.welcome,
+        data={"trainer_id": referrer.trainer_id, "referred_by_client_id": referrer.id},
+        mode=StartMode.RESET_STACK,
+    )
+
+
 @router.message(CommandStart(deep_link=True))
 @inject
 async def process_start_with_token(
@@ -120,6 +157,10 @@ async def process_start_with_token(
     mediator: FromDishka[Mediator],
 ) -> None:
     token = command.args
+
+    if token.startswith(REFERRAL_PREFIX):
+        await _start_by_referral(message, token.removeprefix(REFERRAL_PREFIX), dialog_manager, mediator)
+        return
 
     if token.startswith(CLIENT_INVITE_PREFIX):
         try:

@@ -31,6 +31,7 @@ class TrainerBookingSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         Boolean, default=True, server_default="true"
     )
     ask_rating: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    referral_bonus_sessions: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     trainer: Mapped["TrainerModel"] = relationship(
         "TrainerModel",
@@ -46,6 +47,7 @@ class TrainerBookingSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             no_show_charges_package=entity.no_show_charges_package,
             ask_attendance_confirmation=entity.ask_attendance_confirmation,
             ask_rating=entity.ask_rating,
+            referral_bonus_sessions=entity.referral_bonus_sessions,
         )
 
     def to_entity(self) -> "TrainerBookingSettings":
@@ -57,6 +59,7 @@ class TrainerBookingSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             no_show_charges_package=self.no_show_charges_package,
             ask_attendance_confirmation=self.ask_attendance_confirmation,
             ask_rating=self.ask_rating,
+            referral_bonus_sessions=self.referral_bonus_sessions,
         )
 
     def update_model(self, entity: "TrainerBookingSettings") -> None:
@@ -66,3 +69,4 @@ class TrainerBookingSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.no_show_charges_package = entity.no_show_charges_package
         self.ask_attendance_confirmation = entity.ask_attendance_confirmation
         self.ask_rating = entity.ask_rating
+        self.referral_bonus_sessions = entity.referral_bonus_sessions

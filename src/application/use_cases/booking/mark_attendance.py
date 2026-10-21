@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from src.application.interfaces.booking_scheduler import BookingScheduler
 from src.application.services.package_charge import PackageChargeService
+from src.application.services.referral_reward import ReferralRewardService
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.domain.entities.booking import Booking
 from src.domain.exception.booking import BookingNotFoundException, TrainingNotStartedException
@@ -35,6 +36,7 @@ class MarkBookingAttendanceUseCase(UseCase[MarkBookingAttendanceRequest, Booking
     slot_repo: CalendarSlotRepository
     booking_scheduler: BookingScheduler
     package_charge: PackageChargeService
+    referral_reward: ReferralRewardService
     transaction_manager: TransactionManager
 
     async def __call__(self, command: MarkBookingAttendanceRequest) -> Booking:
@@ -58,6 +60,7 @@ class MarkBookingAttendanceUseCase(UseCase[MarkBookingAttendanceRequest, Booking
         # неявка может не списывать занятие (настройка тренера) — пересчитываем
         await self.package_charge.sync(booking)
         saved = await self.booking_repo.save(booking)
+        await self.referral_reward.on_completed(saved)
         await self.transaction_manager.commit()
         logger.info(
             "[MarkBookingAttendance:done] booking_id=%s status=%s", saved.id, saved.status

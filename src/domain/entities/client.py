@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 from src.domain.entities.base import Entity
 from src.domain.enums.client import ClientSource
@@ -28,6 +29,11 @@ class Client(Entity):
     # токен персональной ссылки: по ней человек «забирает» свою карточку,
     # когда приходит в бота, — история тренировок сохраняется
     invite_token: str | None = None
+    # реферальная программа: свой код для ссылки «пригласить друга»,
+    # кто пригласил этого клиента и когда пригласившему начислен бонус
+    referral_code: str | None = None
+    referred_by_client_id: int | None = None
+    referral_rewarded_at: datetime | None = None
 
     @property
     def has_telegram(self) -> bool:

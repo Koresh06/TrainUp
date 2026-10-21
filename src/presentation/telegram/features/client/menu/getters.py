@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from dishka.integrations.aiogram_dialog import inject, FromDishka
 from aiogram_dialog import DialogManager
 
@@ -8,6 +10,13 @@ from src.domain.entities.client import Client
 from src.domain.entities.trainer import Trainer
 from src.domain.enums.booking import BookingStatus
 from src.application.mediator import Mediator
+from src.application.use_cases.client.referral import (
+    REFERRAL_PREFIX,
+    GetReferralInfoRequest,
+    ReferralInfoDTO,
+)
+from src.application.use_cases.package.create import sessions_word
+from src.core.config import settings
 from src.application.use_cases.booking.get_upcoming_by_client import (
     GetUpcomingBookingsByClientRequest,
 )
@@ -92,4 +101,35 @@ async def my_bookings_getter(
             if lines
             else "Записаться можно в разделе «📅 Записаться на занятия»."
         ),
+    }
+
+
+@inject
+async def referral_getter(
+    dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+    **kwargs,
+) -> dict:
+    client: Client = await mediator.handle(
+        GetClientByTgIdRequest(tg_id=dialog_manager.event.from_user.id)
+    )
+    info: ReferralInfoDTO = await mediator.handle(GetReferralInfoRequest(client_id=client.id))
+    link = f"https://t.me/{settings.telegram.bot_username}?start={REFERRAL_PREFIX}{info.code}"
+    bonus = (
+        f"🎁 Когда друг сходит на первую тренировку, вы получите "
+        f"<b>{info.bonus_sessions}</b> {sessions_word(info.bonus_sessions)} бесплатно.\n\n"
+        if info.bonus_sessions
+        else ""
+    )
+    invited = (
+        f"👥 Вы пригласили: <b>{len(info.invited)}</b>"
+        + (f", уже тренируются: {info.rewarded}" if info.invited else "")
+        if info.invited
+        else "👥 Пока никого — станьте первым 🙂"
+    )
+    return {
+        "link": link,
+        "bonus": bonus,
+        "invited": invited,
+        "share_url": f"https://t.me/share/url?url={quote(link)}&text={quote('Тренируйся со мной 💪')}",
     }

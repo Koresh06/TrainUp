@@ -235,6 +235,12 @@ from src.application.use_cases.progress.measurements import DeleteMeasurementUse
 
 from src.application.use_cases.booking.rate import RateBookingUseCase
 
+from src.application.use_cases.client.referral import GetReferralInfoUseCase
+
+from src.application.use_cases.client.referral import ResolveReferralCodeUseCase
+
+from src.application.services.referral_reward import ReferralRewardService
+
 
 class UseCasesProvider(Provider):
     scope = Scope.REQUEST
@@ -300,11 +306,15 @@ class UseCasesProvider(Provider):
         self,
         client_repo: ClientRepository,
         answer_repo: ClientAnswerRepository,
+        trainer_repo: TrainerRepository,
+        notification_service: NotificationService,
         transaction_manager: TransactionManager,
     ) -> RegisterClientUseCase:
         return RegisterClientUseCase(
             client_repo=client_repo,
             answer_repo=answer_repo,
+            trainer_repo=trainer_repo,
+            notification_service=notification_service,
             transaction_manager=transaction_manager,
         )
 
@@ -905,6 +915,7 @@ class UseCasesProvider(Provider):
         booking_repo: BookingRepository,
         booking_scheduler: BookingScheduler,
         package_charge: PackageChargeService,
+        referral_reward: ReferralRewardService,
         client_repo: ClientRepository,
         trainer_repo: TrainerRepository,
         slot_repo: CalendarSlotRepository,
@@ -916,6 +927,7 @@ class UseCasesProvider(Provider):
             booking_repo=booking_repo,
             booking_scheduler=booking_scheduler,
             package_charge=package_charge,
+            referral_reward=referral_reward,
             client_repo=client_repo,
             trainer_repo=trainer_repo,
             slot_repo=slot_repo,
@@ -1546,6 +1558,7 @@ class UseCasesProvider(Provider):
         slot_repo: CalendarSlotRepository,
         booking_scheduler: BookingScheduler,
         package_charge: PackageChargeService,
+        referral_reward: ReferralRewardService,
         transaction_manager: TransactionManager,
     ) -> MarkBookingAttendanceUseCase:
         return MarkBookingAttendanceUseCase(
@@ -1553,6 +1566,7 @@ class UseCasesProvider(Provider):
             slot_repo=slot_repo,
             booking_scheduler=booking_scheduler,
             package_charge=package_charge,
+            referral_reward=referral_reward,
             transaction_manager=transaction_manager,
         )
 
@@ -1817,4 +1831,26 @@ class UseCasesProvider(Provider):
             slot_repo=slot_repo,
             notification_service=notification_service,
             transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_referral_info_use_case(
+        self,
+        client_repo: ClientRepository,
+        booking_settings_repo: TrainerBookingSettingsRepository,
+        transaction_manager: TransactionManager,
+    ) -> GetReferralInfoUseCase:
+        return GetReferralInfoUseCase(
+            client_repo=client_repo,
+            booking_settings_repo=booking_settings_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def resolve_referral_code_use_case(
+        self,
+        client_repo: ClientRepository,
+    ) -> ResolveReferralCodeUseCase:
+        return ResolveReferralCodeUseCase(
+            client_repo=client_repo,
         )

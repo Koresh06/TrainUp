@@ -5,3 +5,4 @@ class ClientMenuSG(StatesGroup):
     main = State()
     trainer_profile = State()
     my_bookings = State()
+    referral = State()

@@ -1,11 +1,12 @@
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.text import Const, Format
 from aiogram_dialog.widgets.media import DynamicMedia
-from aiogram_dialog.widgets.kbd import Button, Back, SwitchTo
+from aiogram_dialog.widgets.kbd import Button, Back, SwitchTo, Url
 from aiogram_dialog.widgets.link_preview import LinkPreview
 
 from src.presentation.telegram.features.client.menu.getters import (
     my_bookings_getter,
+    referral_getter,
     trainer_profile_getter,
 )
 from src.presentation.telegram.features.client.menu.handlers import (
@@ -55,6 +56,7 @@ client_menu_dialog = Dialog(
             id="profile",
             on_click=on_menu_item_click,
         ),
+        SwitchTo(Const("🎁 Пригласить друга"), id="referral", state=ClientMenuSG.referral),
         Button(
             Const("👤 Ваш инструктор"),
             id="trainer_profile",
@@ -75,5 +77,19 @@ client_menu_dialog = Dialog(
         LinkPreview(is_disabled=True),
         state=ClientMenuSG.my_bookings,
         getter=my_bookings_getter,
+    ),
+    Window(
+        Format(
+            "🎁 <b>Пригласите друга</b>\n\n"
+            "Отправьте другу ссылку — он запишется к вашему тренеру.\n\n"
+            "{bonus}"
+            "<code>{link}</code>\n\n"
+            "{invited}"
+        ),
+        Url(Const("📤 Поделиться"), Format("{share_url}")),
+        SwitchTo(Const("⬅️ Назад"), id="referral_back", state=ClientMenuSG.main),
+        LinkPreview(is_disabled=True),
+        state=ClientMenuSG.referral,
+        getter=referral_getter,
     ),
 )

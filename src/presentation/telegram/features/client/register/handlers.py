@@ -102,6 +102,7 @@ async def on_register_confirm(
                 age=data["age"],
                 sport_experience=data["sport_experience"],
                 answers=data.get("answers", {}),
+                referred_by_client_id=dialog_manager.start_data.get("referred_by_client_id"),
             )
         )
     except AssigningClientToAnotherTrainerError:

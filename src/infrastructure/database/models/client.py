@@ -1,7 +1,9 @@
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import (
+    DateTime,
     ForeignKey,
     BigInteger,
     Integer,
@@ -63,6 +65,15 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     invite_token: Mapped[str | None] = mapped_column(
         VARCHAR(64), unique=True, index=True, nullable=True
     )
+    referral_code: Mapped[str | None] = mapped_column(
+        VARCHAR(32), unique=True, index=True, nullable=True
+    )
+    referred_by_client_id: Mapped[int | None] = mapped_column(
+        ForeignKey("clients.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    referral_rewarded_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     trainer: Mapped["TrainerModel"] = relationship(
         "TrainerModel",
@@ -100,6 +111,9 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             source=entity.source,
             trainer_note=entity.trainer_note,
             invite_token=entity.invite_token,
+            referral_code=entity.referral_code,
+            referred_by_client_id=entity.referred_by_client_id,
+            referral_rewarded_at=entity.referral_rewarded_at,
         )
 
     def to_entity(self) -> "Client":
@@ -117,6 +131,9 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             source=self.source,
             trainer_note=self.trainer_note,
             invite_token=self.invite_token,
+            referral_code=self.referral_code,
+            referred_by_client_id=self.referred_by_client_id,
+            referral_rewarded_at=self.referral_rewarded_at,
             created_at=self.created_at,
         )
 
@@ -133,3 +150,6 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.source = entity.source
         self.trainer_note = entity.trainer_note
         self.invite_token = entity.invite_token
+        self.referral_code = entity.referral_code
+        self.referred_by_client_id = entity.referred_by_client_id
+        self.referral_rewarded_at = entity.referral_rewarded_at

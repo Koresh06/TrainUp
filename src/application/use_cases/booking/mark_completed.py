@@ -8,6 +8,7 @@ from src.application.interfaces.notification_service import (
     RatingRequestDTO,
 )
 from src.application.services.package_charge import PackageChargeService
+from src.application.services.referral_reward import ReferralRewardService
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.domain.constants import PLAN_NEXT_TRAINING_REMINDER_DAYS
 from src.domain.enums.booking import BookingStatus
@@ -32,6 +33,7 @@ class MarkBookingCompletedUseCase(UseCase[MarkBookingCompletedRequest, None]):
     booking_repo: BookingRepository
     booking_scheduler: BookingScheduler
     package_charge: PackageChargeService
+    referral_reward: ReferralRewardService
     client_repo: ClientRepository
     trainer_repo: TrainerRepository
     slot_repo: CalendarSlotRepository
@@ -48,6 +50,7 @@ class MarkBookingCompletedUseCase(UseCase[MarkBookingCompletedRequest, None]):
         booking.completion_job_id = None
         await self.package_charge.sync(booking)
         await self.booking_repo.save(booking)
+        await self.referral_reward.on_completed(booking)
         await self.transaction_manager.commit()
 
         await self.booking_scheduler.schedule_plan_next_training_reminder(

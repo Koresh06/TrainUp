@@ -12,6 +12,7 @@ from .getters import booking_settings_getter, horizon_weeks_getter
 from .handlers import (
     on_horizon_weeks_selected,
     on_max_bookings_entered,
+    on_cycle_referral_bonus,
     on_toggle_ask_attendance,
     on_toggle_ask_rating,
     on_toggle_no_show_charges,
@@ -26,7 +27,8 @@ trainer_booking_settings_dialog = Dialog(
             "🔢 Максимум активных записей на клиента: {max_bookings}\n"
             "🎫 Неявка списывает занятие с абонемента: {no_show_charges}\n"
             "🙋 Накануне спрашивать клиента «придёте?»: {ask_attendance}\n"
-            "⭐ Просить оценить тренировку: {ask_rating}\n\n"
+            "⭐ Просить оценить тренировку: {ask_rating}\n"
+            "🎁 Бонус клиенту за приглашённого друга: {referral_bonus}\n\n"
             "Что изменить?"
         ),
         SwitchTo(
@@ -53,6 +55,11 @@ trainer_booking_settings_dialog = Dialog(
             Format("{ask_rating} Просить оценку после тренировки"),
             id="toggle_ask_rating",
             on_click=on_toggle_ask_rating,
+        ),
+        Button(
+            Format("🎁 Бонус за друга: {referral_bonus}"),
+            id="cycle_referral_bonus",
+            on_click=on_cycle_referral_bonus,
         ),
         Cancel(Const("⬅️ Назад")),
         state=TrainerBookingSettingsSG.main,
