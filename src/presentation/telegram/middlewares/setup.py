@@ -5,7 +5,9 @@ from src.presentation.telegram.features import (
     CLIENT_DIALOGS,
     TRAINER_CABINET_DIALOGS,
 )
+from src.presentation.telegram.features.error_handler import setup_error_handling
 from src.presentation.telegram.middlewares.activity import ActivityTrackingMiddleware
+from src.presentation.telegram.middlewares.logging_context import LoggingContextMiddleware
 from src.presentation.telegram.middlewares.access import (
     AdminGuard,
     ClientTrainerGuard,
@@ -16,6 +18,10 @@ from src.presentation.telegram.middlewares.access import (
 
 def setup_middlewares(dp: Dispatcher) -> None:
     """Вызывать ПОСЛЕ setup_dishka: UserAccessMiddleware берёт контейнер из data."""
+    # контекст логов («кто и что нажал») — на весь апдейт, раньше всех
+    dp.update.outer_middleware(LoggingContextMiddleware())
+    setup_error_handling(dp)
+
     # активность — раньше проверки доступа: заблокированный админом тоже «заходил»
     activity = ActivityTrackingMiddleware()
     dp.message.outer_middleware(activity)

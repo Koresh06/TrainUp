@@ -1,3 +1,10 @@
+# логи docker (docker logs) не растут бесконечно: 3 файла по 20 МБ
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "3"
+
 services:
   db:
     image: postgres:16
@@ -33,6 +40,10 @@ services:
   bot:
     image: ghcr.io/koresh06/trainup:latest
     container_name: trainup_bot
+    # файлы логов приложения (bot.log, worker.log, …, errors.log) — на хосте в ./logs
+    volumes:
+      - ./logs:/app/logs
+    logging: *default-logging
     command: python -m src.presentation.telegram.app
     env_file:
       - .env
@@ -46,6 +57,10 @@ services:
   worker:
     image: ghcr.io/koresh06/trainup:latest
     container_name: trainup_worker
+    # файлы логов приложения (bot.log, worker.log, …, errors.log) — на хосте в ./logs
+    volumes:
+      - ./logs:/app/logs
+    logging: *default-logging
     command: taskiq worker src.worker:broker
     env_file:
       - .env
@@ -59,6 +74,10 @@ services:
   scheduler:
     image: ghcr.io/koresh06/trainup:latest
     container_name: trainup_scheduler
+    # файлы логов приложения (bot.log, worker.log, …, errors.log) — на хосте в ./logs
+    volumes:
+      - ./logs:/app/logs
+    logging: *default-logging
     command: taskiq scheduler src.scheduler:scheduler
     env_file:
       - .env
@@ -74,6 +93,10 @@ services:
   webhook:
     image: ghcr.io/koresh06/trainup:latest
     container_name: trainup_webhook
+    # файлы логов приложения (bot.log, worker.log, …, errors.log) — на хосте в ./logs
+    volumes:
+      - ./logs:/app/logs
+    logging: *default-logging
     command: uvicorn src.presentation.web.app:create_app --host 0.0.0.0 --port 8080 --factory
     env_file:
       - .env

@@ -27,7 +27,10 @@ async def test_every_request_has_handler(container) -> None:
         mediator = await request_container.get(Mediator)
 
     missing = sorted(
-        cls.__name__ for cls in _all_request_types() if cls not in mediator._handlers
+        cls.__name__
+        for cls in _all_request_types()
+        # тестовые запросы (например, в тестах Mediator) регистрировать не нужно
+        if cls.__module__.startswith("src.") and cls not in mediator._handlers
     )
     assert missing == [], f"Не зарегистрированы в Mediator: {missing}"
 

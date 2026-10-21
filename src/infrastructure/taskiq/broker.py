@@ -4,6 +4,7 @@ from redis.exceptions import ConnectionError, TimeoutError as RedisTimeoutError
 from taskiq_redis import RedisScheduleSource, RedisStreamBroker, RedisAsyncResultBackend
 
 from src.core.config import settings
+from src.infrastructure.taskiq.logging_middleware import TaskLoggingMiddleware
 
 result_backend = RedisAsyncResultBackend(redis_url=settings.db.redis.taskiq_url)
 
@@ -17,6 +18,6 @@ broker = RedisStreamBroker(
     retry_on_error=[ConnectionError, RedisTimeoutError],
     retry=Retry(ExponentialBackoff(), retries=5),
     health_check_interval=10,
-).with_result_backend(result_backend)
+).with_result_backend(result_backend).with_middlewares(TaskLoggingMiddleware())
 
 schedule_source = RedisScheduleSource(settings.db.redis.taskiq_url)

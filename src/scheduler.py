@@ -5,6 +5,9 @@ from taskiq.schedule_sources import LabelScheduleSource
 from src.core.dependencies.providers import make_base_providers
 from src.infrastructure.taskiq.broker import broker, schedule_source
 from src.infrastructure.taskiq.tasks import register_taskiq_tasks
+from src.utils.logging import setup_logging
+
+setup_logging("scheduler")
 
 container = make_async_container(*make_base_providers())
 

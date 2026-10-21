@@ -19,7 +19,6 @@ from src.presentation.telegram.middlewares.setup import setup_middlewares
 from src.core.dependencies.providers import make_base_providers
 
 
-# logging.getLogger("aiogram_dialog").setLevel(logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
@@ -32,7 +31,7 @@ async def set_commands(bot: Bot):
 
 
 async def create_app():
-    setup_logging()
+    setup_logging("bot")
     patch_dialog_intent_ids()
 
     container = make_async_container(
@@ -64,9 +63,8 @@ async def create_app():
     finally:
         await broker.shutdown()
         await bot.session.close()
-        logger.info("🧹 Бот остановлены.")
+        logger.info("🧹 Бот остановлен.")
 
 
 if __name__ == "__main__":
-    logger.info("Starting bot")
     asyncio.run(create_app())

@@ -11,7 +11,7 @@ container = make_async_container(*make_base_providers())
 
 @broker.on_event(TaskiqEvents.WORKER_STARTUP)
 async def setup_worker(state: TaskiqState) -> None:
-    setup_logging()
+    setup_logging("worker")
     register_taskiq_tasks(broker, container=container)
 
 

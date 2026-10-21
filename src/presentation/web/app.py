@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    setup_logging()
+    setup_logging("webhook")
     app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)
 
     @app.get("/health")
