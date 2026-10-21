@@ -413,6 +413,12 @@ from src.application.use_cases.vacation.manage import GetVacationsRequest, GetVa
 
 from src.application.use_cases.vacation.manage import DeleteVacationRequest, DeleteVacationUseCase
 
+from src.application.use_cases.progress.measurements import AddMeasurementRequest, AddMeasurementUseCase
+
+from src.application.use_cases.progress.measurements import GetMeasurementsRequest, GetMeasurementsUseCase
+
+from src.application.use_cases.progress.measurements import DeleteMeasurementRequest, DeleteMeasurementUseCase
+
 
 class MediatorProvider(Provider):
     scope = Scope.REQUEST
@@ -537,6 +543,9 @@ class MediatorProvider(Provider):
         create_vacation_use_case: CreateVacationUseCase,
         get_vacations_use_case: GetVacationsUseCase,
         delete_vacation_use_case: DeleteVacationUseCase,
+        add_measurement_use_case: AddMeasurementUseCase,
+        get_measurements_use_case: GetMeasurementsUseCase,
+        delete_measurement_use_case: DeleteMeasurementUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -717,4 +726,7 @@ class MediatorProvider(Provider):
         mediator.register(CreateVacationRequest, create_vacation_use_case)
         mediator.register(GetVacationsRequest, get_vacations_use_case)
         mediator.register(DeleteVacationRequest, delete_vacation_use_case)
+        mediator.register(AddMeasurementRequest, add_measurement_use_case)
+        mediator.register(GetMeasurementsRequest, get_measurements_use_case)
+        mediator.register(DeleteMeasurementRequest, delete_measurement_use_case)
         return mediator

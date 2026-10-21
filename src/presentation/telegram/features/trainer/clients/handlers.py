@@ -33,6 +33,8 @@ from src.domain.exception.calendar_slot import SlotFullException, SlotInPastExce
 from src.domain.exception.client import ClientHasBookingsException
 from src.presentation.telegram.widgets.booking_calendar import AVAILABILITY_CACHE_KEY
 
+from src.presentation.telegram.features.progress.states import ProgressSG
+
 from .states import TrainerClientsSG
 from .validaters import NAME_MAX_LENGTH, validate_any_phone, validate_note
 
@@ -439,3 +441,16 @@ async def on_invite_back(
         )
     )
     await callback.answer("📣 Клиенту отправлено приглашение записаться", show_alert=True)
+
+
+async def on_open_progress(
+    callback: CallbackQuery, button: Button, dialog_manager: DialogManager
+) -> None:
+    await dialog_manager.start(
+        state=ProgressSG.main,
+        data={
+            "trainer_id": dialog_manager.start_data["trainer_id"],
+            "client_id": dialog_manager.dialog_data["viewing_client_id"],
+            "as_trainer": True,
+        },
+    )

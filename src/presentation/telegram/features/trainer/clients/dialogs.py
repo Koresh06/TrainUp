@@ -41,6 +41,7 @@ from .handlers import (
     on_all_paid,
     on_debtor_selected,
     on_invite_back,
+    on_open_progress,
     on_package_close,
     on_package_create_paid,
     on_package_create_unpaid,
@@ -128,6 +129,7 @@ clients_trainer_dialog = Dialog(
             on_click=on_invite_back,
             when="can_invite_back",
         ),
+        Button(Const("📈 Прогресс"), id="progress", on_click=on_open_progress),
         Row(
             SwitchTo(Const("🎫 Абонементы"), id="packages", state=TrainerClientsSG.packages),
             SwitchTo(

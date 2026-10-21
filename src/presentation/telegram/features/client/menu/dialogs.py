@@ -11,6 +11,7 @@ from src.presentation.telegram.features.client.menu.getters import (
 from src.presentation.telegram.features.client.menu.handlers import (
     on_menu_item_click,
     on_my_bookings_click,
+    on_my_progress_click,
     on_trainer_profile_click,
 )
 
@@ -43,6 +44,11 @@ client_menu_dialog = Dialog(
             Const("✉️ Обратная связь"),
             id="feedback",
             on_click=on_menu_item_click,
+        ),
+        Button(
+            Const("📈 Мой прогресс"),
+            id="progress",
+            on_click=on_my_progress_click,
         ),
         Button(
             Const("📝 Моя анкета"),

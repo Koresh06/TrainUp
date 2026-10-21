@@ -63,6 +63,10 @@ from src.infrastructure.repositories.client_answer.sqlalchemy import SQLAlchemyC
 from src.infrastructure.repositories.trainer_reminder_settings.sqlalchemy import SQLAlchemyTrainerReminderSettingsRepo
 from src.domain.repositories.client_package import ClientPackageRepository
 from src.domain.repositories.trainer_vacation import TrainerVacationRepository
+from src.domain.repositories.client_measurement import ClientMeasurementRepository
+from src.infrastructure.repositories.client_measurement.sqlalchemy import (
+    SQLAlchemyClientMeasurementRepo,
+)
 from src.infrastructure.repositories.trainer_vacation.sqlalchemy import SQLAlchemyTrainerVacationRepo
 from src.infrastructure.repositories.client_package.sqlalchemy import SQLAlchemyClientPackageRepo
 
@@ -181,3 +185,9 @@ class RepositoriesProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_trainer_vacation_repository(self, session: AsyncSession) -> TrainerVacationRepository:
         return SQLAlchemyTrainerVacationRepo(session=session)
+
+    @provide(scope=Scope.REQUEST)
+    def get_client_measurement_repository(
+        self, session: AsyncSession
+    ) -> ClientMeasurementRepository:
+        return SQLAlchemyClientMeasurementRepo(session=session)

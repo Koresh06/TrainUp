@@ -104,6 +104,7 @@ from src.presentation.telegram.features.admin.modules.exports.dialogs import (
 )
 from src.presentation.telegram.features.trainer.help.dialogs import trainer_help_dialog
 from src.presentation.telegram.features.trainer.vacation.dialogs import trainer_vacation_dialog
+from src.presentation.telegram.features.progress.dialogs import progress_dialog
 
 def get_all_routers() -> list[Router]:
     return [
@@ -159,8 +160,10 @@ ADMIN_DIALOGS: list[Dialog] = [
     admin_export_dialog,
 ]
 
-# доступны всегда: регистрация клиента, онбординг/оплата тренера, помощь
+# доступны всегда: регистрация клиента, онбординг/оплата тренера, помощь,
+# дневник прогресса (открывают и тренер, и клиент — client_id в start_data)
 OPEN_DIALOGS: list[Dialog] = [
+    progress_dialog,
     client_register_dialog,
     trainer_onboarding_dialog,
     subscription_dialog,

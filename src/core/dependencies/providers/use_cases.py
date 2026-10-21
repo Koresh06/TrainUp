@@ -225,6 +225,14 @@ from src.application.use_cases.vacation.manage import GetVacationsUseCase
 
 from src.application.use_cases.vacation.manage import DeleteVacationUseCase
 
+from src.domain.repositories.client_measurement import ClientMeasurementRepository
+
+from src.application.use_cases.progress.measurements import AddMeasurementUseCase
+
+from src.application.use_cases.progress.measurements import GetMeasurementsUseCase
+
+from src.application.use_cases.progress.measurements import DeleteMeasurementUseCase
+
 
 class UseCasesProvider(Provider):
     scope = Scope.REQUEST
@@ -1744,5 +1752,38 @@ class UseCasesProvider(Provider):
             slot_repo=slot_repo,
             booking_repo=booking_repo,
             calendar_service=calendar_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def add_measurement_use_case(
+        self,
+        measurement_repo: ClientMeasurementRepository,
+        client_repo: ClientRepository,
+        transaction_manager: TransactionManager,
+    ) -> AddMeasurementUseCase:
+        return AddMeasurementUseCase(
+            measurement_repo=measurement_repo,
+            client_repo=client_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_measurements_use_case(
+        self,
+        measurement_repo: ClientMeasurementRepository,
+    ) -> GetMeasurementsUseCase:
+        return GetMeasurementsUseCase(
+            measurement_repo=measurement_repo,
+        )
+
+    @provide
+    def delete_measurement_use_case(
+        self,
+        measurement_repo: ClientMeasurementRepository,
+        transaction_manager: TransactionManager,
+    ) -> DeleteMeasurementUseCase:
+        return DeleteMeasurementUseCase(
+            measurement_repo=measurement_repo,
             transaction_manager=transaction_manager,
         )

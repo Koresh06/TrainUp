@@ -21,6 +21,7 @@ from .payment import PaymentModel
 from .bot_user import BotUserActivityModel, BotUserModel
 from .client_package import ClientPackageModel
 from .trainer_vacation import TrainerVacationModel
+from .client_measurement import ClientMeasurementModel
 
 
 __all__ = [
@@ -48,4 +49,5 @@ __all__ = [
     "BotUserActivityModel",
     "ClientPackageModel",
     "TrainerVacationModel",
+    "ClientMeasurementModel",
 ]

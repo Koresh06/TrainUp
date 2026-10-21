@@ -299,3 +299,46 @@ def empty_chart(*, title: str, subtitle: str) -> bytes:
     ax.text(0.5, 0.5, "Пока нет данных за этот период", ha="center", va="center",
             transform=ax.transAxes, fontsize=12, color=TEXT_MUTED)
     return _to_png(fig)
+
+
+def progress_lines(
+    *,
+    title: str,
+    subtitle: str,
+    dates: Sequence[date],
+    series: Sequence[Series],
+    unit: str,
+) -> bytes:
+    """Дневник прогресса: линии по реальным датам замеров (интервалы неравные).
+    Ось Y не от нуля — важна динамика (72 → 69 кг), а не абсолют."""
+    fig, ax = _figure(title, subtitle)
+    xs = [d.toordinal() for d in dates]
+    values = [float(v) for s in series for v in s.values if v is not None]
+    low, high = min(values), max(values)
+    pad = max((high - low) * 0.15, 1.0)
+    ax.set_ylim(low - pad, high + pad * 1.6)
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=5))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _p: f"{v:.0f} {unit}"))
+
+    step = max(1, -(-len(dates) // 8))
+    ticks = list(range(0, len(dates), step))
+    if ticks[-1] != len(dates) - 1:
+        ticks.append(len(dates) - 1)
+    ax.set_xticks([xs[i] for i in ticks], [f"{dates[i]:%d.%m}" for i in ticks])
+    span = max(xs[-1] - xs[0], 1)
+    ax.set_xlim(xs[0] - span * 0.04, xs[-1] + span * 0.06)
+
+    for item in series:
+        known = [(x, float(v)) for x, v in zip(xs, item.values) if v is not None]
+        if not known:
+            continue
+        lx, ly = zip(*known)
+        ax.plot(lx, ly, color=item.color, linewidth=2, solid_capstyle="round", solid_joinstyle="round")
+        ax.scatter(lx, ly, s=18, color=item.color, zorder=4)
+        ax.scatter([lx[-1]], [ly[-1]], s=46, color=item.color, edgecolors=SURFACE, linewidths=2, zorder=5)
+        ax.annotate(
+            f"{ly[-1]:g}", (lx[-1], ly[-1]), xytext=(0, 8), textcoords="offset points",
+            ha="center", fontsize=9, color=TEXT_PRIMARY, fontweight="bold",
+        )
+    _legend(fig, [s for s in series if any(v is not None for v in s.values)])
+    return _to_png(fig)
