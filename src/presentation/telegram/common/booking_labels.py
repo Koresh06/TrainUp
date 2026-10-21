@@ -22,6 +22,7 @@ STATUS_ICONS: dict[BookingStatus, str] = {
     BookingStatus.CONFIRMED: "✅",
     BookingStatus.CANCELLED: "❌",
     BookingStatus.COMPLETED: "🏁",
+    BookingStatus.NO_SHOW: "🚫",
 }
 
 STATUS_TITLES: dict[BookingStatus, str] = {
@@ -29,6 +30,7 @@ STATUS_TITLES: dict[BookingStatus, str] = {
     BookingStatus.CONFIRMED: "✅ Подтверждена",
     BookingStatus.CANCELLED: "❌ Отменена",
     BookingStatus.COMPLETED: "🏁 Проведена",
+    BookingStatus.NO_SHOW: "🚫 Клиент не пришёл",
 }
 
 

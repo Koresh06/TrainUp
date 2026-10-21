@@ -248,26 +248,6 @@ class SQLAlchemyBookingRepo(BookingRepository):
         result = await self._session.execute(query)
         return {(trainer_id, status): count for trainer_id, status, count in result.all()}
 
-    async def get_history_by_trainer(
-        self, trainer_id: int, limit: int = 50
-    ) -> list[Booking]:
-        query = (
-            select(BookingModel)
-            .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
-            .where(
-                BookingModel.trainer_id == trainer_id,
-                BookingModel.status.in_(
-                    [BookingStatus.COMPLETED, BookingStatus.CANCELLED]
-                ),
-            )
-            .order_by(
-                CalendarSlotModel.slot_date.desc(), CalendarSlotModel.start_time.desc()
-            )
-            .limit(limit)
-        )
-        result = await self._session.execute(query)
-        return [model.to_entity() for model in result.scalars().all()]
-
     async def get_views(
         self,
         *,

@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Any
 
 from dishka.integrations.aiogram_dialog import inject, FromDishka
 from aiogram.types import CallbackQuery, Message
@@ -25,6 +26,13 @@ from src.presentation.telegram.widgets.booking_calendar import AVAILABILITY_CACH
 
 from .states import TrainerClientsSG
 from .validaters import NAME_MAX_LENGTH, validate_any_phone, validate_note
+
+
+async def on_clients_start(start_data: Any, dialog_manager: DialogManager) -> None:
+    # карточку открыли из расписания — «Назад» вернёт туда, а не в список
+    if isinstance(start_data, dict) and start_data.get("client_id"):
+        dialog_manager.dialog_data["viewing_client_id"] = start_data["client_id"]
+        dialog_manager.dialog_data["from_outside"] = True
 
 
 async def on_client_item_selected(

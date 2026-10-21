@@ -14,7 +14,7 @@ from src.presentation.telegram.features.trainer.register.states import Subscript
 
 TRAINER_MENU_TARGETS: dict[str, State] = {
     "invite_link": TrainerInviteLinkSG.main,
-    "bookings": TrainerBookingsSG.mode,
+    "bookings": TrainerBookingsSG.day,
     "clients": TrainerClientsSG.list,
     "settings": TrainerSettingsSG.main,
     "profile": TrainerProfileSG.main,

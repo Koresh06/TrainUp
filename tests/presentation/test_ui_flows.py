@@ -127,7 +127,7 @@ async def test_expired_subscription_closes_cabinet_and_client_access(ui, run, tr
         await session.commit()
 
     # кабинет: нажатие кнопки → сообщение и кнопка продления вместо действия
-    await ui.click(TRAINER_TG, "📋 Бронирования")
+    await ui.click(TRAINER_TG, "📅 Расписание")
     assert any("Подписка закончилась" in t for t in ui.sent_texts())
 
     # клиент: /start → тренер недоступен

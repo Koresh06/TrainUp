@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from enum import Enum
 
 from src.application.interfaces.booking_scheduler import BookingScheduler
 from src.application.interfaces.notification_service import NotificationService
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.domain.entities.booking import Booking
+from src.domain.enums.booking import BookingActor
 from src.domain.exception.booking import BookingNotFoundException
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
@@ -14,9 +14,8 @@ from src.domain.services.calendar_service import CalendarService
 from src.infrastructure.database.transaction_manager.base import TransactionManager
 
 
-class CancelInitiator(str, Enum):
-    TRAINER = "trainer"
-    CLIENT = "client"
+# кто отменил — сохраняется в записи (cancelled_by) и видно тренеру в истории
+CancelInitiator = BookingActor
 
 
 @dataclass(frozen=True, eq=False)
@@ -41,7 +40,7 @@ class CancelBookingUseCase(UseCase[CancelBookingRequest, Booking]):
         if booking is None:
             raise BookingNotFoundException(command.booking_id)
 
-        booking.cancel()
+        booking.cancel(by=command.initiated_by)
         await self.calendar_service.release_slot(booking.slot_id)
         saved = await self.booking_repo.save(booking)
         await self.transaction_manager.commit()
@@ -73,7 +72,7 @@ class CancelBookingUseCase(UseCase[CancelBookingRequest, Booking]):
                         f"Вы можете выбрать другое время."
                     ),
                 )
-        else:
+        elif command.initiated_by == CancelInitiator.CLIENT:
             trainer = await self.trainer_repo.get_by_id(booking.trainer_id)
             client = await self.client_repo.get_by_id(booking.client_id)
             slot = await self.slot_repo.get_by_id(booking.slot_id)

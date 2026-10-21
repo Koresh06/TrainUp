@@ -95,10 +95,6 @@ class BookingRepository(Protocol):
         self, date_from: date, date_to: date
     ) -> dict[tuple[int, BookingStatus], int]: ...
 
-    async def get_history_by_trainer(
-        self, trainer_id: int, limit: int = 50
-    ) -> list[Booking]: ...
-
     async def get_views(
         self,
         *,

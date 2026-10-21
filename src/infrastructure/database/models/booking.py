@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
@@ -6,12 +7,13 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     VARCHAR,
+    DateTime,
     Enum as SqlEnum,
     Numeric,
 )
 
 from src.domain.entities.booking import Booking
-from src.domain.enums.booking import BookingStatus
+from src.domain.enums.booking import BookingActor, BookingStatus
 
 from .base import BaseModel, CreatedAtMixin, UpdatedAtMixin
 
@@ -50,6 +52,12 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     completion_job_id: Mapped[str | None] = mapped_column(
         VARCHAR(255), nullable=True
     )
+    cancelled_by: Mapped[BookingActor | None] = mapped_column(
+        SqlEnum(BookingActor, name="bookingactor"), nullable=True
+    )
+    cancelled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     client: Mapped["ClientModel"] = relationship(
         "ClientModel",
@@ -79,6 +87,8 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             reminder_job_id=entity.reminder_job_id,
             recurring_booking_id=entity.recurring_booking_id,
             completion_job_id=entity.completion_job_id,
+            cancelled_by=entity.cancelled_by,
+            cancelled_at=entity.cancelled_at,
         )
 
     def to_entity(self):
@@ -92,6 +102,8 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             reminder_job_id=self.reminder_job_id,
             recurring_booking_id=self.recurring_booking_id,
             completion_job_id=self.completion_job_id,
+            cancelled_by=self.cancelled_by,
+            cancelled_at=self.cancelled_at,
             created_at=self.created_at,
         )
 
@@ -104,3 +116,5 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.reminder_job_id = entity.reminder_job_id
         self.recurring_booking_id = entity.recurring_booking_id
         self.completion_job_id = entity.completion_job_id
+        self.cancelled_by = entity.cancelled_by
+        self.cancelled_at = entity.cancelled_at

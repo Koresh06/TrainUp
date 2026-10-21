@@ -140,6 +140,7 @@ class ExportReportUseCase(UseCase[ExportReportRequest, ExportFileDTO]):
             BookingStatus.CONFIRMED: "подтверждена",
             BookingStatus.CANCELLED: "отменена",
             BookingStatus.COMPLETED: "проведена",
+            BookingStatus.NO_SHOW: "неявка",
         }
         rows = []
         for b in sorted(bookings, key=lambda b: b.id):

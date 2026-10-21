@@ -56,3 +56,12 @@ class ActiveBookingsLimitExceededException(DomainError):
             f"У клиента с id {self.client_id} уже {self.limit} активных записей "
             f"— это максимум"
         )
+
+
+@dataclass
+class TrainingNotStartedException(DomainError):
+    booking_id: int
+
+    @property
+    def message(self) -> str:
+        return f"Тренировка по записи {self.booking_id} ещё не началась"

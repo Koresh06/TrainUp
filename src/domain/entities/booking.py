@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+from datetime import datetime
 from decimal import Decimal
 
 from src.domain.entities.base import Entity
-from src.domain.enums.booking import ACTIVE_BOOKING_STATUSES, BookingStatus
+from src.domain.enums.booking import ACTIVE_BOOKING_STATUSES, BookingActor, BookingStatus
 from src.domain.exception.booking import BookingStatusTransitionException
+from src.utils.get_datetime_utc_now import get_datetime_utc_now
 
 
 @dataclass(kw_only=True)
@@ -16,6 +18,8 @@ class Booking(Entity):
     reminder_job_id: str | None = None
     recurring_booking_id: int | None = None
     completion_job_id: str | None = None
+    cancelled_by: BookingActor | None = None
+    cancelled_at: datetime | None = None
 
     def is_active(self) -> bool:
         return self.status in ACTIVE_BOOKING_STATUSES
@@ -30,12 +34,33 @@ class Booking(Entity):
         self.status = BookingStatus.CONFIRMED
         self.touch()
 
-    def cancel(self) -> None:
+    def cancel(self, by: BookingActor = BookingActor.TRAINER) -> None:
         if not self.is_active():
             raise BookingStatusTransitionException(
                 booking_id=self.id, status=self.status
             )
         self.status = BookingStatus.CANCELLED
+        self.cancelled_by = by
+        self.cancelled_at = get_datetime_utc_now()
+        self.touch()
+
+    def mark_no_show(self) -> None:
+        # из COMPLETED тоже можно: автозавершение срабатывает само после
+        # тренировки, а тренер отмечает неявку позже
+        if self.status not in (BookingStatus.CONFIRMED, BookingStatus.COMPLETED):
+            raise BookingStatusTransitionException(
+                booking_id=self.id, status=self.status
+            )
+        self.status = BookingStatus.NO_SHOW
+        self.touch()
+
+    def mark_attended(self) -> None:
+        """Тренер ошибся с неявкой — возвращаем «проведена»."""
+        if self.status != BookingStatus.NO_SHOW:
+            raise BookingStatusTransitionException(
+                booking_id=self.id, status=self.status
+            )
+        self.status = BookingStatus.COMPLETED
         self.touch()
 
     def complete(self) -> None:

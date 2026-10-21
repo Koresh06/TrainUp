@@ -7,7 +7,6 @@ from src.application.use_cases.booking.count_active_by_slot_ids import (
     CountActiveBookingsBySlotIdsUseCase,
 )
 from src.application.use_cases.booking.get_by_id import GetBookingByIdUseCase
-from src.application.use_cases.booking.get_history_by_trainer import GetBookingsHistoryByTrainerUseCase
 from src.application.use_cases.booking.mark_completed import MarkBookingCompletedUseCase
 from src.application.use_cases.booking.reschedule import RescheduleBookingUseCase
 from src.application.use_cases.booking.send_reminder import SendTrainingReminderUseCase
@@ -54,9 +53,6 @@ from src.application.use_cases.subscription.get_active_price_plans import (
 from src.application.use_cases.trainer.get_by_tg_id import GetTrainerByTgIdUseCase
 from src.application.use_cases.trainer.get_clients_by_trainer import (
     GetClientsByTrainerUseCase,
-)
-from src.application.use_cases.trainer.get_upcoming_bookings_by_trainer import (
-    GetUpcomingBookingsByTrainerUseCase,
 )
 from src.application.use_cases.trainer.register import RegisterTrainerUseCase
 from src.application.use_cases.trainer.update import UpdateTrainerProfileUseCase
@@ -190,6 +186,8 @@ from src.application.use_cases.client.get_by_invite_token import GetClientByInvi
 from src.application.use_cases.booking.get_views import GetBookingViewsUseCase
 
 from src.application.use_cases.booking.create_by_trainer import CreateBookingByTrainerUseCase
+
+from src.application.use_cases.booking.mark_attendance import MarkBookingAttendanceUseCase
 
 
 class UseCasesProvider(Provider):
@@ -401,14 +399,6 @@ class UseCasesProvider(Provider):
             transaction_manager=transaction_manager,
         )
 
-    @provide
-    def get_upcoming_booking_by_trainer_use_case(
-        self,
-        booking_repo: BookingRepository,
-    ) -> GetUpcomingBookingsByTrainerUseCase:
-        return GetUpcomingBookingsByTrainerUseCase(
-            booking_repo=booking_repo,
-        )
 
     @provide
     def get_clients_by_trainer_use_case(
@@ -872,14 +862,6 @@ class UseCasesProvider(Provider):
             transaction_manager=transaction_manager,
         )
 
-    @provide
-    def get_bookings_history_by_trainer_use_case(
-        self,
-        booking_repo: BookingRepository,
-    ) -> GetBookingsHistoryByTrainerUseCase:
-        return GetBookingsHistoryByTrainerUseCase(
-            booking_repo=booking_repo,
-        )
 
     @provide
     def get_active_recurring_bookings_by_client_use_case(
@@ -1491,6 +1473,21 @@ class UseCasesProvider(Provider):
             pricing_rule_repo=pricing_rule_repo,
             reminder_settings_repo=reminder_settings_repo,
             notification_service=notification_service,
+            booking_scheduler=booking_scheduler,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def mark_booking_attendance_use_case(
+        self,
+        booking_repo: BookingRepository,
+        slot_repo: CalendarSlotRepository,
+        booking_scheduler: BookingScheduler,
+        transaction_manager: TransactionManager,
+    ) -> MarkBookingAttendanceUseCase:
+        return MarkBookingAttendanceUseCase(
+            booking_repo=booking_repo,
+            slot_repo=slot_repo,
             booking_scheduler=booking_scheduler,
             transaction_manager=transaction_manager,
         )

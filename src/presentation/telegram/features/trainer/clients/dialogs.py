@@ -1,3 +1,4 @@
+from aiogram import F
 from aiogram.enums import ButtonStyle
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.input import TextInput
@@ -38,6 +39,7 @@ from .handlers import (
     on_book_day_clicked,
     on_book_time_clicked,
     on_client_item_selected,
+    on_clients_start,
     on_delete_confirm,
     on_edit_field_click,
     on_edit_value_clear,
@@ -95,7 +97,10 @@ clients_trainer_dialog = Dialog(
             state=TrainerClientsSG.delete_confirm,
             when="is_offline",
         ),
-        SwitchTo(Const("⬅️ К списку"), id="to_list", state=TrainerClientsSG.list),
+        SwitchTo(
+            Const("⬅️ К списку"), id="to_list", state=TrainerClientsSG.list, when=~F["from_outside"]
+        ),
+        Cancel(Const("⬅️ Назад"), when="from_outside"),
         LinkPreview(is_disabled=True),
         state=TrainerClientsSG.detail,
         getter=client_detail_getter,
@@ -256,4 +261,5 @@ clients_trainer_dialog = Dialog(
         state=TrainerClientsSG.book_confirm,
         getter=book_confirm_getter,
     ),
+    on_start=on_clients_start,
 )

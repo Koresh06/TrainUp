@@ -33,7 +33,6 @@ from src.application.use_cases.booking.get_by_id import (
     GetBookingByIdRequest,
     GetBookingByIdUseCase,
 )
-from src.application.use_cases.booking.get_history_by_trainer import GetBookingsHistoryByTrainerRequest, GetBookingsHistoryByTrainerUseCase
 from src.application.use_cases.booking.mark_completed import MarkBookingCompletedRequest, MarkBookingCompletedUseCase
 from src.application.use_cases.booking.reschedule import (
     RescheduleBookingRequest,
@@ -192,10 +191,6 @@ from src.application.use_cases.trainer.get_by_tg_id import (
 from src.application.use_cases.trainer.get_clients_by_trainer import (
     GetClientsByTrainerRequest,
     GetClientsByTrainerUseCase,
-)
-from src.application.use_cases.trainer.get_upcoming_bookings_by_trainer import (
-    GetUpcomingBookingsByTrainerRequest,
-    GetUpcomingBookingsByTrainerUseCase,
 )
 from src.application.use_cases.trainer.register import (
     RegisterTrainerRequest,
@@ -386,6 +381,8 @@ from src.application.use_cases.booking.get_views import GetBookingViewsRequest, 
 
 from src.application.use_cases.booking.create_by_trainer import CreateBookingByTrainerRequest, CreateBookingByTrainerUseCase
 
+from src.application.use_cases.booking.mark_attendance import MarkBookingAttendanceRequest, MarkBookingAttendanceUseCase
+
 
 class MediatorProvider(Provider):
     scope = Scope.REQUEST
@@ -411,7 +408,6 @@ class MediatorProvider(Provider):
         create_slot_template_use_case: CreateSlotTemplateUseCase,
         get_active_slot_template_use_case: GetActiveSlotTemplatesUseCase,
         deactivate_slot_template_use_case: DeactivateSlotTemplateUseCase,
-        get_upcoming_booking_by_trainer_use_case: GetUpcomingBookingsByTrainerUseCase,
         get_clients_by_trainer_use_case: GetClientsByTrainerUseCase,
         get_active_invite_link_use_case: GetActiveInviteLinkUseCase,
         get_active_price_plans_use_case: GetActivePricePlansUseCase,
@@ -449,7 +445,6 @@ class MediatorProvider(Provider):
         update_trainer_reminder_settings_use_case: UpdateTrainerReminderSettingsUseCase,
         get_trainer_reminder_settings_use_case: GetTrainerReminderSettingsUseCase,
         mark_booking_completed_use_case: MarkBookingCompletedUseCase,
-        get_bookings_history_by_trainer_use_case: GetBookingsHistoryByTrainerUseCase,
         get_active_recurring_bookings_by_client_use_case: GetActiveRecurringBookingsByClientUseCase,
         create_program_request_use_case: CreateProgramRequestUseCase,
         create_consultation_request_use_case: CreateConsultationRequestUseCase,
@@ -496,6 +491,7 @@ class MediatorProvider(Provider):
         get_client_by_invite_token_use_case: GetClientByInviteTokenUseCase,
         get_booking_views_use_case: GetBookingViewsUseCase,
         create_booking_by_trainer_use_case: CreateBookingByTrainerUseCase,
+        mark_booking_attendance_use_case: MarkBookingAttendanceUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -524,10 +520,6 @@ class MediatorProvider(Provider):
         )
         mediator.register(
             DeactivateSlotTemplateRequest, deactivate_slot_template_use_case
-        )
-        mediator.register(
-            GetUpcomingBookingsByTrainerRequest,
-            get_upcoming_booking_by_trainer_use_case,
         )
         mediator.register(GetClientsByTrainerRequest, get_clients_by_trainer_use_case)
         mediator.register(GetActiveInviteLinkRequest, get_active_invite_link_use_case)
@@ -614,7 +606,6 @@ class MediatorProvider(Provider):
         mediator.register(UpdateTrainerReminderSettingsRequest, update_trainer_reminder_settings_use_case)
         mediator.register(GetTrainerReminderSettingsRequest, get_trainer_reminder_settings_use_case)
         mediator.register(MarkBookingCompletedRequest, mark_booking_completed_use_case)
-        mediator.register(GetBookingsHistoryByTrainerRequest, get_bookings_history_by_trainer_use_case)
         mediator.register(GetActiveRecurringBookingsByClientRequest, get_active_recurring_bookings_by_client_use_case)
         mediator.register(CreateProgramRequestRequest, create_program_request_use_case)
         mediator.register(CreateConsultationRequestRequest, create_consultation_request_use_case)
@@ -665,4 +656,5 @@ class MediatorProvider(Provider):
         mediator.register(GetClientByInviteTokenRequest, get_client_by_invite_token_use_case)
         mediator.register(GetBookingViewsRequest, get_booking_views_use_case)
         mediator.register(CreateBookingByTrainerRequest, create_booking_by_trainer_use_case)
+        mediator.register(MarkBookingAttendanceRequest, mark_booking_attendance_use_case)
         return mediator

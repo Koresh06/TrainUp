@@ -66,6 +66,7 @@ async def stats_getter(
         f"└ Постоянных: {s.recurring_clients}\n\n"
         f"🏋 <b>Тренировки</b>\n"
         f"├ Проведено: <b>{s.completed_trainings}</b>\n"
+        f"├ Не пришли: {s.no_show_trainings}\n"
         f"├ Запланировано до конца периода: {s.planned_trainings}\n"
         f"├ Отменено: {s.cancelled_bookings} (доля отмен {s.cancel_rate:.0%})\n"
         f"└ Всего предстоящих: {s.upcoming_bookings}\n\n"

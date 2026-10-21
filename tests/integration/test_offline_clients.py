@@ -176,3 +176,41 @@ async def test_delete_only_without_history(run, world) -> None:
     )
     with pytest.raises(ClientHasBookingsException):
         await run(DeleteOfflineClientRequest(trainer_id=trainer.id, client_id=world["offline"].id))
+
+
+async def test_no_show_and_cancelled_by(run, world, session, task_queue) -> None:
+    from src.application.use_cases.booking.mark_attendance import MarkBookingAttendanceRequest
+    from src.application.use_cases.stats.get_trainer import GetTrainerStatsRequest
+    from src.application.use_cases.stats.period import StatsPeriod
+    from src.domain.enums.booking import BookingActor
+    from src.domain.exception.booking import (
+        BookingStatusTransitionException,
+        TrainingNotStartedException,
+    )
+    from tests.factories import make_booking, make_slot
+
+    trainer, client = world["trainer"], world["offline"]
+
+    future = await run(
+        CreateBookingByTrainerRequest(trainer_id=trainer.id, client_id=client.id, slot_id=world["s10"].id)
+    )
+    with pytest.raises(TrainingNotStartedException):
+        await run(MarkBookingAttendanceRequest(trainer_id=trainer.id, booking_id=future.id, attended=False))
+
+    await run(CancelBookingRequest(booking_id=future.id))
+    cancelled = await run(GetBookingByIdRequest(booking_id=future.id))
+    assert cancelled.cancelled_by == BookingActor.TRAINER and cancelled.cancelled_at is not None
+
+    # тренировка сегодня рано утром уже прошла — автозавершение отметило «проведена»
+    past_slot = await make_slot(session, trainer.id, get_project_today(), time(0, 0))
+    past = await make_booking(session, client, past_slot, BookingStatus.COMPLETED)
+
+    done = await run(MarkBookingAttendanceRequest(trainer_id=trainer.id, booking_id=past.id, attended=False))
+    assert done.status == BookingStatus.NO_SHOW
+    stats = await run(GetTrainerStatsRequest(trainer_id=trainer.id, period=StatsPeriod.TODAY))
+    assert stats.no_show_trainings == 1 and stats.completed_trainings == 0
+
+    back = await run(MarkBookingAttendanceRequest(trainer_id=trainer.id, booking_id=past.id, attended=True))
+    assert back.status == BookingStatus.COMPLETED
+    with pytest.raises(BookingStatusTransitionException):
+        await run(MarkBookingAttendanceRequest(trainer_id=trainer.id, booking_id=past.id, attended=True))

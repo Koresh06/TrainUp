@@ -147,8 +147,49 @@ class BookingCalendar(Calendar):
             GetTrainerBookingSettingsRequest(trainer_id=trainer_id)
         )
 
+        # тренеру (перенос, запись клиента) окно шире клиентского — его
+        # кладёт getter в HORIZON_CACHE_KEY
+        horizon = manager.dialog_data.get(HORIZON_CACHE_KEY, settings.calendar_horizon_days)
         today = get_project_today()
         return CalendarUserConfig(
             min_date=today,
-            max_date=today + timedelta(days=settings.calendar_horizon_days),
+            max_date=today + timedelta(days=horizon),
+        )
+
+
+# --- календарь «перейти к дате» в расписании тренера ---
+
+BUSY_DAYS_CACHE_KEY = "busy_days"
+SCHEDULE_PAST_DAYS = 90
+
+
+def _schedule_day_style(data: dict, manager: DialogManager) -> ButtonStyle | None:
+    busy: dict[str, int] = manager.dialog_data.get(BUSY_DAYS_CACHE_KEY, {})
+    return ButtonStyle.PRIMARY if busy.get(data["date"].isoformat()) else None
+
+
+class ScheduleCalendar(Calendar):
+    """Все дни кликабельны (и прошедшие), дни с тренировками подсвечены."""
+
+    def _init_views(self) -> dict[CalendarScope, CalendarScopeView]:
+        return {
+            CalendarScope.DAYS: BookingDaysView(
+                self._item_callback_data,
+                date_text=DATE_TEXT,
+                today_text=TODAY_TEXT,
+                weekday_text=WeekDayRu(),
+                next_month_text=MonthNavText(suffix=" >>"),
+                prev_month_text=MonthNavText(prefix="<< "),
+                weekday_style=Style(ButtonStyle.PRIMARY),
+                date_style=DynamicStyle(_schedule_day_style),
+                today_style=DynamicStyle(_schedule_day_style),
+            ),
+        }
+
+    async def _get_user_config(self, data: dict, manager: DialogManager) -> CalendarUserConfig:
+        today = get_project_today()
+        horizon = manager.dialog_data.get(HORIZON_CACHE_KEY, DEFAULT_CALENDAR_HORIZON_DAYS)
+        return CalendarUserConfig(
+            min_date=today - timedelta(days=SCHEDULE_PAST_DAYS),
+            max_date=today + timedelta(days=horizon),
         )

@@ -93,7 +93,7 @@ class SyncWeekdaySlotTemplatesUseCase(UseCase[SyncWeekdaySlotTemplatesRequest, N
             else:
                 # время убрали из шаблона: слот скрывается у клиентов, но уже
                 # существующие записи на нём сохраняются — тренер видит их в
-                # «Бронированиях» и сам решает, отменить или перенести.
+                # «Расписании» и сам решает, отменить или перенести.
                 # Ручную блокировку (status=BLOCKED) не трогаем.
                 changed = slot.is_active
                 slot.is_active = False

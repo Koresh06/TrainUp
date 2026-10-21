@@ -17,7 +17,7 @@ trainer_main_dialog = Dialog(
                 on_click=on_menu_item_click,
             ),
             Button(
-                Const("📋 Бронирования"),
+                Format("📅 Расписание{schedule_badge}"),
                 id="bookings",
                 on_click=on_menu_item_click,
             ),

@@ -197,6 +197,7 @@ async def client_detail_getter(
     return {
         "card": "\n".join(lines),
         "is_offline": not client.has_telegram,
+        "from_outside": dialog_manager.dialog_data.get("from_outside", False),
     }
 
 
