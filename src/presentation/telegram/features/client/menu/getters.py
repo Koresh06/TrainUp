@@ -1,3 +1,4 @@
+from html import escape
 from urllib.parse import quote
 
 from dishka.integrations.aiogram_dialog import inject, FromDishka
@@ -45,14 +46,14 @@ async def trainer_profile_getter(
     social_links_block = ""
     if trainer.social_links:
         links = "\n".join(
-            f'🔗 <a href="{url}">{name}</a>'
+            f'🔗 <a href="{escape(url)}">{escape(name)}</a>'
             for name, url in trainer.social_links.items()
         )
         social_links_block = f"\n\n{links}"
 
     return {
-        "trainer_name": trainer.name,
-        "trainer_bio": trainer.bio,
+        "trainer_name": escape(trainer.name),
+        "trainer_bio": escape(trainer.bio),
         "social_links_block": social_links_block,
         "photo": build_media_attachment(trainer.photo_file_id),
     }
