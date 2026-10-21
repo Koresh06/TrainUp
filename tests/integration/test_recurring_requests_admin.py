@@ -151,7 +151,7 @@ async def test_faq_seed_for_both_audiences(run, container) -> None:
     await seed_faq_items(container)  # повторный запуск не дублирует
     clients_faq = await run(GetActiveFaqItemsRequest(audience=FaqAudience.CLIENT))
     trainers_faq = await run(GetActiveFaqItemsRequest(audience=FaqAudience.TRAINER))
-    assert len(clients_faq) == 7 and len(trainers_faq) == 12
+    assert len(clients_faq) == 9 and len(trainers_faq) == 20
     assert any("подписка" in item.question.lower() for item in trainers_faq)
 
 

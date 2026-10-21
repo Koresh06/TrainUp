@@ -68,3 +68,43 @@ async def test_bot_users_backfilled_from_registered_users(db: str) -> None:
         await engine.dispose()
 
     assert [tuple(r) for r in rows] == [(1, "Тренер", None), (2, "Анна", "anna")]
+
+
+async def test_new_faq_items_appended_to_seeded_faq(db: str) -> None:
+    # FAQ сидится только в пустую базу — новые пункты в живую базу дописывает миграция
+    import asyncio
+
+    from alembic import command
+    from alembic.config import Config
+    from sqlalchemy import text
+
+    from src.core.config.database import PostgresSettings
+
+    original_url = PostgresSettings.url
+    PostgresSettings.url = property(lambda self: db)  # type: ignore[method-assign,assignment]
+    engine = create_async_engine(db, poolclass=NullPool)
+    try:
+        await asyncio.to_thread(command.downgrade, Config("alembic.ini"), "b4d6f8a0c2e5")
+        async with engine.begin() as conn:
+            await conn.execute(text(
+                "INSERT INTO faq_items (question, answer, \"order\", is_active, audience) "
+                "VALUES ('Старый вопрос', 'ответ', 5, true, 'TRAINER'), "
+                "('Утренняя сводка', 'уже добавил админ', 6, true, 'TRAINER')"
+            ))
+        await asyncio.to_thread(command.upgrade, Config("alembic.ini"), "head")
+        async with engine.connect() as conn:
+            rows = (await conn.execute(text(
+                "SELECT question, \"order\" FROM faq_items WHERE audience = 'TRAINER' ORDER BY \"order\""
+            ))).all()
+            clients = (await conn.execute(text(
+                "SELECT count(*) FROM faq_items WHERE audience = 'CLIENT'"
+            ))).scalar()
+    finally:
+        PostgresSettings.url = original_url  # type: ignore[method-assign]
+        await engine.dispose()
+
+    questions = [q for q, _ in rows]
+    assert questions[:2] == ["Старый вопрос", "Утренняя сводка"]
+    assert questions.count("Утренняя сводка") == 1 and "Реферальная программа" in questions
+    assert [o for _, o in rows] == sorted(o for _, o in rows)
+    assert clients == 0  # клиентский FAQ не засеян — не трогаем
