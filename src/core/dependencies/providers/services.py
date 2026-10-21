@@ -11,6 +11,7 @@ from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.client_package import ClientPackageRepository
 from src.domain.repositories.trainer import TrainerRepository
 from src.domain.repositories.trainer_booking_settings import TrainerBookingSettingsRepository
+from src.domain.repositories.trainer_vacation import TrainerVacationRepository
 from src.core.config import settings
 from src.infrastructure.payment.providers.manual import ManualPaymentProvider
 from src.infrastructure.payment.providers.telegram_stars import TelegramStarsProvider
@@ -52,11 +53,13 @@ class ServicesProvider(Provider):
         slot_repo: CalendarSlotRepository,
         template_repo: SlotTemplateRepository,
         booking_repo: BookingRepository,
+        vacation_repo: TrainerVacationRepository,
     ) -> CalendarService:
         return CalendarService(
             slot_repo=slot_repo,
             template_repo=template_repo,
             booking_repo=booking_repo,
+            vacation_repo=vacation_repo,
         )
 
     @provide(scope=Scope.REQUEST)

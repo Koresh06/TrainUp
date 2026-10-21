@@ -15,6 +15,8 @@ from src.application.use_cases.calendar.set_slot_blocked import SetSlotBlockedRe
 from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.enums.slot import SlotStatus
 
+from src.presentation.telegram.features.trainer.vacation.states import TrainerVacationSG
+
 from .getters import DAYS_WITH_SLOTS_CACHE_KEY
 from .states import TrainerBlockingSG
 
@@ -90,3 +92,12 @@ async def on_block_day_click(
         await callback.answer(f"🚫 День закрыт для записи. {BOOKINGS_KEPT_HINT}", show_alert=True)
     else:
         await callback.answer("✅ День снова открыт для записи")
+
+
+async def on_open_vacation(
+    callback: CallbackQuery, button: Button, dialog_manager: DialogManager
+) -> None:
+    await dialog_manager.start(
+        state=TrainerVacationSG.list,
+        data={"trainer_id": dialog_manager.start_data["trainer_id"]},
+    )

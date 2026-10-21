@@ -12,6 +12,7 @@ from .handlers import (
     on_block_day_click,
     on_blocking_date_clicked,
     on_blocking_slot_clicked,
+    on_open_vacation,
 )
 from .states import TrainerBlockingSG
 
@@ -23,6 +24,7 @@ trainer_blocking_dialog = Dialog(
             "Заблокированные слоты клиенты не видят и не могут на них записаться."
         ),
         BookingCalendar(id="blocking_calendar", on_click=on_blocking_date_clicked),
+        Button(Const("🏖 Отпуск / больничный"), id="vacation", on_click=on_open_vacation),
         Cancel(Const("⬅️ Назад")),
         state=TrainerBlockingSG.select_date,
         getter=blocking_calendar_getter,

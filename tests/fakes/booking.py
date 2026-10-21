@@ -98,6 +98,9 @@ class FakeNoneRepository:
     async def get_by_client_id(self, client_id: int) -> list:
         return []
 
+    async def get_by_trainer(self, trainer_id: int, ending_from=None) -> list:
+        return []
+
 
 class FakeNotificationService:
     def __init__(self) -> None:

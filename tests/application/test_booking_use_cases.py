@@ -168,6 +168,7 @@ class TestMaintainRecurringBookings:
             pricing_rule_repo=FakeNoneRepository(),
             notification_service=notifications,
             booking_scheduler=FakeBookingScheduler(),
+            vacation_repo=FakeNoneRepository(),
             transaction_manager=FakeTransactionManager(),
         )
 
@@ -230,6 +231,34 @@ class TestMaintainRecurringBookings:
         created = await booking_repo.get_latest_by_recurring_booking_id(recurring.id)
         assert created.slot_id == next_slot.id
         assert created.status == BookingStatus.CONFIRMED
+
+    async def test_vacation_skips_occurrence_silently(
+        self,
+        slot_repo: FakeCalendarSlotRepository,
+        booking_repo: FakeBookingRepository,
+        calendar_service: CalendarService,
+        notifications: FakeNotificationService,
+    ) -> None:
+        from src.domain.entities.trainer_vacation import TrainerVacation
+
+        blocked = await add_slot(slot_repo, 6, status=SlotStatus.BLOCKED)
+        recurring = self.make_recurring(blocked.slot_date.weekday())
+        use_case = self.make_use_case(
+            recurring, slot_repo, booking_repo, calendar_service, notifications
+        )
+        vacation = TrainerVacation(
+            trainer_id=1, date_from=blocked.slot_date, date_to=blocked.slot_date
+        )
+
+        class Vacations:
+            async def get_by_trainer(self, trainer_id, ending_from):
+                return [vacation]
+
+        use_case.vacation_repo = Vacations()
+        await use_case(MaintainRecurringBookingsRequest())
+
+        # тренер в отпуске — ни записи, ни предупреждения «нет слота»
+        assert booking_repo._bookings == {} and notifications.sent == []
 
     async def test_blocked_slot_notifies_trainer_instead_of_failing(
         self,

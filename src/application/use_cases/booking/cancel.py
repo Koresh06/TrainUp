@@ -22,6 +22,8 @@ CancelInitiator = BookingActor
 class CancelBookingRequest(UseCaseRequest):
     booking_id: int
     initiated_by: CancelInitiator = CancelInitiator.TRAINER
+    # свой текст клиенту вместо стандартного (например, «тренер в отпуске»)
+    client_message: str | None = None
 
 
 @dataclass(kw_only=True)
@@ -69,7 +71,7 @@ class CancelBookingUseCase(UseCase[CancelBookingRequest, Booking]):
                         f"❌ Тренер {trainer.name} отменил вашу тренировку\n\n"
                         f"📅 {slot.slot_date.strftime('%d.%m.%Y')}\n"
                         f"🕐 {slot.start_time.strftime('%H:%M')}\n\n"
-                        f"Вы можете выбрать другое время."
+                        + (command.client_message or "Вы можете выбрать другое время.")
                     ),
                 )
         elif command.initiated_by == CancelInitiator.CLIENT:

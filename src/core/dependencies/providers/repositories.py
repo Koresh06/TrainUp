@@ -62,6 +62,8 @@ from src.infrastructure.repositories.trainer_pricing_rule.sqlalchemy import SQLA
 from src.infrastructure.repositories.client_answer.sqlalchemy import SQLAlchemyClientAnswerRepo
 from src.infrastructure.repositories.trainer_reminder_settings.sqlalchemy import SQLAlchemyTrainerReminderSettingsRepo
 from src.domain.repositories.client_package import ClientPackageRepository
+from src.domain.repositories.trainer_vacation import TrainerVacationRepository
+from src.infrastructure.repositories.trainer_vacation.sqlalchemy import SQLAlchemyTrainerVacationRepo
 from src.infrastructure.repositories.client_package.sqlalchemy import SQLAlchemyClientPackageRepo
 
 
@@ -175,3 +177,7 @@ class RepositoriesProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_client_package_repository(self, session: AsyncSession) -> ClientPackageRepository:
         return SQLAlchemyClientPackageRepo(session=session)
+
+    @provide(scope=Scope.REQUEST)
+    def get_trainer_vacation_repository(self, session: AsyncSession) -> TrainerVacationRepository:
+        return SQLAlchemyTrainerVacationRepo(session=session)

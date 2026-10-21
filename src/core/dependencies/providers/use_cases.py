@@ -215,6 +215,16 @@ from src.application.use_cases.client.get_inactive import GetInactiveClientsUseC
 
 from src.application.use_cases.client.invite_back import InviteClientBackUseCase
 
+from src.domain.repositories.trainer_vacation import TrainerVacationRepository
+
+from src.application.use_cases.vacation.preview import PreviewVacationUseCase
+
+from src.application.use_cases.vacation.create import CreateVacationUseCase
+
+from src.application.use_cases.vacation.manage import GetVacationsUseCase
+
+from src.application.use_cases.vacation.manage import DeleteVacationUseCase
+
 
 class UseCasesProvider(Provider):
     scope = Scope.REQUEST
@@ -714,6 +724,7 @@ class UseCasesProvider(Provider):
         pricing_rule_repo: TrainerPricingRuleRepository,
         notification_service: NotificationService,
         booking_scheduler: BookingScheduler,
+        vacation_repo: TrainerVacationRepository,
         transaction_manager: TransactionManager,
     ) -> MaintainRecurringBookingsUseCase:
         return MaintainRecurringBookingsUseCase(
@@ -727,6 +738,7 @@ class UseCasesProvider(Provider):
             pricing_rule_repo=pricing_rule_repo,
             notification_service=notification_service,
             booking_scheduler=booking_scheduler,
+            vacation_repo=vacation_repo,
             transaction_manager=transaction_manager,
         )
 
@@ -1677,4 +1689,60 @@ class UseCasesProvider(Provider):
             trainer_repo=trainer_repo,
             booking_repo=booking_repo,
             notification_service=notification_service,
+        )
+
+    @provide
+    def preview_vacation_use_case(
+        self,
+        slot_repo: CalendarSlotRepository,
+        booking_repo: BookingRepository,
+    ) -> PreviewVacationUseCase:
+        return PreviewVacationUseCase(
+            slot_repo=slot_repo,
+            booking_repo=booking_repo,
+        )
+
+    @provide
+    def create_vacation_use_case(
+        self,
+        vacation_repo: TrainerVacationRepository,
+        slot_repo: CalendarSlotRepository,
+        booking_repo: BookingRepository,
+        calendar_service: CalendarService,
+        cancel_booking: CancelBookingUseCase,
+        transaction_manager: TransactionManager,
+    ) -> CreateVacationUseCase:
+        return CreateVacationUseCase(
+            vacation_repo=vacation_repo,
+            slot_repo=slot_repo,
+            booking_repo=booking_repo,
+            calendar_service=calendar_service,
+            cancel_booking=cancel_booking,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_vacations_use_case(
+        self,
+        vacation_repo: TrainerVacationRepository,
+    ) -> GetVacationsUseCase:
+        return GetVacationsUseCase(
+            vacation_repo=vacation_repo,
+        )
+
+    @provide
+    def delete_vacation_use_case(
+        self,
+        vacation_repo: TrainerVacationRepository,
+        slot_repo: CalendarSlotRepository,
+        booking_repo: BookingRepository,
+        calendar_service: CalendarService,
+        transaction_manager: TransactionManager,
+    ) -> DeleteVacationUseCase:
+        return DeleteVacationUseCase(
+            vacation_repo=vacation_repo,
+            slot_repo=slot_repo,
+            booking_repo=booking_repo,
+            calendar_service=calendar_service,
+            transaction_manager=transaction_manager,
         )

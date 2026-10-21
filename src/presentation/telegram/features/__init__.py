@@ -103,6 +103,7 @@ from src.presentation.telegram.features.admin.modules.exports.dialogs import (
     admin_export_dialog,
 )
 from src.presentation.telegram.features.trainer.help.dialogs import trainer_help_dialog
+from src.presentation.telegram.features.trainer.vacation.dialogs import trainer_vacation_dialog
 
 def get_all_routers() -> list[Router]:
     return [
@@ -136,6 +137,7 @@ TRAINER_CABINET_DIALOGS: list[Dialog] = [
     trainer_reminder_settings_dialog,
     trainer_blocking_dialog,
     trainer_requests_dialog,
+    trainer_vacation_dialog,
 ]
 
 CLIENT_DIALOGS: list[Dialog] = [

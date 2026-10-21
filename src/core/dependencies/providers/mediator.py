@@ -405,6 +405,14 @@ from src.application.use_cases.client.get_inactive import GetInactiveClientsRequ
 
 from src.application.use_cases.client.invite_back import InviteClientBackRequest, InviteClientBackUseCase
 
+from src.application.use_cases.vacation.preview import PreviewVacationRequest, PreviewVacationUseCase
+
+from src.application.use_cases.vacation.create import CreateVacationRequest, CreateVacationUseCase
+
+from src.application.use_cases.vacation.manage import GetVacationsRequest, GetVacationsUseCase
+
+from src.application.use_cases.vacation.manage import DeleteVacationRequest, DeleteVacationUseCase
+
 
 class MediatorProvider(Provider):
     scope = Scope.REQUEST
@@ -525,6 +533,10 @@ class MediatorProvider(Provider):
         confirm_attendance_use_case: ConfirmAttendanceUseCase,
         get_inactive_clients_use_case: GetInactiveClientsUseCase,
         invite_client_back_use_case: InviteClientBackUseCase,
+        preview_vacation_use_case: PreviewVacationUseCase,
+        create_vacation_use_case: CreateVacationUseCase,
+        get_vacations_use_case: GetVacationsUseCase,
+        delete_vacation_use_case: DeleteVacationUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -701,4 +713,8 @@ class MediatorProvider(Provider):
         mediator.register(ConfirmAttendanceRequest, confirm_attendance_use_case)
         mediator.register(GetInactiveClientsRequest, get_inactive_clients_use_case)
         mediator.register(InviteClientBackRequest, invite_client_back_use_case)
+        mediator.register(PreviewVacationRequest, preview_vacation_use_case)
+        mediator.register(CreateVacationRequest, create_vacation_use_case)
+        mediator.register(GetVacationsRequest, get_vacations_use_case)
+        mediator.register(DeleteVacationRequest, delete_vacation_use_case)
         return mediator

@@ -20,6 +20,7 @@ from .trainer_reminder_settings import TrainerReminderSettingsModel
 from .payment import PaymentModel
 from .bot_user import BotUserActivityModel, BotUserModel
 from .client_package import ClientPackageModel
+from .trainer_vacation import TrainerVacationModel
 
 
 __all__ = [
@@ -46,4 +47,5 @@ __all__ = [
     "BotUserModel",
     "BotUserActivityModel",
     "ClientPackageModel",
+    "TrainerVacationModel",
 ]

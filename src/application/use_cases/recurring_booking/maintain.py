@@ -16,6 +16,7 @@ from src.domain.repositories.recurring_booking import RecurringBookingRepository
 from src.domain.repositories.trainer import TrainerRepository
 from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
 from src.domain.repositories.trainer_reminder_settings import TrainerReminderSettingsRepository
+from src.domain.repositories.trainer_vacation import TrainerVacationRepository
 from src.domain.services.calendar_service import CalendarService
 from src.domain.utils import get_project_today
 from src.infrastructure.database.transaction_manager.base import TransactionManager
@@ -40,6 +41,7 @@ class MaintainRecurringBookingsUseCase(UseCase[MaintainRecurringBookingsRequest,
     pricing_rule_repo: TrainerPricingRuleRepository
     notification_service: NotificationService
     booking_scheduler: BookingScheduler
+    vacation_repo: TrainerVacationRepository
     transaction_manager: TransactionManager
 
     async def __call__(self, command: MaintainRecurringBookingsRequest) -> None:
@@ -59,6 +61,10 @@ class MaintainRecurringBookingsUseCase(UseCase[MaintainRecurringBookingsRequest,
                     continue
 
             next_date = self._next_weekday_date(today, recurring.weekday)
+            vacations = await self.vacation_repo.get_by_trainer(recurring.trainer_id, today)
+            if any(v.covers(next_date) for v in vacations):
+                # тренер в отпуске — тренировку не создаём и не шумим об этом
+                continue
             slot = await self.slot_repo.get_by_date_and_time(
                 recurring.trainer_id, next_date, recurring.start_time
             )

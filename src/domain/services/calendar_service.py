@@ -13,6 +13,7 @@ from src.domain.exception.calendar_slot import (
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.slot_template import SlotTemplateRepository
+from src.domain.repositories.trainer_vacation import TrainerVacationRepository
 from src.domain.utils import get_project_today, is_slot_in_past
 
 
@@ -21,6 +22,8 @@ class CalendarService:
     slot_repo: CalendarSlotRepository
     template_repo: SlotTemplateRepository
     booking_repo: BookingRepository
+    # отпуск тренера: слоты, сгенерированные внутри периода, сразу закрыты
+    vacation_repo: TrainerVacationRepository | None = None
 
     async def generate_slots_for_period(
         self, trainer_id: int, days_ahead: int
@@ -35,6 +38,11 @@ class CalendarService:
 
         today = get_project_today()
         new_slots: list[CalendarSlot] = []
+        vacations = (
+            await self.vacation_repo.get_by_trainer(trainer_id, today)
+            if self.vacation_repo is not None
+            else []
+        )
 
         for offset in range(days_ahead + 1):
             current_date = today + timedelta(days=offset)
@@ -52,7 +60,11 @@ class CalendarService:
                         slot_date=current_date,
                         start_time=template.start_time,
                         end_time=template.end_time,
-                        status=SlotStatus.FREE,
+                        status=(
+                            SlotStatus.BLOCKED
+                            if any(v.covers(current_date) for v in vacations)
+                            else SlotStatus.FREE
+                        ),
                         source=SlotSource.TEMPLATE,
                         capacity=template.capacity,
                     )

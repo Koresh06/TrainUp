@@ -193,3 +193,11 @@ class ScheduleCalendar(Calendar):
             min_date=today - timedelta(days=SCHEDULE_PAST_DAYS),
             max_date=today + timedelta(days=horizon),
         )
+
+
+class FutureScheduleCalendar(ScheduleCalendar):
+    """То же, но только с сегодняшнего дня (выбор периода отпуска)."""
+
+    async def _get_user_config(self, data: dict, manager: DialogManager) -> CalendarUserConfig:
+        config = await super()._get_user_config(data, manager)
+        return CalendarUserConfig(min_date=get_project_today(), max_date=config.max_date)
