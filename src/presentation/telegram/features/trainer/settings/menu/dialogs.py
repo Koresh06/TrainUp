@@ -35,7 +35,7 @@ trainer_settings_dialog = Dialog(
                 on_click=on_settings_item_click,
             ),
             Button(
-                Const("🔔 Напоминания"),
+                Const("🔔 Напоминания и сводки"),
                 id="reminder_settings",
                 on_click=on_settings_item_click,
             ),

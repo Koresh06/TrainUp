@@ -383,6 +383,10 @@ from src.application.use_cases.booking.create_by_trainer import CreateBookingByT
 
 from src.application.use_cases.booking.mark_attendance import MarkBookingAttendanceRequest, MarkBookingAttendanceUseCase
 
+from src.application.use_cases.digest.send_trainer_digests import SendTrainerDigestsRequest, SendTrainerDigestsUseCase
+
+from src.application.use_cases.trainer_reminder_settings.update_digest import UpdateTrainerDigestSettingsRequest, UpdateTrainerDigestSettingsUseCase
+
 
 class MediatorProvider(Provider):
     scope = Scope.REQUEST
@@ -492,6 +496,8 @@ class MediatorProvider(Provider):
         get_booking_views_use_case: GetBookingViewsUseCase,
         create_booking_by_trainer_use_case: CreateBookingByTrainerUseCase,
         mark_booking_attendance_use_case: MarkBookingAttendanceUseCase,
+        send_trainer_digests_use_case: SendTrainerDigestsUseCase,
+        update_trainer_digest_settings_use_case: UpdateTrainerDigestSettingsUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -657,4 +663,6 @@ class MediatorProvider(Provider):
         mediator.register(GetBookingViewsRequest, get_booking_views_use_case)
         mediator.register(CreateBookingByTrainerRequest, create_booking_by_trainer_use_case)
         mediator.register(MarkBookingAttendanceRequest, mark_booking_attendance_use_case)
+        mediator.register(SendTrainerDigestsRequest, send_trainer_digests_use_case)
+        mediator.register(UpdateTrainerDigestSettingsRequest, update_trainer_digest_settings_use_case)
         return mediator

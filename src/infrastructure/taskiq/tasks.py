@@ -35,6 +35,10 @@ from src.application.use_cases.payment.reject import (
     RejectPaymentRequest,
     RejectPaymentUseCase,
 )
+from src.application.use_cases.digest.send_trainer_digests import (
+    SendTrainerDigestsRequest,
+    SendTrainerDigestsUseCase,
+)
 from src.domain.constants import RECURRING_BOOKINGS_TEST_MODE
 from src.domain.enums.mailing import MailingTarget
 
@@ -143,6 +147,16 @@ def register_taskiq_tasks(broker, *, container):
             use_case = await request_container.get(RejectPaymentUseCase)
             await use_case(RejectPaymentRequest(external_id=external_id))
 
+    # каждый час: у каждого тренера свой час утренней/вечерней сводки
+    @broker.task(
+        task_name="send_trainer_digests",
+        schedule=[{"cron": "0 * * * *"}],
+    )
+    async def send_trainer_digests() -> None:
+        async with container() as request_container:
+            use_case = await request_container.get(SendTrainerDigestsUseCase)
+            await use_case(SendTrainerDigestsRequest())
+
     # @broker.task(
     #     task_name="mark_past_bookings_completed",
     #     schedule=[{"cron": "0 5 * * *"}],
@@ -163,5 +177,6 @@ def register_taskiq_tasks(broker, *, container):
         "execute_mailing_batch": execute_mailing_batch,
         "confirm_payment": confirm_payment,
         "reject_payment": reject_payment,
+        "send_trainer_digests": send_trainer_digests,
         # "mark_past_bookings_completed": mark_past_bookings_completed,
     }

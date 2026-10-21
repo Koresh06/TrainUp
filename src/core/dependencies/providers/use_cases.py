@@ -189,6 +189,10 @@ from src.application.use_cases.booking.create_by_trainer import CreateBookingByT
 
 from src.application.use_cases.booking.mark_attendance import MarkBookingAttendanceUseCase
 
+from src.application.use_cases.digest.send_trainer_digests import SendTrainerDigestsUseCase
+
+from src.application.use_cases.trainer_reminder_settings.update_digest import UpdateTrainerDigestSettingsUseCase
+
 
 class UseCasesProvider(Provider):
     scope = Scope.REQUEST
@@ -1489,5 +1493,37 @@ class UseCasesProvider(Provider):
             booking_repo=booking_repo,
             slot_repo=slot_repo,
             booking_scheduler=booking_scheduler,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def send_trainer_digests_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+        subscription_repo: TrainerSubscriptionRepository,
+        settings_repo: TrainerReminderSettingsRepository,
+        booking_repo: BookingRepository,
+        client_repo: ClientRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> SendTrainerDigestsUseCase:
+        return SendTrainerDigestsUseCase(
+            trainer_repo=trainer_repo,
+            subscription_repo=subscription_repo,
+            settings_repo=settings_repo,
+            booking_repo=booking_repo,
+            client_repo=client_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def update_trainer_digest_settings_use_case(
+        self,
+        settings_repo: TrainerReminderSettingsRepository,
+        transaction_manager: TransactionManager,
+    ) -> UpdateTrainerDigestSettingsUseCase:
+        return UpdateTrainerDigestSettingsUseCase(
+            settings_repo=settings_repo,
             transaction_manager=transaction_manager,
         )

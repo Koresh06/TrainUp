@@ -2,16 +2,13 @@
 
 from datetime import date, timedelta
 
+from src.domain.constants import MONTHS_GENITIVE
 from src.domain.enums.booking import BookingStatus
 from src.domain.repositories.booking import BookingView
 from src.domain.utils import get_project_today
 
 WEEKDAY_SHORT = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
 WEEKDAY_FULL = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"]
-MONTHS_GENITIVE = [
-    "января", "февраля", "марта", "апреля", "мая", "июня",
-    "июля", "августа", "сентября", "октября", "ноября", "декабря",
-]
 MONTHS_NOMINATIVE = [
     "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
     "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",

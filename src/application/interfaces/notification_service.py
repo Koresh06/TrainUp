@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 from enum import Enum
 from typing import Protocol
 
@@ -48,6 +49,30 @@ class PlanNextTrainingNotificationDTO:
     chat_id: int
     trainer_name: str
     days_since_training: int
+
+
+@dataclass(frozen=True)
+class DigestItemDTO:
+    time_label: str
+    client_name: str
+    is_pending: bool = False
+    is_recurring: bool = False
+    is_offline: bool = False
+    trainer_note: str | None = None
+
+
+@dataclass(frozen=True)
+class TrainerDigestDTO:
+    """Сводка тренеру: утром — на сегодня, вечером — на завтра."""
+
+    chat_id: int
+    day: date
+    day_label: str  # «среда 22 октября»
+    is_tomorrow: bool
+    items: list[DigestItemDTO]
+    expected_income: Decimal = Decimal("0")
+    # все будущие записи, которые тренер ещё не подтвердил
+    pending_total: int = 0
 
 
 class SubscriptionEvent(str, Enum):
@@ -102,6 +127,8 @@ class NotificationService(Protocol):
     ) -> None: ...
 
     async def notify_subscription(self, data: SubscriptionNotificationDTO) -> None: ...
+
+    async def notify_trainer_digest(self, data: TrainerDigestDTO) -> None: ...
 
     async def notify_admins(self, text: str) -> None: ...
 

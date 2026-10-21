@@ -20,6 +20,7 @@ from src.application.interfaces.notification_service import (
     PlanNextTrainingNotificationDTO,
     SubscriptionEvent,
     SubscriptionNotificationDTO,
+    TrainerDigestDTO,
     TrainingReminderNotificationDTO,
 )
 from src.core.config import settings
@@ -28,6 +29,7 @@ from src.infrastructure.notifications.callback_data.booking import (
     BookingAction,
     BookingActionCD,
 )
+from src.infrastructure.notifications.callback_data.digest import TrainerDigestCD
 from src.infrastructure.notifications.callback_data.payment import (
     ManualPaymentAction,
     ManualPaymentCD,
@@ -235,6 +237,47 @@ class TelegramNotificationService(NotificationService):
             )
         await self._send(data.chat_id, text, kb.as_markup())
 
+    async def notify_trainer_digest(self, data: TrainerDigestDTO) -> None:
+        kb = InlineKeyboardBuilder()
+        kb.button(
+            text="📅 Открыть расписание",
+            callback_data=TrainerDigestCD(day=data.day.isoformat()).pack(),
+        )
+
+        when = "Завтра" if data.is_tomorrow else "Сегодня"
+        greeting = "🌙 " if data.is_tomorrow else "☀️ <b>Доброе утро!</b>\n"
+        count = len(data.items)
+        if not count:
+            text = f"{greeting}{when}, {data.day_label}, тренировок нет — свободный день 🙌"
+        else:
+            lines = []
+            for item in data.items:
+                line = f"<code>{item.time_label}</code> {escape(item.client_name)}"
+                if item.is_recurring:
+                    line += " 🔁"
+                if item.is_offline:
+                    line += " 📵"
+                if item.is_pending:
+                    line += " ⏳ <i>не подтверждена</i>"
+                if item.trainer_note:
+                    line += f"\n      📝 <i>{escape(item.trainer_note)}</i>"
+                lines.append(line)
+            footer = f"Первая в {data.items[0].time_label}"
+            if count > 1:
+                footer += f" · последняя в {data.items[-1].time_label}"
+            if data.expected_income:
+                amount = f"{data.expected_income:,.0f}".replace(",", " ")
+                footer += f" · ≈ {amount} BYN"
+            text = (
+                f"{greeting}<b>{when}, {data.day_label} — {count} "
+                f"{self.pluralize_trainings(count)}</b>\n\n"
+                + "\n".join(lines)
+                + f"\n\n{footer}"
+            )
+        if data.pending_total:
+            text += f"\n⏳ Ждут вашего подтверждения: {data.pending_total}"
+        await self._send(data.chat_id, text, kb.as_markup())
+
     async def notify_manual_payment_request(self, data: ManualPaymentRequestDTO) -> None:
         kb = InlineKeyboardBuilder()
         for action, text in (
@@ -326,6 +369,14 @@ class TelegramNotificationService(NotificationService):
         if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14):
             return "минуты"
         return "минут"
+
+    @staticmethod
+    def pluralize_trainings(n: int) -> str:
+        if n % 10 == 1 and n % 100 != 11:
+            return "тренировка"
+        if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14):
+            return "тренировки"
+        return "тренировок"
 
     @staticmethod
     def pluralize_days(n: int) -> str:

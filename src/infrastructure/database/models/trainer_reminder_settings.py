@@ -1,9 +1,11 @@
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, Integer
+from datetime import date
 
-from src.domain.constants import REMINDER_HOURS_BEFORE_TRAINING
+from sqlalchemy import Boolean, Date, ForeignKey, Integer
+
+from src.domain.constants import DEFAULT_MORNING_DIGEST_HOUR, REMINDER_HOURS_BEFORE_TRAINING
 from src.domain.entities.trainer_reminder_settings import TrainerReminderSettings
 
 
@@ -25,6 +27,15 @@ class TrainerReminderSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     hours_before: Mapped[int] = mapped_column(
         Integer, default=REMINDER_HOURS_BEFORE_TRAINING
     )
+    morning_digest_hour: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, default=DEFAULT_MORNING_DIGEST_HOUR
+    )
+    evening_digest_hour: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    digest_on_empty_days: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
+    last_morning_digest_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    last_evening_digest_on: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     trainer: Mapped["TrainerModel"] = relationship(
         "TrainerModel",
@@ -38,6 +49,11 @@ class TrainerReminderSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         return cls(
             trainer_id=entity.trainer_id,
             hours_before=entity.hours_before,
+            morning_digest_hour=entity.morning_digest_hour,
+            evening_digest_hour=entity.evening_digest_hour,
+            digest_on_empty_days=entity.digest_on_empty_days,
+            last_morning_digest_on=entity.last_morning_digest_on,
+            last_evening_digest_on=entity.last_evening_digest_on,
         )
 
     def to_entity(self) -> "TrainerReminderSettings":
@@ -45,8 +61,18 @@ class TrainerReminderSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             id=self.id,
             trainer_id=self.trainer_id,
             hours_before=self.hours_before,
+            morning_digest_hour=self.morning_digest_hour,
+            evening_digest_hour=self.evening_digest_hour,
+            digest_on_empty_days=self.digest_on_empty_days,
+            last_morning_digest_on=self.last_morning_digest_on,
+            last_evening_digest_on=self.last_evening_digest_on,
         )
 
     def update_model(self, entity: "TrainerReminderSettings") -> None:
         self.trainer_id = entity.trainer_id
         self.hours_before = entity.hours_before
+        self.morning_digest_hour = entity.morning_digest_hour
+        self.evening_digest_hour = entity.evening_digest_hour
+        self.digest_on_empty_days = entity.digest_on_empty_days
+        self.last_morning_digest_on = entity.last_morning_digest_on
+        self.last_evening_digest_on = entity.last_evening_digest_on

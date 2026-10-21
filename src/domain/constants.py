@@ -35,6 +35,17 @@ WEEKDAY_LABELS_FULL = [
     "Воскресенье",
 ]  # порядок соответствует Python date.weekday(): 0=Понедельник ... 6=Воскресенье
 
+MONTHS_GENITIVE = [
+    "января", "февраля", "марта", "апреля", "мая", "июня",
+    "июля", "августа", "сентября", "октября", "ноября", "декабря",
+]
+
+
+def day_label(day: date) -> str:
+    """«среда 22 октября» — для уведомлений и сводок."""
+    return f"{WEEKDAY_LABELS_FULL[day.weekday()].lower()} {day.day} {MONTHS_GENITIVE[day.month - 1]}"
+
+
 WEEKDAY_LABELS_EVERY = [
     "по понедельникам",
     "по вторникам",
@@ -172,3 +183,8 @@ RECURRING_BOOKINGS_TEST_MODE = _business.recurring_bookings_test_mode
 
 # --- Опции для напоминаний (в часах) ---
 REMINDER_HOUR_OPTIONS = [1, 2, 3, 4, 6, 12, 24]
+
+# --- Сводка тренеру: «сегодня у вас…» утром и «завтра у вас…» вечером ---
+DEFAULT_MORNING_DIGEST_HOUR = _business.morning_digest_hour
+MORNING_DIGEST_HOUR_OPTIONS = [6, 7, 8, 9, 10, 11]
+EVENING_DIGEST_HOUR_OPTIONS = [18, 19, 20, 21, 22]

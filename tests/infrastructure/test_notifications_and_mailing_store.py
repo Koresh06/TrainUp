@@ -93,3 +93,34 @@ async def test_redis_mailing_progress_store() -> None:
     await store.clear(mailing_id="m")
     third = await store.add_batch_result(mailing_id="m", success=0, blocked=0, failed=0)
     assert third.done_batches == 1
+
+
+async def test_trainer_digest_text() -> None:
+    from datetime import date
+    from decimal import Decimal
+
+    from src.application.interfaces.notification_service import DigestItemDTO, TrainerDigestDTO
+
+    bot = FakeBot()
+    service = TelegramNotificationService(bot=bot)
+    await service.notify_trainer_digest(
+        TrainerDigestDTO(
+            chat_id=1, day=date(2026, 10, 22), day_label="четверг 22 октября", is_tomorrow=False,
+            items=[
+                DigestItemDTO(time_label="09:00", client_name="Иван <Петров>", is_recurring=True),
+                DigestItemDTO(time_label="18:00", client_name="Олег", is_offline=True,
+                              is_pending=True, trainer_note="колено"),
+            ],
+            expected_income=Decimal("6000"), pending_total=1,
+        )
+    )
+    await service.notify_trainer_digest(
+        TrainerDigestDTO(chat_id=1, day=date(2026, 10, 23), day_label="пятница 23 октября",
+                         is_tomorrow=True, items=[])
+    )
+    busy, empty = (m["text"] for m in bot.sent)
+    assert "Сегодня, четверг 22 октября — 2 тренировки" in busy
+    assert "Иван &lt;Петров&gt; 🔁" in busy and "📝 <i>колено</i>" in busy
+    assert "последняя в 18:00 · ≈ 6 000 BYN" in busy and "Ждут вашего подтверждения: 1" in busy
+    assert "Завтра, пятница 23 октября, тренировок нет" in empty
+    assert bot.sent[0]["reply_markup"].inline_keyboard[0][0].callback_data == "digest:2026-10-22"

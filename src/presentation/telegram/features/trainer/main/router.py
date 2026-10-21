@@ -3,7 +3,7 @@ import logging
 from dishka.integrations.aiogram import inject, FromDishka
 from aiogram import Router
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager, StartMode
 
 from src.domain.entities.trainer import Trainer
@@ -14,6 +14,8 @@ from src.application.use_cases.trainer.get_by_tg_id import GetTrainerByTgIdReque
 from src.application.use_cases.subscription.get_active import (
     GetActiveSubscriptionRequest,
 )
+from src.infrastructure.notifications.callback_data.digest import TrainerDigestCD
+from src.presentation.telegram.features.trainer.booking.states import TrainerBookingsSG
 from src.presentation.telegram.features.trainer.register.states import (
     SubscriptionSG,
     TrainerOnboardingSG,
@@ -59,4 +61,32 @@ async def process_trainer_command(
         state=TrainerMainSG.main,
         mode=StartMode.RESET_STACK,
         data={"trainer_id": trainer.id},
+    )
+
+
+@router.callback_query(TrainerDigestCD.filter())
+@inject
+async def on_digest_open_schedule(
+    callback: CallbackQuery,
+    callback_data: TrainerDigestCD,
+    dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+) -> None:
+    """Кнопка из утренней/вечерней сводки: кабинет, а поверх — расписание на тот день."""
+    try:
+        trainer: Trainer = await mediator.handle(
+            GetTrainerByTgIdRequest(tg_id=callback.from_user.id)
+        )
+    except TrainerNotFoundException:
+        await callback.answer("Кабинет тренера не найден", show_alert=True)
+        return
+    await callback.answer()
+    await dialog_manager.start(
+        state=TrainerMainSG.main,
+        mode=StartMode.RESET_STACK,
+        data={"trainer_id": trainer.id},
+    )
+    await dialog_manager.start(
+        state=TrainerBookingsSG.day,
+        data={"trainer_id": trainer.id, "day": callback_data.day},
     )
