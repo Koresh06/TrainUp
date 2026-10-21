@@ -425,6 +425,10 @@ from src.application.use_cases.client.referral import GetReferralInfoRequest, Ge
 
 from src.application.use_cases.client.referral import ResolveReferralCodeRequest, ResolveReferralCodeUseCase
 
+from src.application.use_cases.trainer.referral import GetTrainerReferralInfoRequest, GetTrainerReferralInfoUseCase
+
+from src.application.use_cases.trainer.referral import ResolveTrainerReferralCodeRequest, ResolveTrainerReferralCodeUseCase
+
 
 class MediatorProvider(Provider):
     scope = Scope.REQUEST
@@ -555,6 +559,8 @@ class MediatorProvider(Provider):
         rate_booking_use_case: RateBookingUseCase,
         get_referral_info_use_case: GetReferralInfoUseCase,
         resolve_referral_code_use_case: ResolveReferralCodeUseCase,
+        get_trainer_referral_info_use_case: GetTrainerReferralInfoUseCase,
+        resolve_trainer_referral_code_use_case: ResolveTrainerReferralCodeUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -741,4 +747,6 @@ class MediatorProvider(Provider):
         mediator.register(RateBookingRequest, rate_booking_use_case)
         mediator.register(GetReferralInfoRequest, get_referral_info_use_case)
         mediator.register(ResolveReferralCodeRequest, resolve_referral_code_use_case)
+        mediator.register(GetTrainerReferralInfoRequest, get_trainer_referral_info_use_case)
+        mediator.register(ResolveTrainerReferralCodeRequest, resolve_trainer_referral_code_use_case)
         return mediator

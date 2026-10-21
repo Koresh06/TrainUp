@@ -10,7 +10,12 @@ from src.application.interfaces.notification_service import (
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.application.use_cases.subscription._shared import _activate_subscription
 from src.domain.entities.trainer_subscription import TrainerSubscription
-from src.domain.enums.subscription import SubscriptionPlan, SubscriptionSource
+from src.application.services.trainer_referral_reward import TrainerReferralRewardService
+from src.domain.enums.subscription import (
+    PAID_SUBSCRIPTION_SOURCES,
+    SubscriptionPlan,
+    SubscriptionSource,
+)
 from src.domain.exception.subscription import SubscriptionPricePlanNotFoundException
 from src.domain.exception.trainer import TrainerNotFoundException
 from src.domain.repositories.subscription import TrainerSubscriptionRepository
@@ -39,6 +44,7 @@ class GrantSubscriptionUseCase(UseCase[GrantSubscriptionRequest, TrainerSubscrip
     subscription_repo: TrainerSubscriptionRepository
     price_plan_repo: SubscriptionPricePlanRepository
     notification_service: NotificationService
+    referral_reward: TrainerReferralRewardService
     transaction_manager: TransactionManager
 
     async def __call__(self, command: GrantSubscriptionRequest) -> TrainerSubscription:
@@ -71,6 +77,9 @@ class GrantSubscriptionUseCase(UseCase[GrantSubscriptionRequest, TrainerSubscrip
                 days=command.days,
             )
         expired_at = saved.expired_at
+        if command.source in PAID_SUBSCRIPTION_SOURCES:
+            # оплата наличными через админа — тоже первая оплата для рефералки
+            await self.referral_reward.on_paid(trainer.id)
         await self.transaction_manager.commit()
 
         await self.notification_service.notify_subscription(

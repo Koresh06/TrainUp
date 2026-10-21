@@ -76,6 +76,7 @@ async def test_referral_link_registration(ui, run, trainer_setup) -> None:
     await register_client(ui, trainer_setup["token"])
     await ui.send(CLIENT_TG, "/start")
     text = await ui.click(CLIENT_TG, "🎁 Пригласить друга")
+    assert "Как это работает" in text and "не начисляет бонусы" in text  # бонус выключен
     code = re.search(r"start=(ref_[0-9a-f]+)", text).group(1)
     assert "📤 Поделиться" in ui.buttons
 

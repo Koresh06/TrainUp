@@ -57,6 +57,11 @@ trainer_main_dialog = Dialog(
                 on_click=on_menu_item_click,
             ),
             Button(
+                Const("🎁 Пригласить тренера"),
+                id="trainer_referral",
+                on_click=on_menu_item_click,
+            ),
+            Button(
                 Const("❓ Помощь"),
                 id="help",
                 on_click=on_menu_item_click,

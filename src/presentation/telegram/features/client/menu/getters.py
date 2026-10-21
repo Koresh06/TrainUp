@@ -16,6 +16,7 @@ from src.application.use_cases.client.referral import (
     GetReferralInfoRequest,
     ReferralInfoDTO,
 )
+from src.application.services.referral_reward import REFERRAL_BONUS_VALID_DAYS
 from src.application.use_cases.package.create import sessions_word
 from src.core.config import settings
 from src.application.use_cases.booking.get_upcoming_by_client import (
@@ -116,21 +117,45 @@ async def referral_getter(
     )
     info: ReferralInfoDTO = await mediator.handle(GetReferralInfoRequest(client_id=client.id))
     link = f"https://t.me/{settings.telegram.bot_username}?start={REFERRAL_PREFIX}{info.code}"
-    bonus = (
-        f"🎁 Когда друг сходит на первую тренировку, вы получите "
-        f"<b>{info.bonus_sessions}</b> {sessions_word(info.bonus_sessions)} бесплатно.\n\n"
-        if info.bonus_sessions
-        else ""
-    )
-    invited = (
-        f"👥 Вы пригласили: <b>{len(info.invited)}</b>"
-        + (f", уже тренируются: {info.rewarded}" if info.invited else "")
-        if info.invited
-        else "👥 Пока никого — станьте первым 🙂"
-    )
+    trainer: Trainer = await mediator.handle(GetTrainerByIdRequest(trainer_id=client.trainer_id))
+
+    steps = [
+        f"1️⃣ Отправьте другу ссылку ниже — по ней он попадёт к вашему тренеру "
+        f"<b>{escape(trainer.name)}</b>.",
+        "2️⃣ Друг регистрируется в боте и записывается на тренировку.",
+    ]
+    if info.bonus_sessions:
+        steps.append(
+            f"3️⃣ Как только он <b>сходит на первую тренировку</b>, вам начислится "
+            f"<b>{info.bonus_sessions} {sessions_word(info.bonus_sessions)} бесплатно</b>. "
+            f"Они спишутся сами на ваших ближайших тренировках, действуют "
+            f"{REFERRAL_BONUS_VALID_DAYS} дней — остаток видно в «📝 Моя анкета»."
+        )
+        rules = "Бонус — за каждого друга, сколько угодно раз."
+    else:
+        steps.append(
+            "3️⃣ Сейчас тренер не начисляет бонусы за приглашения, но всегда рад "
+            "новым людям на тренировках 💪"
+        )
+        rules = ""
+
+    if info.invited:
+        lines = [
+            f"• {escape(c.first_name)} — "
+            + (
+                "✅ сходил(а) на тренировку" + (", бонус начислен" if info.bonus_sessions else "")
+                if c.referral_rewarded_at
+                else "⏳ ждём первую тренировку"
+            )
+            for c in info.invited
+        ]
+        invited = f"👥 <b>Вы пригласили: {len(info.invited)}</b>\n" + "\n".join(lines)
+    else:
+        invited = "👥 Пока никого — станьте первым 🙂"
     return {
+        "steps": "\n".join(steps),
+        "rules": f"\n\n<i>{rules}</i>" if rules else "",
         "link": link,
-        "bonus": bonus,
         "invited": invited,
         "share_url": f"https://t.me/share/url?url={quote(link)}&text={quote('Тренируйся со мной 💪')}",
     }

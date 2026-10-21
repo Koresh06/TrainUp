@@ -7,6 +7,7 @@ from src.application.interfaces.notification_service import (
     SubscriptionEvent,
     SubscriptionNotificationDTO,
 )
+from src.application.services.trainer_referral_reward import TrainerReferralRewardService
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.application.use_cases.payment._shared import usd
 from src.application.use_cases.subscription._shared import _activate_subscription
@@ -46,6 +47,7 @@ class ConfirmPaymentUseCase(UseCase[ConfirmPaymentRequest, Payment]):
     subscription_repo: TrainerSubscriptionRepository
     trainer_repo: TrainerRepository
     notification_service: NotificationService
+    referral_reward: TrainerReferralRewardService
     transaction_manager: TransactionManager
 
     async def __call__(self, command: ConfirmPaymentRequest) -> Payment:
@@ -63,6 +65,7 @@ class ConfirmPaymentUseCase(UseCase[ConfirmPaymentRequest, Payment]):
         payment.mark_paid(datetime.now(timezone.utc))
         saved = await self.payment_repo.save(payment)
         subscription = await self._apply_purpose(payment)
+        await self.referral_reward.on_paid(payment.trainer_id)
         await self.transaction_manager.commit()
 
         trainer = await self.trainer_repo.get_by_id(payment.trainer_id)

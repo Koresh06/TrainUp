@@ -1,3 +1,4 @@
+import logging
 from html import escape
 
 from dishka.integrations.aiogram import inject, FromDishka
@@ -23,6 +24,11 @@ from src.application.use_cases.client.referral import (
     ResolveReferralCodeRequest,
 )
 from src.application.use_cases.trainer.get_by_id import GetTrainerByIdRequest
+from src.application.use_cases.trainer.get_by_tg_id import GetTrainerByTgIdRequest
+from src.application.use_cases.trainer.referral import (
+    TRAINER_REFERRAL_PREFIX,
+    ResolveTrainerReferralCodeRequest,
+)
 from src.application.use_cases.invite_link.resolve import ResolveInviteLinkRequest
 from src.domain.entities.client import Client
 from src.domain.entities.trainer_invite_link import TrainerInviteLink
@@ -37,9 +43,13 @@ from src.domain.exception.invite_link import (
     TrainerInviteLinkInactiveException,
     TrainerInviteLinkNotFoundException,
 )
+from src.domain.exception.trainer import TrainerNotFoundException
 from src.presentation.telegram.features.client.register.states import ClientRegisterSG
+from src.presentation.telegram.features.trainer.register.states import TrainerOnboardingSG
 from src.presentation.telegram.features.client.menu.states import ClientMenuSG
 from src.presentation.telegram.middlewares.access import TRAINER_UNAVAILABLE_TEXT
+
+logger = logging.getLogger(__name__)
 
 router = Router()
 
@@ -115,6 +125,29 @@ async def on_claim_client_click(
     await _open_client_menu(dialog_manager, client.trainer_id)
 
 
+async def _start_by_trainer_referral(
+    message: Message, code: str, dialog_manager: DialogManager, mediator: Mediator
+) -> None:
+    """Ссылка «пригласить тренера»: регистрация тренера с бонусом к пробному периоду."""
+    try:
+        await mediator.handle(GetTrainerByTgIdRequest(tg_id=message.from_user.id))
+    except TrainerNotFoundException:
+        pass
+    else:
+        await message.answer("ℹ️ Вы уже зарегистрированы как тренер — кабинет: /trainer")
+        return
+
+    referrer: Trainer | None = await mediator.handle(ResolveTrainerReferralCodeRequest(code=code))
+    if referrer is None:
+        logger.warning("[Start] unknown trainer referral code=%s", code)
+    await dialog_manager.start(
+        state=TrainerOnboardingSG.welcome,
+        # неизвестный код — обычная регистрация без бонуса, а не тупик
+        data={"referred_by_trainer_id": referrer.id if referrer else None},
+        mode=StartMode.RESET_STACK,
+    )
+
+
 async def _start_by_referral(
     message: Message, code: str, dialog_manager: DialogManager, mediator: Mediator
 ) -> None:
@@ -157,6 +190,12 @@ async def process_start_with_token(
     mediator: FromDishka[Mediator],
 ) -> None:
     token = command.args
+
+    if token.startswith(TRAINER_REFERRAL_PREFIX):
+        await _start_by_trainer_referral(
+            message, token.removeprefix(TRAINER_REFERRAL_PREFIX), dialog_manager, mediator
+        )
+        return
 
     if token.startswith(REFERRAL_PREFIX):
         await _start_by_referral(message, token.removeprefix(REFERRAL_PREFIX), dialog_manager, mediator)

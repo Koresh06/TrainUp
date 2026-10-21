@@ -44,6 +44,7 @@ def register_use_case(subs: FakeSubscriptions, trial_days: int) -> RegisterTrain
         booking_settings_repo=_IdRepo(),
         question_repo=_IdRepo(),
         subscription_repo=subs,
+        notification_service=RecordingNotifications(),
         transaction_manager=FakeTransactionManager(),
         trial_days=trial_days,
     )

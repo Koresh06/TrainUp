@@ -52,6 +52,21 @@ class SQLAlchemyTrainerRepo(TrainerRepository):
         result = await self._session.execute(query)
         return [model.to_entity() for model in result.scalars().all()]
 
+    async def get_by_referral_code(self, code: str) -> Trainer | None:
+        query = select(TrainerModel).where(TrainerModel.referral_code == code)
+        result = await self._session.execute(query)
+        model = result.scalar_one_or_none()
+        return model.to_entity() if model is not None else None
+
+    async def get_referred_by(self, trainer_id: int) -> list[Trainer]:
+        query = (
+            select(TrainerModel)
+            .where(TrainerModel.referred_by_trainer_id == trainer_id)
+            .order_by(TrainerModel.id)
+        )
+        result = await self._session.execute(query)
+        return [model.to_entity() for model in result.scalars().all()]
+
     async def save(self, trainer: Trainer) -> Trainer:
         if trainer.id == 0:
             model = TrainerModel.from_entity(trainer)

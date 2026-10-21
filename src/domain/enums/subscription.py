@@ -20,6 +20,7 @@ class SubscriptionSource(Enum):
     PURCHASE = "purchase"  # оплата в боте
     CASH = "cash"          # оплатил наличными/переводом — подписку выдал админ
     TRIAL = "trial"        # бесплатно: пробный/тестовый период от админа
+    REFERRAL = "referral"  # бесплатно: бонус за приглашённого тренера
 
 
 PAID_SUBSCRIPTION_SOURCES = (SubscriptionSource.PURCHASE, SubscriptionSource.CASH)

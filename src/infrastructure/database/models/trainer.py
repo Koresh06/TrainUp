@@ -1,8 +1,11 @@
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import (
     BigInteger,
+    DateTime,
+    ForeignKey,
     Integer,
     VARCHAR,
     Boolean,
@@ -43,6 +46,15 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     photo_file_id: Mapped[str | None] = mapped_column(VARCHAR(255), nullable=True)
     social_links: Mapped[dict[str, str]] = mapped_column(JSONB, default=dict)
     phone: Mapped[str | None] = mapped_column(VARCHAR(255), nullable=True)
+    referral_code: Mapped[str | None] = mapped_column(
+        VARCHAR(32), unique=True, index=True, nullable=True
+    )
+    referred_by_trainer_id: Mapped[int | None] = mapped_column(
+        ForeignKey("trainers.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    referral_rewarded_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     clients: Mapped[list["ClientModel"]] = relationship(
         "ClientModel",
@@ -103,6 +115,9 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             photo_file_id=entity.photo_file_id,
             social_links=entity.social_links,
             phone=entity.phone,
+            referral_code=entity.referral_code,
+            referred_by_trainer_id=entity.referred_by_trainer_id,
+            referral_rewarded_at=entity.referral_rewarded_at,
         )
 
     def to_entity(self) -> "Trainer":
@@ -116,6 +131,9 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             photo_file_id=self.photo_file_id,
             social_links=self.social_links or {},
             phone=self.phone,
+            referral_code=self.referral_code,
+            referred_by_trainer_id=self.referred_by_trainer_id,
+            referral_rewarded_at=self.referral_rewarded_at,
             created_at=self.created_at,
         )
 
@@ -128,3 +146,6 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.photo_file_id = entity.photo_file_id
         self.social_links = entity.social_links
         self.phone = entity.phone
+        self.referral_code = entity.referral_code
+        self.referred_by_trainer_id = entity.referred_by_trainer_id
+        self.referral_rewarded_at = entity.referral_rewarded_at

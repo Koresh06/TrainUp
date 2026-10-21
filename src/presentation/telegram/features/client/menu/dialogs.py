@@ -81,9 +81,8 @@ client_menu_dialog = Dialog(
     Window(
         Format(
             "🎁 <b>Пригласите друга</b>\n\n"
-            "Отправьте другу ссылку — он запишется к вашему тренеру.\n\n"
-            "{bonus}"
-            "<code>{link}</code>\n\n"
+            "<b>Как это работает</b>\n{steps}{rules}\n\n"
+            "Ваша ссылка:\n<code>{link}</code>\n\n"
             "{invited}"
         ),
         Url(Const("📤 Поделиться"), Format("{share_url}")),

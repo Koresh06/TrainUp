@@ -241,6 +241,12 @@ from src.application.use_cases.client.referral import ResolveReferralCodeUseCase
 
 from src.application.services.referral_reward import ReferralRewardService
 
+from src.application.services.trainer_referral_reward import TrainerReferralRewardService
+
+from src.application.use_cases.trainer.referral import GetTrainerReferralInfoUseCase
+
+from src.application.use_cases.trainer.referral import ResolveTrainerReferralCodeUseCase
+
 
 class UseCasesProvider(Provider):
     scope = Scope.REQUEST
@@ -500,6 +506,7 @@ class UseCasesProvider(Provider):
         booking_settings_repo: TrainerBookingSettingsRepository,
         question_repo: RegistrationQuestionRepository,
         subscription_repo: TrainerSubscriptionRepository,
+        notification_service: NotificationService,
         transaction_manager: TransactionManager,
     ) -> RegisterTrainerUseCase:
         return RegisterTrainerUseCase(
@@ -509,6 +516,7 @@ class UseCasesProvider(Provider):
             question_repo=question_repo,
             subscription_repo=subscription_repo,
             trial_days=TRAINER_TRIAL_DAYS,
+            notification_service=notification_service,
             transaction_manager=transaction_manager,
         )
 
@@ -1142,6 +1150,7 @@ class UseCasesProvider(Provider):
         subscription_repo: TrainerSubscriptionRepository,
         price_plan_repo: SubscriptionPricePlanRepository,
         notification_service: NotificationService,
+        referral_reward: TrainerReferralRewardService,
         transaction_manager: TransactionManager,
     ) -> GrantSubscriptionUseCase:
         return GrantSubscriptionUseCase(
@@ -1149,6 +1158,7 @@ class UseCasesProvider(Provider):
             subscription_repo=subscription_repo,
             price_plan_repo=price_plan_repo,
             notification_service=notification_service,
+            referral_reward=referral_reward,
             transaction_manager=transaction_manager,
         )
 
@@ -1371,6 +1381,7 @@ class UseCasesProvider(Provider):
         subscription_repo: TrainerSubscriptionRepository,
         trainer_repo: TrainerRepository,
         notification_service: NotificationService,
+        referral_reward: TrainerReferralRewardService,
         transaction_manager: TransactionManager,
     ) -> ConfirmPaymentUseCase:
         return ConfirmPaymentUseCase(
@@ -1379,6 +1390,7 @@ class UseCasesProvider(Provider):
             subscription_repo=subscription_repo,
             trainer_repo=trainer_repo,
             notification_service=notification_service,
+            referral_reward=referral_reward,
             transaction_manager=transaction_manager,
         )
 
@@ -1853,4 +1865,24 @@ class UseCasesProvider(Provider):
     ) -> ResolveReferralCodeUseCase:
         return ResolveReferralCodeUseCase(
             client_repo=client_repo,
+        )
+
+    @provide
+    def get_trainer_referral_info_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+        transaction_manager: TransactionManager,
+    ) -> GetTrainerReferralInfoUseCase:
+        return GetTrainerReferralInfoUseCase(
+            trainer_repo=trainer_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def resolve_trainer_referral_code_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+    ) -> ResolveTrainerReferralCodeUseCase:
+        return ResolveTrainerReferralCodeUseCase(
+            trainer_repo=trainer_repo,
         )

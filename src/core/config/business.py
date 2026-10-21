@@ -36,3 +36,8 @@ class BusinessSettings(BaseSettings):
 
     # через сколько дней без тренировок клиент попадает в «😴 Давно не были»
     inactive_client_days: int = 21
+
+    # реферальная программа тренеров: +дни подписки пригласившему после первой
+    # оплаты приглашённого и +дни к пробному периоду приглашённому (0 — без бонуса)
+    trainer_referral_bonus_days: int = 30
+    trainer_referral_friend_days: int = 7

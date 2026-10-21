@@ -12,7 +12,11 @@ from src.application.use_cases.payment.get_methods import GetPaymentMethodsReque
 from src.application.use_cases.subscription.get_active import (
     GetActiveSubscriptionRequest,
 )
-from src.domain.constants import SUBSCRIPTION_WARNING_HOURS, TRAINER_TRIAL_DAYS
+from src.domain.constants import (
+    SUBSCRIPTION_WARNING_HOURS,
+    TRAINER_REFERRAL_FRIEND_DAYS,
+    TRAINER_TRIAL_DAYS,
+)
 from src.domain.entities.subscription_price_plan import SubscriptionPricePlan
 from src.domain.entities.trainer_subscription import TrainerSubscription
 from src.domain.enums.payment import PaymentMethod
@@ -22,7 +26,6 @@ from src.utils.timezone import to_moscow
 
 from .texts import (
     BENEFITS_SHORT,
-    TRIAL_LABEL,
     cheapest_per_day,
     days_word,
     monthly_base_price,
@@ -73,12 +76,20 @@ def _subscription_status(subscription: TrainerSubscription | None) -> str:
     return f"✅ Подписка активна до <b>{until}</b>."
 
 
-async def welcome_getter(**kwargs) -> dict:
+async def welcome_getter(dialog_manager: DialogManager, **kwargs) -> dict:
+    referred = bool((dialog_manager.start_data or {}).get("referred_by_trainer_id"))
+    trial_days = TRAINER_TRIAL_DAYS + (TRAINER_REFERRAL_FRIEND_DAYS if referred else 0)
+    referral_line = (
+        f"\n🎁 Ты пришёл по приглашению коллеги — пробный период на "
+        f"{TRAINER_REFERRAL_FRIEND_DAYS} {days_word(TRAINER_REFERRAL_FRIEND_DAYS)} длиннее."
+        if referred and TRAINER_REFERRAL_FRIEND_DAYS
+        else ""
+    )
     return {
         "welcome_step_two": (
-            f"2️⃣ Сразу получишь <b>{TRIAL_LABEL} бесплатно</b> — все возможности, "
-            f"без оплаты и привязки карты"
-            if TRAINER_TRIAL_DAYS
+            f"2️⃣ Сразу получишь <b>{trial_days} {days_word(trial_days)} бесплатно</b> — "
+            f"все возможности, без оплаты и привязки карты{referral_line}"
+            if trial_days
             else "2️⃣ Выберешь тариф и оплатишь подписку"
         ),
     }

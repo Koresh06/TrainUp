@@ -191,3 +191,7 @@ EVENING_DIGEST_HOUR_OPTIONS = [18, 19, 20, 21, 22]
 
 # --- «😴 Давно не были»: клиенты без тренировок дольше N дней и без записей ---
 INACTIVE_CLIENT_DAYS = _business.inactive_client_days
+
+# --- Реферальная программа тренеров ---
+TRAINER_REFERRAL_BONUS_DAYS = max(_business.trainer_referral_bonus_days, 0)
+TRAINER_REFERRAL_FRIEND_DAYS = max(_business.trainer_referral_friend_days, 0)

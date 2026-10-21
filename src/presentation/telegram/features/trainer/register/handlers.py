@@ -126,6 +126,9 @@ async def on_onboarding_confirm(
                 notification_chat_id=data["notification_chat_id"],
                 photo_file_id=data.get("photo_file_id"),
                 phone=data.get("phone"),
+                referred_by_trainer_id=(dialog_manager.start_data or {}).get(
+                    "referred_by_trainer_id"
+                ),
             )
         )
     except TrainerAlreadyExistsException:

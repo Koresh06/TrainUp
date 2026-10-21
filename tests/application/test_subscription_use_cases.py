@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import pytest
 
+from src.application.services.trainer_referral_reward import TrainerReferralRewardService
 from src.application.interfaces.notification_service import SubscriptionEvent
 from src.application.use_cases.subscription.check_expiring import (
     CheckExpiringSubscriptionsRequest,
@@ -67,6 +68,11 @@ class TestGrantSubscription:
                 [SubscriptionPricePlan(id=5, plan=SubscriptionPlan.THREE_MONTHS, months=3, price=Decimal("80"))]
             ),
             notification_service=notifications,
+            referral_reward=TrainerReferralRewardService(
+                trainer_repo=FakeTrainers([trainer()]),
+                subscription_repo=subs,
+                notification_service=notifications,
+            ),
             transaction_manager=FakeTransactionManager(),
         )
 

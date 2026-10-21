@@ -28,6 +28,7 @@ SOURCE_LABELS: dict[SubscriptionSource, str] = {
     SubscriptionSource.PURCHASE: "оплата в боте",
     SubscriptionSource.CASH: "наличные/перевод",
     SubscriptionSource.TRIAL: "бесплатно",
+    SubscriptionSource.REFERRAL: "бонус за приглашение",
 }
 
 GRANT_DAYS_OPTIONS = [3, 7, 14, 30, 90]
