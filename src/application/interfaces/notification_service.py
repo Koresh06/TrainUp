@@ -52,6 +52,18 @@ class PlanNextTrainingNotificationDTO:
 
 
 @dataclass(frozen=True)
+class AttendanceRequestDTO:
+    """Накануне: «Завтра в 18:00 тренировка — придёте?»."""
+
+    chat_id: int
+    booking_id: int
+    trainer_name: str
+    day_label: str  # «четверг 22 октября»
+    time_label: str
+    is_tomorrow: bool = True
+
+
+@dataclass(frozen=True)
 class DigestItemDTO:
     time_label: str
     client_name: str
@@ -59,6 +71,8 @@ class DigestItemDTO:
     is_recurring: bool = False
     is_offline: bool = False
     trainer_note: str | None = None
+    # клиент ответил «приду» на запрос накануне
+    client_confirmed: bool = False
 
 
 @dataclass(frozen=True)
@@ -129,6 +143,8 @@ class NotificationService(Protocol):
     async def notify_subscription(self, data: SubscriptionNotificationDTO) -> None: ...
 
     async def notify_trainer_digest(self, data: TrainerDigestDTO) -> None: ...
+
+    async def notify_attendance_request(self, data: AttendanceRequestDTO) -> None: ...
 
     async def notify_admins(self, text: str) -> None: ...
 

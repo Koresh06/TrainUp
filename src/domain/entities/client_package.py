@@ -5,7 +5,7 @@ from decimal import Decimal
 from src.domain.entities.base import Entity
 from src.domain.enums.package import PackageStatus
 from src.domain.exception.package import PackageNotChargeableException
-from src.utils.get_datetime_utc_now import get_datetime_utc_now
+from src.utils.get_datetime_utc_now import get_aware_utc_now
 
 
 @dataclass(kw_only=True)
@@ -65,7 +65,7 @@ class ClientPackage(Entity):
 
     def mark_paid(self) -> None:
         if self.paid_at is None:
-            self.paid_at = get_datetime_utc_now()
+            self.paid_at = get_aware_utc_now()
             self.touch()
 
     def cancel(self) -> None:

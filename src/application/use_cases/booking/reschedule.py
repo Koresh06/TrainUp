@@ -71,6 +71,7 @@ class RescheduleBookingUseCase(UseCase[RescheduleBookingRequest, Booking]):
             pricing_rule.price_for(new_slot.start_time) if pricing_rule is not None else None
         )
         booking.slot_id = command.new_slot_id
+        booking.reset_attendance()
         booking.touch()
         saved = await self.booking_repo.save(booking)
         await self.transaction_manager.commit()

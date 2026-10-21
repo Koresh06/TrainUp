@@ -397,6 +397,10 @@ from src.application.use_cases.package.get_balances import GetClientBalancesRequ
 
 from src.application.use_cases.booking.mark_paid import MarkBookingsPaidRequest, MarkBookingsPaidUseCase
 
+from src.application.use_cases.booking.attendance import SendAttendanceRequestsRequest, SendAttendanceRequestsUseCase
+
+from src.application.use_cases.booking.attendance import ConfirmAttendanceRequest, ConfirmAttendanceUseCase
+
 
 class MediatorProvider(Provider):
     scope = Scope.REQUEST
@@ -513,6 +517,8 @@ class MediatorProvider(Provider):
         get_client_packages_use_case: GetClientPackagesUseCase,
         get_client_balances_use_case: GetClientBalancesUseCase,
         mark_bookings_paid_use_case: MarkBookingsPaidUseCase,
+        send_attendance_requests_use_case: SendAttendanceRequestsUseCase,
+        confirm_attendance_use_case: ConfirmAttendanceUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -685,4 +691,6 @@ class MediatorProvider(Provider):
         mediator.register(GetClientPackagesRequest, get_client_packages_use_case)
         mediator.register(GetClientBalancesRequest, get_client_balances_use_case)
         mediator.register(MarkBookingsPaidRequest, mark_bookings_paid_use_case)
+        mediator.register(SendAttendanceRequestsRequest, send_attendance_requests_use_case)
+        mediator.register(ConfirmAttendanceRequest, confirm_attendance_use_case)
         return mediator

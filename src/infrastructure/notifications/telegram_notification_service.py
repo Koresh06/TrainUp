@@ -12,6 +12,7 @@ from aiogram.exceptions import (
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from src.application.interfaces.notification_service import (
+    AttendanceRequestDTO,
     ClientRequestNotificationDTO,
     MailingResultDTO,
     ManualPaymentRequestDTO,
@@ -259,6 +260,8 @@ class TelegramNotificationService(NotificationService):
                     line += " 📵"
                 if item.is_pending:
                     line += " ⏳ <i>не подтверждена</i>"
+                elif item.client_confirmed:
+                    line += " 👍"
                 if item.trainer_note:
                     line += f"\n      📝 <i>{escape(item.trainer_note)}</i>"
                 lines.append(line)
@@ -276,6 +279,30 @@ class TelegramNotificationService(NotificationService):
             )
         if data.pending_total:
             text += f"\n⏳ Ждут вашего подтверждения: {data.pending_total}"
+        await self._send(data.chat_id, text, kb.as_markup())
+
+    async def notify_attendance_request(self, data: AttendanceRequestDTO) -> None:
+        kb = InlineKeyboardBuilder()
+        kb.button(
+            text="✅ Приду",
+            callback_data=ReminderActionCD(
+                action=ReminderAction.CONFIRM, booking_id=data.booking_id
+            ).pack(),
+        )
+        kb.button(
+            text="❌ Не смогу",
+            callback_data=ReminderActionCD(
+                action=ReminderAction.CANCEL, booking_id=data.booking_id
+            ).pack(),
+        )
+        kb.adjust(2)
+        when = "Завтра" if data.is_tomorrow else "Сегодня"
+        text = (
+            f"📅 <b>{when}, {data.day_label}, в {data.time_label}</b> — тренировка "
+            f"с <b>{escape(data.trainer_name)}</b>.\n\n"
+            f"Подтвердите, пожалуйста, что придёте. Если планы изменились — "
+            f"отмените, и время освободится для других."
+        )
         await self._send(data.chat_id, text, kb.as_markup())
 
     async def notify_manual_payment_request(self, data: ManualPaymentRequestDTO) -> None:

@@ -35,6 +35,10 @@ from src.application.use_cases.payment.reject import (
     RejectPaymentRequest,
     RejectPaymentUseCase,
 )
+from src.application.use_cases.booking.attendance import (
+    SendAttendanceRequestsRequest,
+    SendAttendanceRequestsUseCase,
+)
 from src.application.use_cases.digest.send_trainer_digests import (
     SendTrainerDigestsRequest,
     SendTrainerDigestsUseCase,
@@ -157,6 +161,16 @@ def register_taskiq_tasks(broker, *, container):
             use_case = await request_container.get(SendTrainerDigestsUseCase)
             await use_case(SendTrainerDigestsRequest())
 
+    # накануне спрашиваем клиентов «придёте?» (за ~сутки до тренировки)
+    @broker.task(
+        task_name="send_attendance_requests",
+        schedule=[{"cron": "*/30 * * * *"}],
+    )
+    async def send_attendance_requests() -> None:
+        async with container() as request_container:
+            use_case = await request_container.get(SendAttendanceRequestsUseCase)
+            await use_case(SendAttendanceRequestsRequest())
+
     # @broker.task(
     #     task_name="mark_past_bookings_completed",
     #     schedule=[{"cron": "0 5 * * *"}],
@@ -178,5 +192,6 @@ def register_taskiq_tasks(broker, *, container):
         "confirm_payment": confirm_payment,
         "reject_payment": reject_payment,
         "send_trainer_digests": send_trainer_digests,
+        "send_attendance_requests": send_attendance_requests,
         # "mark_past_bookings_completed": mark_past_bookings_completed,
     }

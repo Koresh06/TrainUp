@@ -52,6 +52,10 @@ def short_day(day: date) -> str:
 
 def booking_badges(view: BookingView) -> str:
     badges = ""
+    if view.booking.client_confirmed_at is not None and view.booking.status in (
+        BookingStatus.CONFIRMED,
+    ):
+        badges += " 👍"
     if view.booking.recurring_booking_id is not None:
         badges += " 🔁"
     if not view.client_has_telegram:

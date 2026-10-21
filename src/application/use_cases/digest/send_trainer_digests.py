@@ -21,7 +21,7 @@ from src.domain.repositories.trainer_reminder_settings import (
     TrainerReminderSettingsRepository,
 )
 from src.infrastructure.database.transaction_manager.base import TransactionManager
-from src.utils.get_datetime_utc_now import get_datetime_utc_now
+from src.utils.get_datetime_utc_now import get_aware_utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class SendTrainerDigestsUseCase(UseCase[SendTrainerDigestsRequest, int]):
     transaction_manager: TransactionManager
 
     async def __call__(self, command: SendTrainerDigestsRequest) -> int:
-        local_now = (command.now or get_datetime_utc_now()).astimezone(PROJECT_TIMEZONE)
+        local_now = (command.now or get_aware_utc_now()).astimezone(PROJECT_TIMEZONE)
         today = local_now.date()
         sent = 0
 
@@ -126,6 +126,7 @@ class SendTrainerDigestsUseCase(UseCase[SendTrainerDigestsRequest, int]):
                         is_recurring=v.booking.recurring_booking_id is not None,
                         is_offline=not v.client_has_telegram,
                         trainer_note=notes.get(v.booking.client_id),
+                        client_confirmed=v.booking.client_confirmed_at is not None,
                     )
                     for v in views
                 ],

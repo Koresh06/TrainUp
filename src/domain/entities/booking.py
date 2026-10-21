@@ -5,7 +5,7 @@ from decimal import Decimal
 from src.domain.entities.base import Entity
 from src.domain.enums.booking import ACTIVE_BOOKING_STATUSES, BookingActor, BookingStatus
 from src.domain.exception.booking import BookingStatusTransitionException
-from src.utils.get_datetime_utc_now import get_datetime_utc_now
+from src.utils.get_datetime_utc_now import get_aware_utc_now
 
 
 @dataclass(kw_only=True)
@@ -24,6 +24,10 @@ class Booking(Entity):
     package_id: int | None = None
     # разовая тренировка оплачена (отмечает тренер)
     paid_at: datetime | None = None
+    # клиент ответил «приду» (на запрос накануне или на напоминание)
+    client_confirmed_at: datetime | None = None
+    # запрос «придёте?» уже отправлен — повторно не спрашиваем
+    attendance_requested_at: datetime | None = None
 
     @property
     def is_paid(self) -> bool:
@@ -49,7 +53,7 @@ class Booking(Entity):
             )
         self.status = BookingStatus.CANCELLED
         self.cancelled_by = by
-        self.cancelled_at = get_datetime_utc_now()
+        self.cancelled_at = get_aware_utc_now()
         self.touch()
 
     def mark_no_show(self) -> None:
@@ -78,6 +82,18 @@ class Booking(Entity):
             )
         self.status = BookingStatus.COMPLETED
         self.touch()
+
+    def confirm_attendance(self) -> None:
+        if not self.is_active():
+            raise BookingStatusTransitionException(booking_id=self.id, status=self.status)
+        if self.client_confirmed_at is None:
+            self.client_confirmed_at = get_aware_utc_now()
+            self.touch()
+
+    def reset_attendance(self) -> None:
+        """Тренировку перенесли — подтверждение относилось к старому времени."""
+        self.client_confirmed_at = None
+        self.attendance_requested_at = None
 
     def set_reminder_job(self, job_id: str) -> None:
         self.reminder_job_id = job_id

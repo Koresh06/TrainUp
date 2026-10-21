@@ -5,7 +5,7 @@ from src.domain.entities.booking import Booking
 from src.domain.exception.booking import BookingNotFoundException
 from src.domain.repositories.booking import BookingRepository
 from src.infrastructure.database.transaction_manager.base import TransactionManager
-from src.utils.get_datetime_utc_now import get_datetime_utc_now
+from src.utils.get_datetime_utc_now import get_aware_utc_now
 
 
 @dataclass(frozen=True, eq=False)
@@ -23,7 +23,7 @@ class MarkBookingsPaidUseCase(UseCase[MarkBookingsPaidRequest, list[Booking]]):
     transaction_manager: TransactionManager
 
     async def __call__(self, command: MarkBookingsPaidRequest) -> list[Booking]:
-        now = get_datetime_utc_now()
+        now = get_aware_utc_now()
         saved = []
         for booking_id in command.booking_ids:
             booking = await self.booking_repo.get_by_id(booking_id)

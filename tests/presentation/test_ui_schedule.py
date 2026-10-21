@@ -90,3 +90,45 @@ async def test_schedule_pick_date(ui, run, trainer_setup) -> None:
     assert "Завтра" in day
 
 
+
+
+async def test_client_confirms_attendance(ui, run, trainer_setup, notifications) -> None:
+    import re
+    from datetime import datetime
+
+    from aiogram.types import Chat, InlineKeyboardButton, InlineKeyboardMarkup, Message
+    from aiogram_dialog.test_tools.keyboard import InlineButtonTextLocator
+
+    from src.application.use_cases.booking.confirm import ConfirmBookingRequest
+    from src.infrastructure.notifications.callback_data.reminder import (
+        ReminderAction,
+        ReminderActionCD,
+    )
+
+    await activate_subscription(run, trainer_setup["trainer"].id)
+    await register_client(ui, trainer_setup["token"])
+    await ui.click(CLIENT_TG, "📅 Записаться на занятия")
+    await ui.click(CLIENT_TG, str(trainer_setup["tomorrow"].day))
+    await ui.click(CLIENT_TG, "10:00 (2)")
+    await ui.click(CLIENT_TG, "✅ Подтвердить")
+    [new_booking] = notifications.of("notify_new_booking")
+    await run(ConfirmBookingRequest(booking_id=new_booking.booking_id))
+
+    message = Message(
+        message_id=1, date=datetime.now(), chat=Chat(id=CLIENT_TG, type="private"),
+        text="Завтра тренировка — придёте?",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(
+            text="✅ Приду",
+            callback_data=ReminderActionCD(
+                action=ReminderAction.CONFIRM, booking_id=new_booking.booking_id
+            ).pack(),
+        )]]),
+    )
+    await ui.client(CLIENT_TG).click(message, InlineButtonTextLocator(re.escape("✅ Приду")))
+    booking = await run(GetBookingByIdRequest(booking_id=new_booking.booking_id))
+    assert booking.client_confirmed_at is not None
+
+    await ui.send(TRAINER_TG, "/trainer")
+    await ui.click(TRAINER_TG, next(b for b in ui.buttons if b.startswith("📅 Расписание")))
+    day = await ui.click(TRAINER_TG, next(b for b in ui.buttons if b.endswith("▶️")))
+    assert "Пётр Петров 👍" in day

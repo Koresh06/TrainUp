@@ -8,7 +8,8 @@ from src.application.use_cases.booking.get_by_id import GetBookingByIdRequest
 from src.application.use_cases.client.get_by_tg_id import GetClientByTgIdRequest
 from src.domain.entities.booking import Booking
 from src.domain.entities.client import Client
-from src.domain.exception.booking import BookingStatusTransitionException
+from src.application.use_cases.booking.attendance import ConfirmAttendanceRequest
+from src.domain.exception.booking import BookingNotFoundException, BookingStatusTransitionException
 from src.domain.exception.client import ClientNotFoundException
 from src.infrastructure.notifications.callback_data.plan_next import PlanNextTrainingCD
 from src.application.use_cases.booking.cancel import (
@@ -26,12 +27,29 @@ router = Router()
 
 
 @router.callback_query(ReminderActionCD.filter(F.action == ReminderAction.CONFIRM))
+@inject
 async def on_reminder_confirm(
     callback: CallbackQuery,
     callback_data: ReminderActionCD,
+    mediator: FromDishka[Mediator],
 ) -> None:
+    # «✅ Приду» — и в запросе накануне, и в напоминании: тренер видит 👍
+    try:
+        client: Client = await mediator.handle(
+            GetClientByTgIdRequest(tg_id=callback.from_user.id)
+        )
+        await mediator.handle(
+            ConfirmAttendanceRequest(booking_id=callback_data.booking_id, client_id=client.id)
+        )
+    except (ClientNotFoundException, BookingNotFoundException):
+        await callback.answer("Это не ваша запись", show_alert=True)
+        return
+    except BookingStatusTransitionException:
+        await callback.answer("Запись уже отменена или завершена", show_alert=True)
+        await callback.message.edit_reply_markup(reply_markup=None)
+        return
     await callback.answer("Отлично, ждём вас! 👍", show_alert=False)
-    await callback.message.edit_reply_markup(reply_markup=None)
+    await callback.message.edit_text(f"{callback.message.html_text}\n\n👍 Вы подтвердили, что придёте")
 
 
 @router.callback_query(ReminderActionCD.filter(F.action == ReminderAction.CANCEL))

@@ -207,6 +207,10 @@ from src.application.use_cases.booking.mark_paid import MarkBookingsPaidUseCase
 
 from src.application.services.package_charge import PackageChargeService
 
+from src.application.use_cases.booking.attendance import SendAttendanceRequestsUseCase
+
+from src.application.use_cases.booking.attendance import ConfirmAttendanceUseCase
+
 
 class UseCasesProvider(Provider):
     scope = Scope.REQUEST
@@ -1605,6 +1609,40 @@ class UseCasesProvider(Provider):
         transaction_manager: TransactionManager,
     ) -> MarkBookingsPaidUseCase:
         return MarkBookingsPaidUseCase(
+            booking_repo=booking_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def send_attendance_requests_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+        subscription_repo: TrainerSubscriptionRepository,
+        booking_settings_repo: TrainerBookingSettingsRepository,
+        reminder_settings_repo: TrainerReminderSettingsRepository,
+        booking_repo: BookingRepository,
+        client_repo: ClientRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> SendAttendanceRequestsUseCase:
+        return SendAttendanceRequestsUseCase(
+            trainer_repo=trainer_repo,
+            subscription_repo=subscription_repo,
+            booking_settings_repo=booking_settings_repo,
+            reminder_settings_repo=reminder_settings_repo,
+            booking_repo=booking_repo,
+            client_repo=client_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def confirm_attendance_use_case(
+        self,
+        booking_repo: BookingRepository,
+        transaction_manager: TransactionManager,
+    ) -> ConfirmAttendanceUseCase:
+        return ConfirmAttendanceUseCase(
             booking_repo=booking_repo,
             transaction_manager=transaction_manager,
         )

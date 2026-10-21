@@ -153,6 +153,8 @@ async def day_getter(
         body = ""
     if cancelled:
         summary += f"\n<i>отменено: {cancelled}</i>"
+    if any(v.booking.client_confirmed_at for v in shown):
+        summary += "\n<i>👍 — клиент подтвердил, что придёт</i>"
 
     pending = await _pending(mediator, trainer_id)
     return {
@@ -361,6 +363,10 @@ async def booking_detail_getter(
     lines.append(f"📌 {STATUS_TITLES.get(status, status.value)}")
     if booking.recurring_booking_id is not None:
         lines.append("🔁 Постоянная тренировка")
+    if booking.client_confirmed_at is not None and status in ACTIVE_BOOKING_STATUSES:
+        lines.append("👍 Клиент подтвердил, что придёт")
+    elif booking.attendance_requested_at is not None and status in ACTIVE_BOOKING_STATUSES:
+        lines.append("❔ Клиент ещё не ответил, придёт ли")
     if booking.package_id is not None:
         lines.append("🎫 Списано с абонемента")
     elif booking.price and status in PAST_BOOKING_STATUSES:

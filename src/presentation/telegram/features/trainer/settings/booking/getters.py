@@ -25,6 +25,7 @@ async def booking_settings_getter(
         "horizon_weeks": horizon_weeks,
         "max_bookings": settings.max_active_bookings_per_client,
         "no_show_charges": "✅" if settings.no_show_charges_package else "❌",
+        "ask_attendance": "✅" if settings.ask_attendance_confirmation else "❌",
     }
 
 

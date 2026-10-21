@@ -130,6 +130,9 @@ class RecordingNotifications:
     async def notify_subscription(self, data) -> None:
         self.calls.append(("notify_subscription", data))
 
+    async def notify_attendance_request(self, data) -> None:
+        self.calls.append(("notify_attendance_request", data))
+
     async def notify_trainer_digest(self, data) -> None:
         self.calls.append(("notify_trainer_digest", data))
 

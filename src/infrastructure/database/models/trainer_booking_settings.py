@@ -27,6 +27,9 @@ class TrainerBookingSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     no_show_charges_package: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default="true"
     )
+    ask_attendance_confirmation: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true"
+    )
 
     trainer: Mapped["TrainerModel"] = relationship(
         "TrainerModel",
@@ -40,6 +43,7 @@ class TrainerBookingSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             calendar_horizon_days=entity.calendar_horizon_days,
             max_active_bookings_per_client=entity.max_active_bookings_per_client,
             no_show_charges_package=entity.no_show_charges_package,
+            ask_attendance_confirmation=entity.ask_attendance_confirmation,
         )
 
     def to_entity(self) -> "TrainerBookingSettings":
@@ -49,6 +53,7 @@ class TrainerBookingSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             calendar_horizon_days=self.calendar_horizon_days,
             max_active_bookings_per_client=self.max_active_bookings_per_client,
             no_show_charges_package=self.no_show_charges_package,
+            ask_attendance_confirmation=self.ask_attendance_confirmation,
         )
 
     def update_model(self, entity: "TrainerBookingSettings") -> None:
@@ -56,3 +61,4 @@ class TrainerBookingSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.calendar_horizon_days = entity.calendar_horizon_days
         self.max_active_bookings_per_client = entity.max_active_bookings_per_client
         self.no_show_charges_package = entity.no_show_charges_package
+        self.ask_attendance_confirmation = entity.ask_attendance_confirmation

@@ -10,3 +10,5 @@ class TrainerBookingSettings(Entity):
     max_active_bookings_per_client: int
     # неявка списывает занятие с абонемента (как и проведённая тренировка)
     no_show_charges_package: bool = True
+    # накануне спрашивать клиента «придёте?» (✅ приду / ❌ не смогу)
+    ask_attendance_confirmation: bool = True

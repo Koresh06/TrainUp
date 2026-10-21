@@ -62,6 +62,12 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         ForeignKey("client_packages.id", ondelete="SET NULL"), nullable=True, index=True
     )
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    client_confirmed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    attendance_requested_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     client: Mapped["ClientModel"] = relationship(
         "ClientModel",
@@ -95,6 +101,8 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             cancelled_at=entity.cancelled_at,
             package_id=entity.package_id,
             paid_at=entity.paid_at,
+            client_confirmed_at=entity.client_confirmed_at,
+            attendance_requested_at=entity.attendance_requested_at,
         )
 
     def to_entity(self):
@@ -112,6 +120,8 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             cancelled_at=self.cancelled_at,
             package_id=self.package_id,
             paid_at=self.paid_at,
+            client_confirmed_at=self.client_confirmed_at,
+            attendance_requested_at=self.attendance_requested_at,
             created_at=self.created_at,
         )
 
@@ -128,3 +138,5 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.cancelled_at = entity.cancelled_at
         self.package_id = entity.package_id
         self.paid_at = entity.paid_at
+        self.client_confirmed_at = entity.client_confirmed_at
+        self.attendance_requested_at = entity.attendance_requested_at

@@ -13,7 +13,7 @@ from src.domain.repositories.client_package import ClientPackageRepository
 from src.domain.repositories.trainer import TrainerRepository
 from src.domain.utils import get_project_today
 from src.infrastructure.database.transaction_manager.base import TransactionManager
-from src.utils.get_datetime_utc_now import get_datetime_utc_now
+from src.utils.get_datetime_utc_now import get_aware_utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class CreateClientPackageUseCase(UseCase[CreateClientPackageRequest, ClientPacka
                 if command.valid_days
                 else None
             ),
-            paid_at=get_datetime_utc_now() if command.paid else None,
+            paid_at=get_aware_utc_now() if command.paid else None,
             is_bonus=command.is_bonus,
         )
         saved = await self.package_repo.save(package)

@@ -13,6 +13,7 @@ class UpdateTrainerBookingSettingsRequest(UseCaseRequest):
     max_active_bookings_per_client: int
     # None — не менять
     no_show_charges_package: bool | None = None
+    ask_attendance_confirmation: bool | None = None
 
 
 @dataclass(kw_only=True)
@@ -32,6 +33,8 @@ class UpdateTrainerBookingSettingsUseCase(
             existing.max_active_bookings_per_client = command.max_active_bookings_per_client
             if command.no_show_charges_package is not None:
                 existing.no_show_charges_package = command.no_show_charges_package
+            if command.ask_attendance_confirmation is not None:
+                existing.ask_attendance_confirmation = command.ask_attendance_confirmation
             saved = await self.settings_repo.save(existing)
         else:
             new_settings = TrainerBookingSettings(
