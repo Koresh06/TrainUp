@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Callable
 from aiogram_dialog import DialogManager
-from aiogram_dialog.widgets.kbd import Row, Button
+from aiogram_dialog.widgets.kbd import Row, Button, Group
 from aiogram_dialog.widgets.text import Format
 
 from src.application.use_cases.stats.get_trainer import StatsPeriod
@@ -72,8 +72,8 @@ def chart_flags(chart: Enum, labels: dict | None = None) -> dict:
     }
 
 
-def chart_row(labels: dict, on_chart_selected: Callable) -> Row:
-    return Row(
+def chart_group(labels: dict, on_chart_selected: Callable) -> Group:
+    return Group(
         *(
             Button(
                 Format(f"{{lbl_chart_{item.value}}}"),
@@ -81,7 +81,8 @@ def chart_row(labels: dict, on_chart_selected: Callable) -> Row:
                 on_click=on_chart_selected,
             )
             for item in labels
-        )
+        ),
+        width=2,
     )
 
 

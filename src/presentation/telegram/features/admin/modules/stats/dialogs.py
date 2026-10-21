@@ -6,7 +6,7 @@ from aiogram_dialog.widgets.text import Const, Format
 from src.presentation.telegram.features.admin.common import on_admin_period_selected
 from src.presentation.telegram.features.admin.states import AdminStatsSG
 from src.presentation.telegram.features.trainer.stats.helper import (
-    chart_row,
+    chart_group,
     on_chart_selected,
     period_row,
 )
@@ -41,7 +41,7 @@ admin_stats_dialog = Dialog(
     Window(
         DynamicMedia("chart"),
         Format("{caption}"),
-        chart_row(ADMIN_CHART_LABELS, on_chart_selected),
+        chart_group(ADMIN_CHART_LABELS, on_chart_selected),
         period_row(on_admin_period_selected),
         Row(
             SwitchTo(Const("👥 Пользователи"), id="charts_to_users", state=AdminStatsSG.users),

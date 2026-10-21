@@ -1,5 +1,5 @@
 from aiogram_dialog import Dialog, DialogManager, Window
-from aiogram_dialog.widgets.kbd import Button, Cancel, Column
+from aiogram_dialog.widgets.kbd import Button, Column
 from aiogram_dialog.widgets.text import Const, Format
 from aiogram.types import CallbackQuery
 from dishka.integrations.aiogram_dialog import inject, FromDishka
@@ -75,7 +75,6 @@ admin_menu_dialog = Dialog(
             Button(Const("❓ FAQ"), id="faq", on_click=on_admin_menu_click),
             Button(Const("📥 Выгрузки (CSV)"), id="exports", on_click=on_admin_menu_click),
         ),
-        Cancel(Const("✖️ Закрыть")),
         state=AdminMenuSG.main,
         getter=admin_menu_getter,
     ),
