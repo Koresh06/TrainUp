@@ -3,13 +3,9 @@ from datetime import date
 from dishka.integrations.aiogram_dialog import inject, FromDishka
 from aiogram_dialog import DialogManager
 
-from src.application.use_cases.booking.count_active_by_slot_ids import (
-    CountActiveBookingsBySlotIdsRequest,
-)
 from src.application.use_cases.calendar.get_day_availability_map import (
     GetDayAvailabilityMapRequest,
 )
-from src.application.use_cases.calendar.get_day_slots import GetDaySlotsRequest
 from src.application.use_cases.calendar.get_slot_by_id import GetSlotByIdRequest
 from src.application.use_cases.client.get_by_id import GetClientByIdRequest
 from src.application.use_cases.trainer_booking_settings.get_by_id import (
@@ -28,8 +24,7 @@ from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.client import Client
 from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
 from src.domain.enums.booking import BookingStatus, BookingsListMode
-from src.domain.enums.slot import SlotStatus
-from src.domain.utils import is_slot_in_past
+from src.presentation.telegram.common.free_slots import free_slot_options
 from src.presentation.telegram.widgets.booking_calendar import (
     AVAILABILITY_CACHE_KEY,
     HORIZON_CACHE_KEY,
@@ -169,30 +164,10 @@ async def reschedule_times_getter(
 ) -> dict:
     trainer_id: int = dialog_manager.start_data["trainer_id"]
     selected_day = date.fromisoformat(dialog_manager.dialog_data["reschedule_day"])
-
-    slots: list[CalendarSlot] = await mediator.handle(
-        GetDaySlotsRequest(trainer_id=trainer_id, slot_date=selected_day)
-    )
-    slots = [s for s in slots if not is_slot_in_past(s)]
-    slots.sort(key=lambda s: s.start_time)
-
-    slot_ids = [s.id for s in slots]
-    booked_counts = await mediator.handle(
-        CountActiveBookingsBySlotIdsRequest(slot_ids=slot_ids)
-    )
-
-    times = []
-    for slot in slots:
-        free_spots = slot.capacity - booked_counts.get(slot.id, 0)
-        is_free = slot.status != SlotStatus.BLOCKED and free_spots > 0
-        if not is_free:
-            continue
-        label = f"{slot.start_time.strftime('%H:%M')}" + (
-            f" ({free_spots})" if slot.capacity > 1 else ""
-        )
-        times.append({"value_id": str(slot.id), "label": label})
-
-    return {"times": times, "selected_day_label": selected_day.strftime("%d.%m.%Y")}
+    return {
+        "times": await free_slot_options(mediator, trainer_id, selected_day),
+        "selected_day_label": selected_day.strftime("%d.%m.%Y"),
+    }
 
 
 @inject

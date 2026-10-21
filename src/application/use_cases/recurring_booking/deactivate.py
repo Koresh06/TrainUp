@@ -66,7 +66,7 @@ class DeactivateRecurringBookingUseCase(
             cancelled += 1
 
         client = await self.client_repo.get_by_id(recurring.client_id)
-        if client is not None:
+        if client is not None and client.has_telegram:
             await self.notification_service.send(
                 chat_id=client.tg_id,
                 text=(

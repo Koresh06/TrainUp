@@ -177,6 +177,20 @@ from src.application.use_cases.admin.get_analytics import GetAdminAnalyticsUseCa
 from src.application.use_cases.bot_user.track_activity import TrackUserActivityUseCase
 from src.application.use_cases.bot_user.set_bot_blocked import SetBotBlockedByUserUseCase
 
+from src.application.use_cases.client.create_offline import CreateOfflineClientUseCase
+
+from src.application.use_cases.client.update_by_trainer import UpdateClientFieldUseCase
+
+from src.application.use_cases.client.delete_offline import DeleteOfflineClientUseCase
+
+from src.application.use_cases.client.claim_invite import ClaimClientInviteUseCase
+
+from src.application.use_cases.client.get_by_invite_token import GetClientByInviteTokenUseCase
+
+from src.application.use_cases.booking.get_views import GetBookingViewsUseCase
+
+from src.application.use_cases.booking.create_by_trainer import CreateBookingByTrainerUseCase
+
 
 class UseCasesProvider(Provider):
     scope = Scope.REQUEST
@@ -1381,5 +1395,102 @@ class UseCasesProvider(Provider):
     ) -> SetBotBlockedByUserUseCase:
         return SetBotBlockedByUserUseCase(
             bot_user_repo=bot_user_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def create_offline_client_use_case(
+        self,
+        client_repo: ClientRepository,
+        transaction_manager: TransactionManager,
+    ) -> CreateOfflineClientUseCase:
+        return CreateOfflineClientUseCase(
+            client_repo=client_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def update_client_field_use_case(
+        self,
+        client_repo: ClientRepository,
+        transaction_manager: TransactionManager,
+    ) -> UpdateClientFieldUseCase:
+        return UpdateClientFieldUseCase(
+            client_repo=client_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def delete_offline_client_use_case(
+        self,
+        client_repo: ClientRepository,
+        booking_repo: BookingRepository,
+        recurring_repo: RecurringBookingRepository,
+        transaction_manager: TransactionManager,
+    ) -> DeleteOfflineClientUseCase:
+        return DeleteOfflineClientUseCase(
+            client_repo=client_repo,
+            booking_repo=booking_repo,
+            recurring_repo=recurring_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def claim_client_invite_use_case(
+        self,
+        client_repo: ClientRepository,
+        trainer_repo: TrainerRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> ClaimClientInviteUseCase:
+        return ClaimClientInviteUseCase(
+            client_repo=client_repo,
+            trainer_repo=trainer_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_client_by_invite_token_use_case(
+        self,
+        client_repo: ClientRepository,
+    ) -> GetClientByInviteTokenUseCase:
+        return GetClientByInviteTokenUseCase(
+            client_repo=client_repo,
+        )
+
+    @provide
+    def get_booking_views_use_case(
+        self,
+        booking_repo: BookingRepository,
+    ) -> GetBookingViewsUseCase:
+        return GetBookingViewsUseCase(
+            booking_repo=booking_repo,
+        )
+
+    @provide
+    def create_booking_by_trainer_use_case(
+        self,
+        calendar_service: CalendarService,
+        booking_repo: BookingRepository,
+        client_repo: ClientRepository,
+        trainer_repo: TrainerRepository,
+        slot_repo: CalendarSlotRepository,
+        pricing_rule_repo: TrainerPricingRuleRepository,
+        reminder_settings_repo: TrainerReminderSettingsRepository,
+        notification_service: NotificationService,
+        booking_scheduler: BookingScheduler,
+        transaction_manager: TransactionManager,
+    ) -> CreateBookingByTrainerUseCase:
+        return CreateBookingByTrainerUseCase(
+            calendar_service=calendar_service,
+            booking_repo=booking_repo,
+            client_repo=client_repo,
+            trainer_repo=trainer_repo,
+            slot_repo=slot_repo,
+            pricing_rule_repo=pricing_rule_repo,
+            reminder_settings_repo=reminder_settings_repo,
+            notification_service=notification_service,
+            booking_scheduler=booking_scheduler,
             transaction_manager=transaction_manager,
         )

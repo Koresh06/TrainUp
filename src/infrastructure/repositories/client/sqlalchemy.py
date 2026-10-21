@@ -1,4 +1,4 @@
-from sqlalchemy import cast, or_, select, String
+from sqlalchemy import cast, delete, or_, select, String
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,9 +30,23 @@ class SQLAlchemyClientRepo(ClientRepository):
         return model.to_entity() if model is not None else None
 
     async def get_by_trainer_id(self, trainer_id: int) -> list[Client]:
-        query = select(ClientModel).where(ClientModel.trainer_id == trainer_id)
+        query = (
+            select(ClientModel)
+            .where(ClientModel.trainer_id == trainer_id)
+            .order_by(ClientModel.first_name, ClientModel.last_name)
+        )
         result = await self._session.execute(query)
         return [model.to_entity() for model in result.scalars().all()]
+
+    async def get_by_invite_token(self, token: str) -> Client | None:
+        query = select(ClientModel).where(ClientModel.invite_token == token)
+        result = await self._session.execute(query)
+        model = result.scalar_one_or_none()
+        return model.to_entity() if model is not None else None
+
+    async def delete(self, client_id: int) -> None:
+        await self._session.execute(delete(ClientModel).where(ClientModel.id == client_id))
+        await self._session.flush()
 
     async def save(self, client: Client) -> Client:
         if client.id == 0:

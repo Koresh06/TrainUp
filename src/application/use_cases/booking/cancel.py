@@ -57,7 +57,13 @@ class CancelBookingUseCase(UseCase[CancelBookingRequest, Booking]):
             trainer = await self.trainer_repo.get_by_id(booking.trainer_id)
             client = await self.client_repo.get_by_id(booking.client_id)
             slot = await self.slot_repo.get_by_id(booking.slot_id)
-            if trainer is not None and client is not None and slot is not None:
+            # клиенту без Telegram сообщить некуда — тренер предупреждает сам
+            if (
+                trainer is not None
+                and client is not None
+                and client.has_telegram
+                and slot is not None
+            ):
                 await self.notification_service.send(
                     chat_id=client.tg_id,
                     text=(
@@ -85,7 +91,7 @@ class CancelBookingUseCase(UseCase[CancelBookingRequest, Booking]):
                     text=(
                         f"❌ Клиент {full_name} отменил тренировку\n\n"
                         f"👤 {username_line}\n"
-                        f"📞 {client.phone}\n\n"
+                        f"📞 {client.phone or '—'}\n\n"
                         f"📅 {slot.slot_date.strftime('%d.%m.%Y')}\n"
                         f"🕐 {slot.start_time.strftime('%H:%M')}"
                     ),

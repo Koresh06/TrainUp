@@ -55,6 +55,7 @@ client_feedback_dialog = Dialog(
             id="callback_confirm",
             on_click=on_callback_confirm,
             style=Style(style=ButtonStyle.SUCCESS),
+            when="has_phone",
         ),
         SwitchTo(
             Const("✏️ Указать другой номер"),

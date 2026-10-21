@@ -15,8 +15,8 @@ class NewBookingNotificationDTO:
     client_first_name: str
     client_last_name: str | None
     client_username: str | None
-    client_phone: str
-    client_age: int
+    client_phone: str | None
+    client_age: int | None
     client_answers: list[tuple[str, str]] = field(default_factory=list)  # (вопрос, ответ)
 
 
@@ -40,7 +40,7 @@ class ClientRequestNotificationDTO:
     client_full_name: str
     client_tg_id: int
     client_username: str | None
-    client_phone: str
+    client_phone: str | None
 
 
 @dataclass(frozen=True)

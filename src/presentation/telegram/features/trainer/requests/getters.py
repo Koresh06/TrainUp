@@ -95,7 +95,7 @@ async def request_detail_getter(
     ]
     if client.username:
         contact_lines.append(f"👤 @{client.username}")
-    contact_lines.append(f"📞 {client.phone}")
+    contact_lines.append(f"📞 {client.phone or '—'}")
 
     return {
         "kind_label": CLIENT_REQUEST_KIND_LABELS[request.kind],

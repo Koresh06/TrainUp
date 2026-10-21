@@ -31,7 +31,8 @@ async def admin_clients_list_getter(
                 "id": str(c.id),
                 "label": (
                     f"{'⛔ ' if not c.is_active else ''}"
-                    f"{c.first_name} {c.last_name or ''}".strip() + f" · {c.phone}"
+                    f"{'📵 ' if not c.has_telegram else ''}"
+                    f"{c.full_name} · {c.phone or '—'}"
                 ),
             }
             for c in clients
@@ -58,9 +59,13 @@ async def admin_client_card_getter(
     text = (
         f"👤 <b>{escape(full_name)}</b>"
         f"{'  ⛔ заблокирован' if not client.is_active else ''}\n"
-        f'💬 <a href="tg://user?id={client.tg_id}">написать</a> · {username}\n'
-        f"📞 {client.phone} · 🎂 {client.age} лет\n"
-        f"🆔 {client.tg_id}\n\n"
+        + (
+            f'💬 <a href="tg://user?id={client.tg_id}">написать</a> · {username}\n'
+            f"🆔 {client.tg_id}\n"
+            if client.has_telegram
+            else "📵 Без Telegram — карточку завёл тренер\n"
+        )
+        + f"📞 {client.phone or '—'} · 🎂 {f'{client.age} лет' if client.age else '—'}\n\n"
         f"👨‍🏫 Тренер: {escape(trainer.name)}\n"
         f"🗓 В боте с {to_moscow(client.created_at).strftime('%d.%m.%Y')}\n"
         f"📅 Предстоящих записей: {len(upcoming)}"

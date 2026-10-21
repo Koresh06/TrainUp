@@ -81,6 +81,9 @@ class RescheduleBookingUseCase(UseCase[RescheduleBookingRequest, Booking]):
             await self.booking_scheduler.cancel_booking_completion(booking_id=booking.id)
         await self.transaction_manager.commit()
 
+        client = await self.client_repo.get_by_id(booking.client_id)
+        has_telegram = client is not None and client.has_telegram
+
         if booking.status == BookingStatus.CONFIRMED:
             await _schedule_booking_jobs(
                 booking_id=saved.id,
@@ -89,10 +92,10 @@ class RescheduleBookingUseCase(UseCase[RescheduleBookingRequest, Booking]):
                 reminder_settings_repo=self.reminder_settings_repo,
                 booking_scheduler=self.booking_scheduler,
                 transaction_manager=self.transaction_manager,
+                send_reminder=has_telegram,
             )
 
-        client = await self.client_repo.get_by_id(booking.client_id)
-        if client is not None:
+        if has_telegram:
             await self.notification_service.send(
                 chat_id=client.tg_id,
                 text=(

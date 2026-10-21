@@ -78,10 +78,12 @@ class ExecuteMailingUseCase(UseCase[ExecuteMailingRequest, int]):
         if command.target in (MailingTarget.ALL_TRAINERS, MailingTarget.EVERYONE):
             chat_ids += [t.tg_id for t in await self.trainer_repo.get_all() if t.is_active]
         if command.target in (MailingTarget.ALL_CLIENTS, MailingTarget.EVERYONE):
-            chat_ids += [c.tg_id for c in await self.client_repo.get_all() if c.is_active]
+            chat_ids += [
+                c.tg_id for c in await self.client_repo.get_all() if c.is_active and c.has_telegram
+            ]
         if command.target == MailingTarget.TRAINER_CLIENTS:
             if command.trainer_id is None:
                 raise ValueError("trainer_id required")
             clients = await self.client_repo.get_by_trainer_id(command.trainer_id)
-            chat_ids += [c.tg_id for c in clients if c.is_active]
+            chat_ids += [c.tg_id for c in clients if c.is_active and c.has_telegram]
         return list(dict.fromkeys(chat_ids))  # без дублей, порядок сохраняем

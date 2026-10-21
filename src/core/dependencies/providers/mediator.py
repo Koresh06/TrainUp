@@ -372,6 +372,20 @@ from src.application.use_cases.payment.get_by_external_id import (
     GetPaymentByExternalIdUseCase,
 )
 
+from src.application.use_cases.client.create_offline import CreateOfflineClientRequest, CreateOfflineClientUseCase
+
+from src.application.use_cases.client.update_by_trainer import UpdateClientFieldRequest, UpdateClientFieldUseCase
+
+from src.application.use_cases.client.delete_offline import DeleteOfflineClientRequest, DeleteOfflineClientUseCase
+
+from src.application.use_cases.client.claim_invite import ClaimClientInviteRequest, ClaimClientInviteUseCase
+
+from src.application.use_cases.client.get_by_invite_token import GetClientByInviteTokenRequest, GetClientByInviteTokenUseCase
+
+from src.application.use_cases.booking.get_views import GetBookingViewsRequest, GetBookingViewsUseCase
+
+from src.application.use_cases.booking.create_by_trainer import CreateBookingByTrainerRequest, CreateBookingByTrainerUseCase
+
 
 class MediatorProvider(Provider):
     scope = Scope.REQUEST
@@ -475,6 +489,13 @@ class MediatorProvider(Provider):
         get_admin_analytics_use_case: GetAdminAnalyticsUseCase,
         track_user_activity_use_case: TrackUserActivityUseCase,
         set_bot_blocked_by_user_use_case: SetBotBlockedByUserUseCase,
+        create_offline_client_use_case: CreateOfflineClientUseCase,
+        update_client_field_use_case: UpdateClientFieldUseCase,
+        delete_offline_client_use_case: DeleteOfflineClientUseCase,
+        claim_client_invite_use_case: ClaimClientInviteUseCase,
+        get_client_by_invite_token_use_case: GetClientByInviteTokenUseCase,
+        get_booking_views_use_case: GetBookingViewsUseCase,
+        create_booking_by_trainer_use_case: CreateBookingByTrainerUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -637,4 +658,11 @@ class MediatorProvider(Provider):
         mediator.register(TrackUserActivityRequest, track_user_activity_use_case)
         mediator.register(SetBotBlockedByUserRequest, set_bot_blocked_by_user_use_case)
 
+        mediator.register(CreateOfflineClientRequest, create_offline_client_use_case)
+        mediator.register(UpdateClientFieldRequest, update_client_field_use_case)
+        mediator.register(DeleteOfflineClientRequest, delete_offline_client_use_case)
+        mediator.register(ClaimClientInviteRequest, claim_client_invite_use_case)
+        mediator.register(GetClientByInviteTokenRequest, get_client_by_invite_token_use_case)
+        mediator.register(GetBookingViewsRequest, get_booking_views_use_case)
+        mediator.register(CreateBookingByTrainerRequest, create_booking_by_trainer_use_case)
         return mediator

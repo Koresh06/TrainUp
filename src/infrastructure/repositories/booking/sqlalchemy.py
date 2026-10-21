@@ -11,9 +11,9 @@ from src.domain.exception.booking import (
     BookingNotFoundException,
     SlotAlreadyBookedException,
 )
-from src.domain.repositories.booking import BookingRepository, BookingStatRow
+from src.domain.repositories.booking import BookingRepository, BookingStatRow, BookingView
 from src.domain.utils import get_project_today
-from src.infrastructure.database.models import BookingModel, CalendarSlotModel
+from src.infrastructure.database.models import BookingModel, CalendarSlotModel, ClientModel
 
 
 class SQLAlchemyBookingRepo(BookingRepository):
@@ -267,6 +267,64 @@ class SQLAlchemyBookingRepo(BookingRepository):
         )
         result = await self._session.execute(query)
         return [model.to_entity() for model in result.scalars().all()]
+
+    async def get_views(
+        self,
+        *,
+        trainer_id: int,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        statuses: tuple[BookingStatus, ...] | None = None,
+        client_id: int | None = None,
+        newest_first: bool = False,
+        limit: int | None = None,
+    ) -> list[BookingView]:
+        query = (
+            select(
+                BookingModel,
+                CalendarSlotModel.slot_date,
+                CalendarSlotModel.start_time,
+                ClientModel.first_name,
+                ClientModel.last_name,
+                ClientModel.tg_id,
+            )
+            .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
+            .join(ClientModel, BookingModel.client_id == ClientModel.id)
+            .where(BookingModel.trainer_id == trainer_id)
+        )
+        if date_from is not None:
+            query = query.where(CalendarSlotModel.slot_date >= date_from)
+        if date_to is not None:
+            query = query.where(CalendarSlotModel.slot_date <= date_to)
+        if statuses is not None:
+            query = query.where(BookingModel.status.in_(statuses))
+        if client_id is not None:
+            query = query.where(BookingModel.client_id == client_id)
+        if newest_first:
+            query = query.order_by(
+                CalendarSlotModel.slot_date.desc(), CalendarSlotModel.start_time.desc()
+            )
+        else:
+            query = query.order_by(CalendarSlotModel.slot_date, CalendarSlotModel.start_time)
+        if limit is not None:
+            query = query.limit(limit)
+
+        result = await self._session.execute(query)
+        return [
+            BookingView(
+                booking=model.to_entity(),
+                slot_date=slot_date,
+                start_time=start_time,
+                client_first_name=first_name,
+                client_last_name=last_name,
+                client_has_telegram=tg_id is not None,
+            )
+            for model, slot_date, start_time, first_name, last_name, tg_id in result.all()
+        ]
+
+    async def has_any_by_client(self, client_id: int) -> bool:
+        query = select(exists().where(BookingModel.client_id == client_id))
+        return bool((await self._session.execute(query)).scalar())
 
     async def get_stat_rows(
         self, date_from: date, date_to: date, trainer_id: int | None = None

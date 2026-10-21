@@ -47,7 +47,12 @@ class TelegramNotificationService(NotificationService):
     def __init__(self, bot: Bot) -> None:
         self._bot = bot
 
-    async def _send(self, chat_id: int, text: str, reply_markup: Any = None) -> bool:
+    async def _send(self, chat_id: int | None, text: str, reply_markup: Any = None) -> bool:
+        if chat_id is None:
+            # страховка: клиент без Telegram — use case'ы такие сообщения
+            # не отправляют, но лучше промолчать, чем уронить операцию
+            logger.warning("[Notification] skipped: chat_id is None")
+            return False
         # пользователь мог заблокировать бота / группа удалена — это не повод
         # ронять бизнес-операцию (подтверждение брони, отмену и т.п.)
         try:
@@ -59,7 +64,7 @@ class TelegramNotificationService(NotificationService):
             logger.warning("[Notification] chat_id=%s not delivered: %s", chat_id, error)
             return False
 
-    async def send(self, *, chat_id: int, text: str) -> None:
+    async def send(self, *, chat_id: int | None, text: str) -> None:
         await self._send(chat_id, text)
 
     async def notify_new_booking(self, data: NewBookingNotificationDTO) -> None:
@@ -89,8 +94,8 @@ class TelegramNotificationService(NotificationService):
         text = (
             f"📅 Новая запись!\n\n"
             f"👤 Клиент: {full_name} ({username_line})\n"
-            f"📞 Телефон: {data.client_phone}\n"
-            f"🎂 Возраст: {data.client_age}\n\n"
+            f"📞 Телефон: {data.client_phone or '—'}\n"
+            f"🎂 Возраст: {data.client_age or '—'}\n\n"
             f"Дата: {data.date_label}\n"
             f"Время: {data.time_label}\n"
             f"Статус: ожидает подтверждения"
@@ -156,7 +161,7 @@ class TelegramNotificationService(NotificationService):
             f"📨 <b>Новая заявка: {escape(data.title)}</b>\n\n"
             f"👤 Клиент: {escape(data.client_full_name)} ({username_line})\n"
             f'💬 <a href="tg://user?id={data.client_tg_id}">Написать клиенту</a>\n'
-            f"📞 {data.client_phone}\n\n"
+            f"📞 {data.client_phone or '—'}\n\n"
             f"{escape(data.details)}"
         )
         await self._send(data.chat_id, text, kb.as_markup())

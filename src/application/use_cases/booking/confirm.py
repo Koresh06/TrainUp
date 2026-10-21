@@ -45,7 +45,12 @@ class ConfirmBookingUseCase(UseCase[ConfirmBookingRequest, Booking]):
         trainer = await self.trainer_repo.get_by_id(booking.trainer_id)
         slot = await self.slot_repo.get_by_id(booking.slot_id)
 
-        if client is not None and trainer is not None and slot is not None:
+        if (
+            client is not None
+            and client.has_telegram
+            and trainer is not None
+            and slot is not None
+        ):
             contact_lines = [
                 f'💬 <a href="tg://user?id={trainer.tg_id}">Написать тренеру в Telegram</a>'
             ]
@@ -70,6 +75,7 @@ class ConfirmBookingUseCase(UseCase[ConfirmBookingRequest, Booking]):
                 reminder_settings_repo=self.reminder_settings_repo,
                 booking_scheduler=self.booking_scheduler,
                 transaction_manager=self.transaction_manager,
+                send_reminder=client is None or client.has_telegram,
             )
 
         return saved

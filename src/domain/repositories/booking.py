@@ -21,6 +21,29 @@ class BookingStatRow:
     start_time: time
 
 
+@dataclass(frozen=True)
+class BookingView:
+    """Запись вместе со слотом и клиентом — для экранов тренера (расписание,
+    история, карточка клиента): один JOIN вместо двух запросов на каждую бронь."""
+
+    booking: Booking
+    slot_date: date
+    start_time: time
+    client_first_name: str
+    client_last_name: str | None
+    client_has_telegram: bool
+
+    @property
+    def client_short_name(self) -> str:
+        if self.client_last_name:
+            return f"{self.client_first_name} {self.client_last_name[0]}."
+        return self.client_first_name
+
+    @property
+    def client_full_name(self) -> str:
+        return f"{self.client_first_name} {self.client_last_name or ''}".strip()
+
+
 class BookingRepository(Protocol):
     async def get_all(self) -> list[Booking]: ...
 
@@ -75,6 +98,22 @@ class BookingRepository(Protocol):
     async def get_history_by_trainer(
         self, trainer_id: int, limit: int = 50
     ) -> list[Booking]: ...
+
+    async def get_views(
+        self,
+        *,
+        trainer_id: int,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        statuses: tuple[BookingStatus, ...] | None = None,
+        client_id: int | None = None,
+        newest_first: bool = False,
+        limit: int | None = None,
+    ) -> list[BookingView]:
+        """Записи тренера с датой слота в [date_from; date_to] (границы опциональны)."""
+        ...
+
+    async def has_any_by_client(self, client_id: int) -> bool: ...
 
     async def get_stat_rows(
         self, date_from: date, date_to: date, trainer_id: int | None = None

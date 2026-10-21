@@ -104,7 +104,9 @@ class GetAdminAnalyticsUseCase(UseCase[GetAdminAnalyticsRequest, AdminAnalyticsD
 
         users = await self.bot_user_repo.get_all()
         trainer_tg = {t.tg_id for t in await self.trainer_repo.get_all()}
-        client_tg = {c.tg_id for c in await self.client_repo.get_all()} - trainer_tg
+        client_tg = {
+            c.tg_id for c in await self.client_repo.get_all() if c.has_telegram
+        } - trainer_tg
         subscriptions = await self.subscription_repo.get_all()
 
         def role(tg_id: int) -> str:

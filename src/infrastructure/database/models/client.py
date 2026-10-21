@@ -11,6 +11,7 @@ from sqlalchemy import (
 )
 
 from src.domain.entities.client import Client
+from src.domain.enums.client import ClientSource
 from src.domain.enums.training import SportExperience
 
 from .base import BaseModel, CreatedAtMixin, UpdatedAtMixin
@@ -29,7 +30,11 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     __tablename__ = "clients"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    tg_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
+    # NULL — клиент без Telegram (карточку завёл тренер); unique-индекс
+    # в Postgres пропускает сколько угодно NULL
+    tg_id: Mapped[int | None] = mapped_column(
+        BigInteger, unique=True, index=True, nullable=True
+    )
     trainer_id: Mapped[int] = mapped_column(
         ForeignKey("trainers.id", ondelete="SET NULL"),
         index=True,
@@ -38,16 +43,26 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     first_name: Mapped[str] = mapped_column(VARCHAR(255))
     last_name: Mapped[str | None] = mapped_column(VARCHAR(255), nullable=True)
     username: Mapped[str | None] = mapped_column(VARCHAR(255), nullable=True)
-    phone: Mapped[str] = mapped_column(VARCHAR(255))
-    age: Mapped[int] = mapped_column(Integer)
-    sport_experience: Mapped[SportExperience] = mapped_column(
+    phone: Mapped[str | None] = mapped_column(VARCHAR(255), nullable=True)
+    age: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    sport_experience: Mapped[SportExperience | None] = mapped_column(
         SqlEnum(
             SportExperience,
             name="sport_experience",
             create_type=True,
         ),
+        nullable=True,
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    source: Mapped[ClientSource] = mapped_column(
+        SqlEnum(ClientSource, name="clientsource"),
+        default=ClientSource.TELEGRAM,
+        server_default=ClientSource.TELEGRAM.name,
+    )
+    trainer_note: Mapped[str | None] = mapped_column(VARCHAR(1000), nullable=True)
+    invite_token: Mapped[str | None] = mapped_column(
+        VARCHAR(64), unique=True, index=True, nullable=True
+    )
 
     trainer: Mapped["TrainerModel"] = relationship(
         "TrainerModel",
@@ -82,6 +97,9 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             age=entity.age,
             sport_experience=entity.sport_experience,
             is_active=entity.is_active,
+            source=entity.source,
+            trainer_note=entity.trainer_note,
+            invite_token=entity.invite_token,
         )
 
     def to_entity(self) -> "Client":
@@ -96,6 +114,9 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             age=self.age,
             sport_experience=self.sport_experience,
             is_active=self.is_active,
+            source=self.source,
+            trainer_note=self.trainer_note,
+            invite_token=self.invite_token,
             created_at=self.created_at,
         )
 
@@ -109,3 +130,6 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.age = entity.age
         self.sport_experience = entity.sport_experience
         self.is_active = entity.is_active
+        self.source = entity.source
+        self.trainer_note = entity.trainer_note
+        self.invite_token = entity.invite_token

@@ -50,6 +50,11 @@ class SendTrainingReminderUseCase(UseCase[SendTrainingReminderRequest, None]):
             )
             return
 
+        if not client.has_telegram:
+            # напоминание могли поставить до того, как карточку отвязали —
+            # клиенту без Telegram писать некуда
+            return
+
         training_at_utc = get_training_datetime_utc(slot)
         minutes_before = max(
             int((training_at_utc - get_datetime_utc_now()).total_seconds() // 60), 0

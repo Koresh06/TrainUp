@@ -20,7 +20,8 @@ async def callback_confirm_getter(
     client: Client = await mediator.handle(
         GetClientByTgIdRequest(tg_id=dialog_manager.event.from_user.id)
     )
-    return {"phone": client.phone}
+    # карточку мог завести тренер без телефона — тогда сразу просим номер
+    return {"phone": client.phone or "—", "has_phone": client.phone is not None}
 
 
 @inject

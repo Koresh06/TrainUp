@@ -41,8 +41,8 @@ async def client_profile_getter(
 
     return {
         "full_name": escape(f"{client.first_name} {client.last_name or ''}".strip()),
-        "phone": client.phone,
-        "age": client.age,
+        "phone": client.phone or "—",
+        "age": f"{client.age} лет" if client.age else "—",
         "sport_experience": SPORT_EXPERIENCE_LABELS.get(client.sport_experience, "—"),
         "answers_summary": "\n\n".join(lines) if lines else "Ответов пока нет.",
     }

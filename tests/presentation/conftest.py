@@ -120,6 +120,28 @@ class UI:
     def sent_texts(self) -> list[str]:
         return [getattr(m, "text", "") or "" for m in BOT_CALLS]
 
+    async def click_sent(self, user_id: int, button_text: str) -> None:
+        """Нажать кнопку в сообщении, отправленном напрямую через bot API
+        (message.answer, уведомления) — оно не проходит через MessageManager."""
+        from datetime import datetime
+
+        from aiogram.types import Chat, Message
+
+        sent = next(
+            m for m in reversed(BOT_CALLS)
+            if getattr(m, "reply_markup", None) is not None
+            and any(b.text == button_text for row in m.reply_markup.inline_keyboard for b in row)
+        )
+        message = Message(
+            message_id=10_000 + len(BOT_CALLS),
+            date=datetime.now(),
+            chat=Chat(id=user_id, type="private"),
+            text=sent.text,
+            reply_markup=sent.reply_markup,
+        )
+        self.mm.reset_history()
+        await self.client(user_id).click(message, InlineButtonTextLocator(re.escape(button_text)))
+
 
 @pytest.fixture
 def ui(ui_env, container) -> UI:

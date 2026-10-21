@@ -32,7 +32,7 @@ client_profile_dialog = Dialog(
             "📝 <b>Моя анкета</b>\n\n"
             "👤 {full_name}\n"
             "📞 {phone}\n"
-            "🎂 {age} лет\n"
+            "🎂 {age}\n"
             "🏋️ Стаж: {sport_experience}\n\n"
             "{answers_summary}\n\n"
             "Цели, здоровье и пожелания видны тренеру при каждой записи — "

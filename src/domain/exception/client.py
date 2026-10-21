@@ -32,3 +32,42 @@ class ClientAlreadyExistsException(DomainError):
     @property
     def message(self) -> str:
         return f"Клиент с tg_id {self.tg_id} уже существует"
+
+
+@dataclass
+class ClientAlreadyHasTelegramException(DomainError):
+    client_id: int
+
+    @property
+    def message(self) -> str:
+        return f"Карточка клиента {self.client_id} уже привязана к Telegram"
+
+
+@dataclass
+class ClientInviteNotFoundException(DomainError):
+    token: str
+
+    @property
+    def message(self) -> str:
+        return "Персональная ссылка клиента недействительна"
+
+
+@dataclass
+class ClientHasBookingsException(DomainError):
+    client_id: int
+
+    @property
+    def message(self) -> str:
+        return f"У клиента {self.client_id} есть записи — удалить карточку нельзя"
+
+
+@dataclass
+class ClientAccessDeniedException(DomainError):
+    """Тренер пытается работать с чужим клиентом."""
+
+    client_id: int
+    trainer_id: int
+
+    @property
+    def message(self) -> str:
+        return f"Клиент {self.client_id} не принадлежит тренеру {self.trainer_id}"

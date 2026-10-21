@@ -24,6 +24,7 @@ async def _schedule_booking_jobs(
     reminder_settings_repo: TrainerReminderSettingsRepository,
     booking_scheduler: BookingScheduler,
     transaction_manager: TransactionManager,
+    send_reminder: bool = True,
 ) -> None:
     """
     Единая точка планирования отложенных задач подтверждённой брони:
@@ -33,6 +34,9 @@ async def _schedule_booking_jobs(
 
     BookingScheduler пишет job_id в бронь (flush), поэтому в конце обязателен
     commit — иначе id задач теряются и их потом невозможно отменить.
+
+    send_reminder=False — клиенту без Telegram напоминать некуда, ставим
+    только автозавершение.
     """
     reminder_settings = await reminder_settings_repo.get_by_trainer_id(trainer_id)
     hours_before = (
@@ -48,7 +52,9 @@ async def _schedule_booking_jobs(
     else:
         remind_at_utc = training_at_utc - timedelta(hours=hours_before)
 
-    if remind_at_utc > now:
+    if not send_reminder:
+        pass
+    elif remind_at_utc > now:
         await booking_scheduler.schedule_training_reminder(
             booking_id=booking_id,
             remind_at_utc=remind_at_utc,

@@ -50,7 +50,8 @@ async def _create_recurring_occurrence(
 
     client = await client_repo.get_by_id(recurring.client_id)
     trainer = await trainer_repo.get_by_id(recurring.trainer_id)
-    if client is not None and trainer is not None:
+    has_telegram = client is not None and client.has_telegram
+    if has_telegram and trainer is not None:
         contact_lines = [
             f'💬 <a href="tg://user?id={trainer.tg_id}">Написать тренеру в Telegram</a>'
         ]
@@ -75,6 +76,7 @@ async def _create_recurring_occurrence(
         reminder_settings_repo=reminder_settings_repo,
         booking_scheduler=booking_scheduler,
         transaction_manager=transaction_manager,
+        send_reminder=has_telegram,
     )
 
     return saved
