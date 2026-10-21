@@ -58,6 +58,11 @@ async def stats_getter(
         else ""
     )
 
+    rating = (
+        f"├ Оценка клиентов: ⭐ {s.rating_average:.1f} ({s.rating_count})\n"
+        if s.rating_average is not None
+        else ""
+    )
     text = (
         f"📊 <b>Статистика · {STATS_PERIOD_LABELS[s.period]}</b>\n\n"
         f"👥 <b>Клиенты</b>\n"
@@ -67,6 +72,7 @@ async def stats_getter(
         f"🏋 <b>Тренировки</b>\n"
         f"├ Проведено: <b>{s.completed_trainings}</b>\n"
         f"├ Не пришли: {s.no_show_trainings}\n"
+        f"{rating}"
         f"├ Запланировано до конца периода: {s.planned_trainings}\n"
         f"├ Отменено: {s.cancelled_bookings} (доля отмен {s.cancel_rate:.0%})\n"
         f"└ Всего предстоящих: {s.upcoming_bookings}\n\n"

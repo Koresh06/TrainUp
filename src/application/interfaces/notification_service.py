@@ -64,6 +64,16 @@ class AttendanceRequestDTO:
 
 
 @dataclass(frozen=True)
+class RatingRequestDTO:
+    """После тренировки: «Как прошла тренировка?» ⭐1–5."""
+
+    chat_id: int
+    booking_id: int
+    trainer_name: str
+    date_label: str
+
+
+@dataclass(frozen=True)
 class DigestItemDTO:
     time_label: str
     client_name: str
@@ -145,6 +155,8 @@ class NotificationService(Protocol):
     async def notify_trainer_digest(self, data: TrainerDigestDTO) -> None: ...
 
     async def notify_attendance_request(self, data: AttendanceRequestDTO) -> None: ...
+
+    async def notify_rating_request(self, data: RatingRequestDTO) -> None: ...
 
     async def notify_admins(self, text: str) -> None: ...
 

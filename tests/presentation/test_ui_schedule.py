@@ -132,3 +132,35 @@ async def test_client_confirms_attendance(ui, run, trainer_setup, notifications)
     await ui.click(TRAINER_TG, next(b for b in ui.buttons if b.startswith("📅 Расписание")))
     day = await ui.click(TRAINER_TG, next(b for b in ui.buttons if b.endswith("▶️")))
     assert "Пётр Петров 👍" in day
+
+
+async def test_client_rates_training(ui, run, trainer_setup, session) -> None:
+    import re
+    from datetime import datetime, time
+
+    from aiogram.types import Chat, InlineKeyboardButton, InlineKeyboardMarkup, Message
+    from aiogram_dialog.test_tools.keyboard import InlineButtonTextLocator
+
+    from src.application.use_cases.client.get_by_tg_id import GetClientByTgIdRequest
+    from src.infrastructure.notifications.callback_data.rating import RateTrainingCD
+
+    await activate_subscription(run, trainer_setup["trainer"].id)
+    await register_client(ui, trainer_setup["token"])
+    client = await run(GetClientByTgIdRequest(tg_id=CLIENT_TG))
+    slot = await make_slot(session, trainer_setup["trainer"].id, get_project_today(), time(0, 0))
+    booking = await make_booking(session, client, slot, BookingStatus.COMPLETED)
+
+    message = Message(
+        message_id=1, date=datetime.now(), chat=Chat(id=CLIENT_TG, type="private"),
+        text="Как прошла тренировка?",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(
+            text="5⭐", callback_data=RateTrainingCD(booking_id=booking.id, stars=5).pack(),
+        )]]),
+    )
+    await ui.client(CLIENT_TG).click(message, InlineButtonTextLocator(re.escape("5⭐")))
+    assert (await run(GetBookingByIdRequest(booking_id=booking.id))).rating == 5
+
+    await ui.send(TRAINER_TG, "/trainer")
+    await ui.click(TRAINER_TG, next(b for b in ui.buttons if b.startswith("📅 Расписание")))
+    await ui.click(TRAINER_TG, "00:00 🏁 Пётр П.")
+    assert "Оценка клиента: ⭐⭐⭐⭐⭐" in ui.text

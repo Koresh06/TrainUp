@@ -233,6 +233,8 @@ from src.application.use_cases.progress.measurements import GetMeasurementsUseCa
 
 from src.application.use_cases.progress.measurements import DeleteMeasurementUseCase
 
+from src.application.use_cases.booking.rate import RateBookingUseCase
+
 
 class UseCasesProvider(Provider):
     scope = Scope.REQUEST
@@ -903,12 +905,22 @@ class UseCasesProvider(Provider):
         booking_repo: BookingRepository,
         booking_scheduler: BookingScheduler,
         package_charge: PackageChargeService,
+        client_repo: ClientRepository,
+        trainer_repo: TrainerRepository,
+        slot_repo: CalendarSlotRepository,
+        booking_settings_repo: TrainerBookingSettingsRepository,
+        notification_service: NotificationService,
         transaction_manager: TransactionManager,
     ) -> MarkBookingCompletedUseCase:
         return MarkBookingCompletedUseCase(
             booking_repo=booking_repo,
             booking_scheduler=booking_scheduler,
             package_charge=package_charge,
+            client_repo=client_repo,
+            trainer_repo=trainer_repo,
+            slot_repo=slot_repo,
+            booking_settings_repo=booking_settings_repo,
+            notification_service=notification_service,
             transaction_manager=transaction_manager,
         )
 
@@ -1785,5 +1797,24 @@ class UseCasesProvider(Provider):
     ) -> DeleteMeasurementUseCase:
         return DeleteMeasurementUseCase(
             measurement_repo=measurement_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def rate_booking_use_case(
+        self,
+        booking_repo: BookingRepository,
+        client_repo: ClientRepository,
+        trainer_repo: TrainerRepository,
+        slot_repo: CalendarSlotRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> RateBookingUseCase:
+        return RateBookingUseCase(
+            booking_repo=booking_repo,
+            client_repo=client_repo,
+            trainer_repo=trainer_repo,
+            slot_repo=slot_repo,
+            notification_service=notification_service,
             transaction_manager=transaction_manager,
         )

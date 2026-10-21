@@ -14,6 +14,7 @@ class UpdateTrainerBookingSettingsRequest(UseCaseRequest):
     # None — не менять
     no_show_charges_package: bool | None = None
     ask_attendance_confirmation: bool | None = None
+    ask_rating: bool | None = None
 
 
 @dataclass(kw_only=True)
@@ -35,6 +36,8 @@ class UpdateTrainerBookingSettingsUseCase(
                 existing.no_show_charges_package = command.no_show_charges_package
             if command.ask_attendance_confirmation is not None:
                 existing.ask_attendance_confirmation = command.ask_attendance_confirmation
+            if command.ask_rating is not None:
+                existing.ask_rating = command.ask_rating
             saved = await self.settings_repo.save(existing)
         else:
             new_settings = TrainerBookingSettings(

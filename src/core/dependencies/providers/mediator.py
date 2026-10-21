@@ -419,6 +419,8 @@ from src.application.use_cases.progress.measurements import GetMeasurementsReque
 
 from src.application.use_cases.progress.measurements import DeleteMeasurementRequest, DeleteMeasurementUseCase
 
+from src.application.use_cases.booking.rate import RateBookingRequest, RateBookingUseCase
+
 
 class MediatorProvider(Provider):
     scope = Scope.REQUEST
@@ -546,6 +548,7 @@ class MediatorProvider(Provider):
         add_measurement_use_case: AddMeasurementUseCase,
         get_measurements_use_case: GetMeasurementsUseCase,
         delete_measurement_use_case: DeleteMeasurementUseCase,
+        rate_booking_use_case: RateBookingUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -729,4 +732,5 @@ class MediatorProvider(Provider):
         mediator.register(AddMeasurementRequest, add_measurement_use_case)
         mediator.register(GetMeasurementsRequest, get_measurements_use_case)
         mediator.register(DeleteMeasurementRequest, delete_measurement_use_case)
+        mediator.register(RateBookingRequest, rate_booking_use_case)
         return mediator

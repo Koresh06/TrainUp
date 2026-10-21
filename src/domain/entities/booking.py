@@ -28,6 +28,8 @@ class Booking(Entity):
     client_confirmed_at: datetime | None = None
     # запрос «придёте?» уже отправлен — повторно не спрашиваем
     attendance_requested_at: datetime | None = None
+    # оценка клиента после тренировки, 1..5
+    rating: int | None = None
 
     @property
     def is_paid(self) -> bool:
@@ -89,6 +91,14 @@ class Booking(Entity):
         if self.client_confirmed_at is None:
             self.client_confirmed_at = get_aware_utc_now()
             self.touch()
+
+    def rate(self, stars: int) -> None:
+        if self.status != BookingStatus.COMPLETED:
+            raise BookingStatusTransitionException(booking_id=self.id, status=self.status)
+        if not 1 <= stars <= 5:
+            raise ValueError("stars must be 1..5")
+        self.rating = stars
+        self.touch()
 
     def reset_attendance(self) -> None:
         """Тренировку перенесли — подтверждение относилось к старому времени."""

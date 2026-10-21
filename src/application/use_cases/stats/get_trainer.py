@@ -69,6 +69,9 @@ class TrainerStatsDTO:
     requests_count: int
     # клиент не пришёл (отметил тренер)
     no_show_trainings: int = 0
+    # оценки клиентов за тренировки периода
+    rating_average: float | None = None
+    rating_count: int = 0
     busiest_weekdays: list[int] = field(default_factory=list)
     busiest_hours: list[int] = field(default_factory=list)
     top_clients: list[TopClientDTO] = field(default_factory=list)
@@ -166,6 +169,12 @@ class GetTrainerStatsUseCase(UseCase[GetTrainerStatsRequest, TrainerStatsDTO]):
             expected_income=sum((r.price for r in planned if r.price), Decimal("0")),
             requests_count=requests_count,
             no_show_trainings=sum(1 for r in in_period if r.status == BookingStatus.NO_SHOW),
+            rating_average=(
+                sum(ratings) / len(ratings)
+                if (ratings := [r.rating for r in completed if r.rating is not None])
+                else None
+            ),
+            rating_count=sum(1 for r in completed if r.rating is not None),
             busiest_weekdays=_top_keys(Counter(r.slot_date.weekday() for r in load_rows), 2),
             busiest_hours=_top_keys(Counter(r.start_time.hour for r in load_rows), 2),
             top_clients=[

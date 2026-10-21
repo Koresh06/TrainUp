@@ -19,6 +19,7 @@ class BookingStatRow:
     price: Decimal | None
     slot_date: date
     start_time: time
+    rating: int | None = None
 
 
 @dataclass(frozen=True)

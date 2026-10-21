@@ -13,6 +13,7 @@ from .handlers import (
     on_horizon_weeks_selected,
     on_max_bookings_entered,
     on_toggle_ask_attendance,
+    on_toggle_ask_rating,
     on_toggle_no_show_charges,
 )
 from .validaters import validate_max_bookings
@@ -24,7 +25,8 @@ trainer_booking_settings_dialog = Dialog(
             "📅 Горизонт календаря: {horizon_weeks} нед.\n"
             "🔢 Максимум активных записей на клиента: {max_bookings}\n"
             "🎫 Неявка списывает занятие с абонемента: {no_show_charges}\n"
-            "🙋 Накануне спрашивать клиента «придёте?»: {ask_attendance}\n\n"
+            "🙋 Накануне спрашивать клиента «придёте?»: {ask_attendance}\n"
+            "⭐ Просить оценить тренировку: {ask_rating}\n\n"
             "Что изменить?"
         ),
         SwitchTo(
@@ -46,6 +48,11 @@ trainer_booking_settings_dialog = Dialog(
             Format("{ask_attendance} Спрашивать «придёте?» накануне"),
             id="toggle_ask_attendance",
             on_click=on_toggle_ask_attendance,
+        ),
+        Button(
+            Format("{ask_rating} Просить оценку после тренировки"),
+            id="toggle_ask_rating",
+            on_click=on_toggle_ask_rating,
         ),
         Cancel(Const("⬅️ Назад")),
         state=TrainerBookingSettingsSG.main,

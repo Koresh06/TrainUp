@@ -9,6 +9,8 @@ from src.application.use_cases.client.get_by_tg_id import GetClientByTgIdRequest
 from src.domain.entities.booking import Booking
 from src.domain.entities.client import Client
 from src.application.use_cases.booking.attendance import ConfirmAttendanceRequest
+from src.application.use_cases.booking.rate import RateBookingRequest
+from src.infrastructure.notifications.callback_data.rating import RateTrainingCD
 from src.domain.exception.booking import BookingNotFoundException, BookingStatusTransitionException
 from src.domain.exception.client import ClientNotFoundException
 from src.infrastructure.notifications.callback_data.plan_next import PlanNextTrainingCD
@@ -110,4 +112,35 @@ async def on_plan_next_training_click(
     await dialog_manager.start(
         state=BookingSG.select_day,
         data={"trainer_id": client.trainer_id},
+    )
+
+
+@router.callback_query(RateTrainingCD.filter())
+@inject
+async def on_rate_training(
+    callback: CallbackQuery,
+    callback_data: RateTrainingCD,
+    mediator: FromDishka[Mediator],
+) -> None:
+    try:
+        client: Client = await mediator.handle(
+            GetClientByTgIdRequest(tg_id=callback.from_user.id)
+        )
+        await mediator.handle(
+            RateBookingRequest(
+                booking_id=callback_data.booking_id,
+                client_id=client.id,
+                stars=callback_data.stars,
+            )
+        )
+    except (ClientNotFoundException, BookingNotFoundException):
+        await callback.answer("Это не ваша тренировка", show_alert=True)
+        return
+    except (BookingStatusTransitionException, ValueError):
+        await callback.answer("Эту тренировку уже нельзя оценить", show_alert=True)
+        await callback.message.edit_reply_markup(reply_markup=None)
+        return
+    await callback.answer("Спасибо!")
+    await callback.message.edit_text(
+        f"{callback.message.html_text}\n\nВаша оценка: {'⭐' * callback_data.stars} — спасибо!"
     )

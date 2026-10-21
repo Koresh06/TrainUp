@@ -318,6 +318,7 @@ class SQLAlchemyBookingRepo(BookingRepository):
                 BookingModel.price,
                 CalendarSlotModel.slot_date,
                 CalendarSlotModel.start_time,
+                BookingModel.rating,
             )
             .join(CalendarSlotModel, BookingModel.slot_id == CalendarSlotModel.id)
             .where(
@@ -337,6 +338,7 @@ class SQLAlchemyBookingRepo(BookingRepository):
                 price=row[4],
                 slot_date=row[5],
                 start_time=row[6],
+                rating=row[7],
             )
             for row in result.all()
         ]

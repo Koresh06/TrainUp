@@ -30,6 +30,7 @@ class TrainerBookingSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     ask_attendance_confirmation: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default="true"
     )
+    ask_rating: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
 
     trainer: Mapped["TrainerModel"] = relationship(
         "TrainerModel",
@@ -44,6 +45,7 @@ class TrainerBookingSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             max_active_bookings_per_client=entity.max_active_bookings_per_client,
             no_show_charges_package=entity.no_show_charges_package,
             ask_attendance_confirmation=entity.ask_attendance_confirmation,
+            ask_rating=entity.ask_rating,
         )
 
     def to_entity(self) -> "TrainerBookingSettings":
@@ -54,6 +56,7 @@ class TrainerBookingSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             max_active_bookings_per_client=self.max_active_bookings_per_client,
             no_show_charges_package=self.no_show_charges_package,
             ask_attendance_confirmation=self.ask_attendance_confirmation,
+            ask_rating=self.ask_rating,
         )
 
     def update_model(self, entity: "TrainerBookingSettings") -> None:
@@ -62,3 +65,4 @@ class TrainerBookingSettingsModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.max_active_bookings_per_client = entity.max_active_bookings_per_client
         self.no_show_charges_package = entity.no_show_charges_package
         self.ask_attendance_confirmation = entity.ask_attendance_confirmation
+        self.ask_rating = entity.ask_rating

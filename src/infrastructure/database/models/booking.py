@@ -68,6 +68,7 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     attendance_requested_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     client: Mapped["ClientModel"] = relationship(
         "ClientModel",
@@ -103,6 +104,7 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             paid_at=entity.paid_at,
             client_confirmed_at=entity.client_confirmed_at,
             attendance_requested_at=entity.attendance_requested_at,
+            rating=entity.rating,
         )
 
     def to_entity(self):
@@ -122,6 +124,7 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             paid_at=self.paid_at,
             client_confirmed_at=self.client_confirmed_at,
             attendance_requested_at=self.attendance_requested_at,
+            rating=self.rating,
             created_at=self.created_at,
         )
 
@@ -140,3 +143,4 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.paid_at = entity.paid_at
         self.client_confirmed_at = entity.client_confirmed_at
         self.attendance_requested_at = entity.attendance_requested_at
+        self.rating = entity.rating

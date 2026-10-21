@@ -12,3 +12,5 @@ class TrainerBookingSettings(Entity):
     no_show_charges_package: bool = True
     # накануне спрашивать клиента «придёте?» (✅ приду / ❌ не смогу)
     ask_attendance_confirmation: bool = True
+    # после тренировки просить клиента оценить её (1–5 ⭐)
+    ask_rating: bool = True

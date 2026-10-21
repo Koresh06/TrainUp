@@ -13,6 +13,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from src.application.interfaces.notification_service import (
     AttendanceRequestDTO,
+    RatingRequestDTO,
     ClientRequestNotificationDTO,
     MailingResultDTO,
     ManualPaymentRequestDTO,
@@ -36,6 +37,7 @@ from src.infrastructure.notifications.callback_data.payment import (
     ManualPaymentCD,
 )
 from src.infrastructure.notifications.callback_data.plan_next import PlanNextTrainingCD
+from src.infrastructure.notifications.callback_data.rating import RateTrainingCD
 from src.infrastructure.notifications.callback_data.reminder import ReminderAction, ReminderActionCD
 from src.infrastructure.notifications.callback_data.request import RequestActionCD
 from src.infrastructure.notifications.callback_data.subscription import (
@@ -302,6 +304,21 @@ class TelegramNotificationService(NotificationService):
             f"с <b>{escape(data.trainer_name)}</b>.\n\n"
             f"Подтвердите, пожалуйста, что придёте. Если планы изменились — "
             f"отмените, и время освободится для других."
+        )
+        await self._send(data.chat_id, text, kb.as_markup())
+
+    async def notify_rating_request(self, data: RatingRequestDTO) -> None:
+        kb = InlineKeyboardBuilder()
+        for stars in range(1, 6):
+            kb.button(
+                text=f"{stars}⭐",
+                callback_data=RateTrainingCD(booking_id=data.booking_id, stars=stars).pack(),
+            )
+        kb.adjust(5)
+        text = (
+            f"🏁 <b>Как прошла тренировка?</b>\n\n"
+            f"{data.date_label} с <b>{escape(data.trainer_name)}</b>. "
+            f"Оцените от 1 до 5 — тренер увидит оценку и станет ещё лучше 💪"
         )
         await self._send(data.chat_id, text, kb.as_markup())
 

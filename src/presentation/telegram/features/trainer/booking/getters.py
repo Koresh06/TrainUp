@@ -363,6 +363,8 @@ async def booking_detail_getter(
     lines.append(f"📌 {STATUS_TITLES.get(status, status.value)}")
     if booking.recurring_booking_id is not None:
         lines.append("🔁 Постоянная тренировка")
+    if booking.rating is not None:
+        lines.append(f"⭐ Оценка клиента: {'⭐' * booking.rating} ({booking.rating}/5)")
     if booking.client_confirmed_at is not None and status in ACTIVE_BOOKING_STATUSES:
         lines.append("👍 Клиент подтвердил, что придёт")
     elif booking.attendance_requested_at is not None and status in ACTIVE_BOOKING_STATUSES:

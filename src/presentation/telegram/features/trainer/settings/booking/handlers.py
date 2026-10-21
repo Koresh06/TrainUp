@@ -110,3 +110,24 @@ async def on_toggle_ask_attendance(
             ask_attendance_confirmation=not current.ask_attendance_confirmation,
         )
     )
+
+
+@inject
+async def on_toggle_ask_rating(
+    callback: CallbackQuery,
+    button: Button,
+    dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+) -> None:
+    trainer_id: int = dialog_manager.start_data["trainer_id"]
+    current: TrainerBookingSettings = await mediator.handle(
+        GetTrainerBookingSettingsRequest(trainer_id=trainer_id)
+    )
+    await mediator.handle(
+        UpdateTrainerBookingSettingsRequest(
+            trainer_id=trainer_id,
+            calendar_horizon_days=current.calendar_horizon_days,
+            max_active_bookings_per_client=current.max_active_bookings_per_client,
+            ask_rating=not current.ask_rating,
+        )
+    )
