@@ -753,6 +753,7 @@ class UseCasesProvider(Provider):
         notification_service: NotificationService,
         booking_scheduler: BookingScheduler,
         vacation_repo: TrainerVacationRepository,
+        subscription_repo: TrainerSubscriptionRepository,
         transaction_manager: TransactionManager,
     ) -> MaintainRecurringBookingsUseCase:
         return MaintainRecurringBookingsUseCase(
@@ -767,6 +768,7 @@ class UseCasesProvider(Provider):
             notification_service=notification_service,
             booking_scheduler=booking_scheduler,
             vacation_repo=vacation_repo,
+            subscription_repo=subscription_repo,
             transaction_manager=transaction_manager,
         )
 
@@ -1132,6 +1134,7 @@ class UseCasesProvider(Provider):
         client_repo: ClientRepository,
         trainer_repo: TrainerRepository,
         recurring_repo: RecurringBookingRepository,
+        subscription_repo: TrainerSubscriptionRepository,
         notification_service: NotificationService,
     ) -> SendPlanNextTrainingReminderUseCase:
         return SendPlanNextTrainingReminderUseCase(
@@ -1140,6 +1143,7 @@ class UseCasesProvider(Provider):
             client_repo=client_repo,
             trainer_repo=trainer_repo,
             recurring_repo=recurring_repo,
+            subscription_repo=subscription_repo,
             notification_service=notification_service,
         )
 

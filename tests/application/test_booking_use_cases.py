@@ -1,10 +1,15 @@
-from datetime import time, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
+from decimal import Decimal
 
 import pytest
 
 from src.application.use_cases.booking.create import (
     CreateBookingRequest,
     CreateBookingUseCase,
+)
+from src.application.use_cases.booking.send_plan_next_reminder import (
+    SendPlanNextTrainingReminderRequest,
+    SendPlanNextTrainingReminderUseCase,
 )
 from src.application.use_cases.recurring_booking.maintain import (
     MaintainRecurringBookingsRequest,
@@ -15,8 +20,14 @@ from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.client import Client
 from src.domain.entities.recurring_booking import RecurringBooking
 from src.domain.entities.trainer import Trainer
+from src.domain.entities.trainer_subscription import TrainerSubscription
 from src.domain.enums.booking import BookingStatus
 from src.domain.enums.slot import SlotStatus
+from src.domain.enums.subscription import (
+    SubscriptionPlan,
+    SubscriptionSource,
+    SubscriptionStatus,
+)
 from src.domain.enums.training import SportExperience
 from src.domain.exception.booking import (
     ActiveBookingsLimitExceededException,
@@ -34,6 +45,7 @@ from tests.fakes.booking import (
     FakeTransactionManager,
 )
 from tests.fakes.calendar import FakeCalendarSlotRepository, FakeSlotTemplateRepository
+from tests.fakes.common import FakeSubscriptions
 
 TRAINER = Trainer(
     id=1, tg_id=100, name="Тренер", bio="", notification_chat_id=-500, is_active=True
@@ -48,6 +60,19 @@ CLIENT = Client(
     sport_experience=SportExperience.NONE,
 )
 START = time(10, 0, tzinfo=timezone.utc)
+
+
+def active_subscription(trainer_id: int = 1) -> TrainerSubscription:
+    now = datetime.now(timezone.utc)
+    return TrainerSubscription(
+        trainer_id=trainer_id,
+        plan=SubscriptionPlan.CUSTOM,
+        amount=Decimal("0"),
+        status=SubscriptionStatus.ACTIVE,
+        started_at=now,
+        expired_at=now + timedelta(days=7),
+        source=SubscriptionSource.TRIAL,
+    )
 
 
 @pytest.fixture
@@ -169,6 +194,7 @@ class TestMaintainRecurringBookings:
             notification_service=notifications,
             booking_scheduler=FakeBookingScheduler(),
             vacation_repo=FakeNoneRepository(),
+            subscription_repo=FakeSubscriptions([active_subscription()]),
             transaction_manager=FakeTransactionManager(),
         )
 
@@ -277,3 +303,75 @@ class TestMaintainRecurringBookings:
 
         assert booking_repo._bookings == {}
         assert notifications.sent[0][0] == TRAINER.notification_chat_id
+
+    async def test_no_subscription_skips_silently(
+        self,
+        slot_repo: FakeCalendarSlotRepository,
+        booking_repo: FakeBookingRepository,
+        calendar_service: CalendarService,
+        notifications: FakeNotificationService,
+    ) -> None:
+        next_slot = await add_slot(slot_repo, 6)
+        recurring = self.make_recurring(next_slot.slot_date.weekday())
+        use_case = self.make_use_case(
+            recurring, slot_repo, booking_repo, calendar_service, notifications
+        )
+        use_case.subscription_repo = FakeSubscriptions()
+
+        await use_case(MaintainRecurringBookingsRequest())
+
+        # подписка кончилась — ни записи клиенту, ни сообщений
+        assert booking_repo._bookings == {} and notifications.sent == []
+
+
+class TestPlanNextTrainingReminder:
+    """«Запланируйте следующую тренировку» — только если тренер принимает записи."""
+
+    async def make_use_case(self, slot_repo: FakeCalendarSlotRepository, subscriptions):
+        past_slot = await add_slot(slot_repo, -4)
+        completed = Booking(
+            id=1, client_id=7, trainer_id=1, slot_id=past_slot.id,
+            status=BookingStatus.COMPLETED,
+        )
+
+        class Bookings:
+            async def get_upcoming_by_client(self, client_id):
+                return []
+
+            async def get_latest_completed_by_client(self, client_id):
+                return completed
+
+        class Recurring:
+            async def get_active_by_trainer_and_client(self, trainer_id, client_id):
+                return None
+
+        class Notifications:
+            def __init__(self) -> None:
+                self.sent = []
+
+            async def notify_plan_next_training(self, data):
+                self.sent.append(data)
+
+        notifications = Notifications()
+        use_case = SendPlanNextTrainingReminderUseCase(
+            booking_repo=Bookings(),
+            slot_repo=slot_repo,
+            client_repo=FakeClientRepository([CLIENT]),
+            trainer_repo=FakeTrainerRepository([TRAINER]),
+            recurring_repo=Recurring(),
+            subscription_repo=subscriptions,
+            notification_service=notifications,
+        )
+        return use_case, notifications
+
+    async def test_sent_with_active_subscription(self, slot_repo) -> None:
+        use_case, notifications = await self.make_use_case(
+            slot_repo, FakeSubscriptions([active_subscription()])
+        )
+        await use_case(SendPlanNextTrainingReminderRequest(client_id=7))
+        assert len(notifications.sent) == 1
+
+    async def test_skipped_without_subscription(self, slot_repo) -> None:
+        use_case, notifications = await self.make_use_case(slot_repo, FakeSubscriptions())
+        await use_case(SendPlanNextTrainingReminderRequest(client_id=7))
+        assert notifications.sent == []

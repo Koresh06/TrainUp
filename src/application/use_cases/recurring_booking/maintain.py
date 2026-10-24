@@ -13,6 +13,7 @@ from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.recurring_booking import RecurringBookingRepository
+from src.domain.repositories.subscription import TrainerSubscriptionRepository
 from src.domain.repositories.trainer import TrainerRepository
 from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
 from src.domain.repositories.trainer_reminder_settings import TrainerReminderSettingsRepository
@@ -42,14 +43,27 @@ class MaintainRecurringBookingsUseCase(UseCase[MaintainRecurringBookingsRequest,
     notification_service: NotificationService
     booking_scheduler: BookingScheduler
     vacation_repo: TrainerVacationRepository
+    subscription_repo: TrainerSubscriptionRepository
     transaction_manager: TransactionManager
 
     async def __call__(self, command: MaintainRecurringBookingsRequest) -> None:
         recurring_bookings = await self.recurring_repo.get_all_active()
         today = get_project_today()
         created_count = 0
+        # подписка проверяется один раз на тренера, а не на каждую постоянку
+        trainer_available: dict[int, bool] = {}
 
         for recurring in recurring_bookings:
+            if recurring.trainer_id not in trainer_available:
+                trainer_available[recurring.trainer_id] = await self._is_trainer_available(
+                    recurring.trainer_id
+                )
+            if not trainer_available[recurring.trainer_id]:
+                # подписка кончилась или тренер заблокирован — новые тренировки
+                # не создаём (и клиентам о них не пишем). Сама постоянка остаётся:
+                # после продления всё продолжится с ближайшей недели
+                continue
+
             latest = await self.booking_repo.get_latest_by_recurring_booking_id(recurring.id)
 
             # ближайшее вхождение ещё впереди — ждём, пока пройдёт. Статус не важен:
@@ -98,9 +112,16 @@ class MaintainRecurringBookingsUseCase(UseCase[MaintainRecurringBookingsRequest,
             created_count += 1
 
         logger.info(
-            "[MaintainRecurringBookings:done] checked=%s created=%s",
+            "[MaintainRecurringBookings:done] checked=%s created=%s skipped_trainers=%s",
             len(recurring_bookings), created_count,
+            sum(1 for available in trainer_available.values() if not available),
         )
+
+    async def _is_trainer_available(self, trainer_id: int) -> bool:
+        trainer = await self.trainer_repo.get_by_id(trainer_id)
+        if trainer is None or not trainer.is_active:
+            return False
+        return await self.subscription_repo.get_active_by_trainer_id(trainer_id) is not None
 
     async def _notify_trainer_slot_unavailable(
         self, recurring: RecurringBooking, next_date: date

@@ -81,6 +81,17 @@ async def on_digest_open_schedule(
         await callback.answer("Кабинет тренера не найден", show_alert=True)
         return
     await callback.answer()
+    # сводка могла прийти ещё при живой подписке — кнопку нажимают позже
+    subscription: TrainerSubscription | None = await mediator.handle(
+        GetActiveSubscriptionRequest(trainer_id=trainer.id)
+    )
+    if subscription is None:
+        await dialog_manager.start(
+            state=SubscriptionSG.select_plan,
+            mode=StartMode.RESET_STACK,
+            data={"trainer_id": trainer.id},
+        )
+        return
     await dialog_manager.start(
         state=TrainerMainSG.main,
         mode=StartMode.RESET_STACK,

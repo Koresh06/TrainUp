@@ -12,6 +12,7 @@ from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.recurring_booking import RecurringBookingRepository
+from src.domain.repositories.subscription import TrainerSubscriptionRepository
 from src.domain.repositories.trainer import TrainerRepository
 from src.domain.utils import get_training_datetime_utc
 from src.utils.get_datetime_utc_now import get_datetime_utc_now
@@ -39,6 +40,7 @@ class SendPlanNextTrainingReminderUseCase(
     client_repo: ClientRepository
     trainer_repo: TrainerRepository
     recurring_repo: RecurringBookingRepository
+    subscription_repo: TrainerSubscriptionRepository
     notification_service: NotificationService
 
     async def __call__(self, command: SendPlanNextTrainingReminderRequest) -> None:
@@ -73,6 +75,14 @@ class SendPlanNextTrainingReminderUseCase(
 
         trainer = await self.trainer_repo.get_by_id(client.trainer_id)
         if trainer is None:
+            return
+        # кнопка «записаться» всё равно упрётся в «тренер недоступен» —
+        # не зовём клиента, пока у тренера нет подписки или он заблокирован
+        if (
+            not trainer.is_active
+            or await self.subscription_repo.get_active_by_trainer_id(trainer.id) is None
+        ):
+            logger.info("[PlanNextReminder:skip] client_id=%s trainer unavailable", client.id)
             return
 
         await self.notification_service.notify_plan_next_training(
