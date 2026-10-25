@@ -12,7 +12,9 @@ from aiogram_dialog.widgets.kbd import (
 from aiogram_dialog.widgets.style import Style
 from aiogram_dialog.widgets.text import Const, Format
 
-from src.presentation.telegram.features.client.validaters import validate_feedback_message
+from src.presentation.telegram.features.client.validaters import (
+    validate_feedback_message,
+)
 from src.presentation.telegram.features.error_handler import on_input_error
 from src.presentation.telegram.features.handlers_phone import validate_phone_number
 
@@ -62,7 +64,11 @@ client_feedback_dialog = Dialog(
             id="to_callback_phone",
             state=ClientFeedbackSG.callback_phone,
         ),
-        SwitchTo(Const("⬅️ Назад"), id="back_to_main", state=ClientFeedbackSG.main),
+        SwitchTo(
+            Const("⬅️ Назад"),
+            id="back_to_main",
+            state=ClientFeedbackSG.main,
+        ),
         state=ClientFeedbackSG.callback_confirm,
         getter=callback_confirm_getter,
     ),
@@ -92,7 +98,11 @@ client_feedback_dialog = Dialog(
             on_success=on_feedback_message_entered,
             on_error=on_input_error,
         ),
-        SwitchTo(Const("⬅️ Назад"), id="back_to_main", state=ClientFeedbackSG.main),
+        SwitchTo(
+            Const("⬅️ Назад"),
+            id="back_to_main",
+            state=ClientFeedbackSG.main,
+        ),
         state=ClientFeedbackSG.message,
     ),
     Window(
@@ -110,13 +120,21 @@ client_feedback_dialog = Dialog(
             height=8,
             hide_on_single_page=True,
         ),
-        SwitchTo(Const("⬅️ Назад"), id="back_to_main", state=ClientFeedbackSG.main),
+        SwitchTo(
+            Const("⬅️ Назад"),
+            id="back_to_main",
+            state=ClientFeedbackSG.main,
+        ),
         state=ClientFeedbackSG.faq_list,
         getter=faq_list_getter,
     ),
     Window(
         Format("❓ <b>{question}</b>\n\n{answer}"),
-        SwitchTo(Const("⬅️ К вопросам"), id="back_to_faq", state=ClientFeedbackSG.faq_list),
+        SwitchTo(
+            Const("⬅️ К вопросам"),
+            id="back_to_faq",
+            state=ClientFeedbackSG.faq_list,
+        ),
         state=ClientFeedbackSG.faq_answer,
         getter=faq_answer_getter,
     ),

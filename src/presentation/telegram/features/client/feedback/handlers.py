@@ -44,7 +44,10 @@ async def on_callback_confirm(
         GetClientByTgIdRequest(tg_id=callback.from_user.id)
     )
     await _send_feedback(
-        dialog_manager, mediator, callback.from_user.id, phone=client.phone
+        dialog_manager,
+        mediator,
+        callback.from_user.id,
+        phone=client.phone,
     )
     await callback.answer("Тренер перезвонит вам в ближайшее время 📞", show_alert=True)
     await dialog_manager.done()
@@ -58,7 +61,12 @@ async def on_callback_phone_entered(
     value: str,
     mediator: FromDishka[Mediator],
 ) -> None:
-    await _send_feedback(dialog_manager, mediator, message.from_user.id, phone=value)
+    await _send_feedback(
+        dialog_manager,
+        mediator,
+        message.from_user.id,
+        phone=value,
+    )
     await message.answer("✅ Тренер перезвонит вам в ближайшее время 📞")
     await dialog_manager.done()
 
@@ -71,7 +79,12 @@ async def on_feedback_message_entered(
     value: str,
     mediator: FromDishka[Mediator],
 ) -> None:
-    await _send_feedback(dialog_manager, mediator, message.from_user.id, message=value)
+    await _send_feedback(
+        dialog_manager,
+        mediator,
+        message.from_user.id,
+        message=value,
+    )
     await message.answer("✅ Сообщение отправлено тренеру")
     await dialog_manager.done()
 

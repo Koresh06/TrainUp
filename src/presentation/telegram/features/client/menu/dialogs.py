@@ -56,7 +56,11 @@ client_menu_dialog = Dialog(
             id="profile",
             on_click=on_menu_item_click,
         ),
-        SwitchTo(Const("🎁 Пригласить друга"), id="referral", state=ClientMenuSG.referral),
+        SwitchTo(
+            Const("🎁 Пригласить друга"),
+            id="referral",
+            state=ClientMenuSG.referral,
+        ),
         Button(
             Const("👤 Ваш инструктор"),
             id="trainer_profile",
@@ -73,7 +77,11 @@ client_menu_dialog = Dialog(
     ),
     Window(
         Format("📋 <b>Мои записи</b>\n\n{bookings_block}\n\n{contact_hint}"),
-        SwitchTo(Const("⬅️ Назад"), id="back_to_menu", state=ClientMenuSG.main),
+        SwitchTo(
+            Const("⬅️ Назад"),
+            id="back_to_menu",
+            state=ClientMenuSG.main,
+        ),
         LinkPreview(is_disabled=True),
         state=ClientMenuSG.my_bookings,
         getter=my_bookings_getter,
@@ -86,7 +94,11 @@ client_menu_dialog = Dialog(
             "{invited}"
         ),
         Url(Const("📤 Поделиться"), Format("{share_url}")),
-        SwitchTo(Const("⬅️ Назад"), id="referral_back", state=ClientMenuSG.main),
+        SwitchTo(
+            Const("⬅️ Назад"),
+            id="referral_back",
+            state=ClientMenuSG.main,
+        ),
         LinkPreview(is_disabled=True),
         state=ClientMenuSG.referral,
         getter=referral_getter,

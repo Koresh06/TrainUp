@@ -5,7 +5,9 @@ from aiogram_dialog.widgets.kbd import Back, Button, Cancel, Group, Select
 from aiogram_dialog.widgets.style import Style
 from aiogram_dialog.widgets.text import Const, Format
 
-from src.presentation.telegram.features.client.validaters import validate_request_comment
+from src.presentation.telegram.features.client.validaters import (
+    validate_request_comment,
+)
 from src.presentation.telegram.features.error_handler import on_input_error
 
 from .getters import consultation_confirm_getter, consultation_types_getter
@@ -19,10 +21,7 @@ from .states import ClientConsultationSG
 
 client_consultation_dialog = Dialog(
     Window(
-        Const(
-            "💬 <b>Консультация с тренером</b>\n\n"
-            "Выберите тип консультации:"
-        ),
+        Const("💬 <b>Консультация с тренером</b>\n\n" "Выберите тип консультации:"),
         Group(
             Select(
                 Format("{item[label]}"),
@@ -48,7 +47,11 @@ client_consultation_dialog = Dialog(
             on_success=on_comment_entered,
             on_error=on_input_error,
         ),
-        Button(Const("Пропустить ➡️"), id="skip_comment", on_click=on_comment_skip),
+        Button(
+            Const("Пропустить ➡️"),
+            id="skip_comment",
+            on_click=on_comment_skip,
+        ),
         Back(Const("⬅️ Назад")),
         state=ClientConsultationSG.comment,
     ),
