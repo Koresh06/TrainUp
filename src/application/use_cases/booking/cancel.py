@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from html import escape
 
 from src.application.interfaces.booking_scheduler import BookingScheduler
 from src.application.interfaces.notification_service import NotificationService
@@ -68,7 +69,7 @@ class CancelBookingUseCase(UseCase[CancelBookingRequest, Booking]):
                 await self.notification_service.send(
                     chat_id=client.tg_id,
                     text=(
-                        f"❌ Тренер {trainer.name} отменил вашу тренировку\n\n"
+                        f"❌ Тренер {escape(trainer.name)} отменил вашу тренировку\n\n"
                         f"📅 {slot.slot_date.strftime('%d.%m.%Y')}\n"
                         f"🕐 {slot.start_time.strftime('%H:%M')}\n\n"
                         + (command.client_message or "Вы можете выбрать другое время.")
@@ -89,8 +90,9 @@ class CancelBookingUseCase(UseCase[CancelBookingRequest, Booking]):
                 )
                 await self.notification_service.send(
                     chat_id=trainer.notification_chat_id,
+                    fallback_chat_id=trainer.tg_id,
                     text=(
-                        f"❌ Клиент {full_name} отменил тренировку\n\n"
+                        f"❌ Клиент {escape(full_name)} отменил тренировку\n\n"
                         f"👤 {username_line}\n"
                         f"📞 {client.phone or '—'}\n\n"
                         f"📅 {slot.slot_date.strftime('%d.%m.%Y')}\n"

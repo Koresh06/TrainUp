@@ -112,7 +112,7 @@ class RecordingNotifications:
     def of(self, method: str) -> list:
         return [arg for name, arg in self.calls if name == method]
 
-    async def send(self, *, chat_id: int, text: str) -> None:
+    async def send(self, *, chat_id: int, text: str, fallback_chat_id: int | None = None) -> None:
         self.calls.append(("send", (chat_id, text)))
 
     async def notify_new_booking(self, data) -> None:

@@ -5,6 +5,7 @@ from aiogram.exceptions import TelegramForbiddenError
 from aiogram.methods import SendMessage
 
 from src.application.interfaces.notification_service import (
+    NewBookingNotificationDTO,
     SubscriptionEvent,
     SubscriptionNotificationDTO,
 )
@@ -40,6 +41,32 @@ async def test_send_does_not_raise_when_user_blocked_bot() -> None:
     await service.send(chat_id=42, text="hi")
     await service.send(chat_id=43, text="hi")
     assert [m["chat_id"] for m in bot.sent] == [43]
+
+
+async def test_group_unavailable_falls_back_to_trainer_dm() -> None:
+    # бота удалили из рабочей группы — уведомление дублируется тренеру в личку
+    bot = FakeBot(blocked={-100})
+    service = TelegramNotificationService(bot=bot)
+    await service.send(chat_id=-100, text="❌ Клиент отменил", fallback_chat_id=7)
+    [message] = bot.sent
+    assert message["chat_id"] == 7 and "рабочую группу" in message["text"]
+
+    # группа работает — в личку ничего не уходит
+    await service.send(chat_id=-200, text="ok", fallback_chat_id=7)
+    assert [m["chat_id"] for m in bot.sent] == [7, -200]
+
+
+async def test_new_booking_fallback_keeps_buttons() -> None:
+    bot = FakeBot(blocked={-100})
+    await TelegramNotificationService(bot=bot).notify_new_booking(
+        NewBookingNotificationDTO(
+            chat_id=-100, booking_id=1, date_label="01.11.2026", time_label="10:00",
+            client_first_name="Пётр", client_last_name=None, client_username=None,
+            client_phone=None, client_age=None, fallback_chat_id=7,
+        )
+    )
+    [message] = bot.sent
+    assert message["chat_id"] == 7 and message["reply_markup"] is not None
 
 
 async def test_broadcast_counts_blocked() -> None:

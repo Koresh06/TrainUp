@@ -151,10 +151,12 @@ def register_taskiq_tasks(broker, *, container):
             use_case = await request_container.get(RejectPaymentUseCase)
             await use_case(RejectPaymentRequest(external_id=external_id))
 
-    # каждый час: у каждого тренера свой час утренней/вечерней сводки
+    # у каждого тренера свой час сводки; запуск каждые 15 минут, а не раз в час:
+    # scheduler, перезапущенный ровно в :00, пропускает cron текущей минуты —
+    # и тренер остался бы без сводки. Дубли отсекает дата последней отправки
     @broker.task(
         task_name="send_trainer_digests",
-        schedule=[{"cron": "0 * * * *"}],
+        schedule=[{"cron": "*/15 * * * *"}],
     )
     async def send_trainer_digests() -> None:
         async with container() as request_container:

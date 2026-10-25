@@ -91,6 +91,7 @@ class RegisterClientUseCase(UseCase[RegisterClientRequest, Client]):
             return
         await self.notification_service.send(
             chat_id=trainer.notification_chat_id,
+            fallback_chat_id=trainer.tg_id,
             text=(
                 f"🎁 Новый клиент <b>{escape(client.full_name)}</b> пришёл по приглашению "
                 f"<b>{escape(referrer.full_name)}</b>."

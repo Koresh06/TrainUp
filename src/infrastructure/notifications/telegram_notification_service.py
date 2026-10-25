@@ -47,12 +47,24 @@ from src.utils.timezone import to_moscow
 
 logger = logging.getLogger(__name__)
 
+# дописываем к уведомлению, которое не дошло в рабочую группу и ушло в личку
+GROUP_FALLBACK_NOTE = (
+    "\n\n⚠️ <i>Не получилось отправить в рабочую группу — проверьте, что бот "
+    "в ней есть: /trainer → 👤 Профиль → 🔔 Группа.</i>"
+)
+
 
 class TelegramNotificationService(NotificationService):
     def __init__(self, bot: Bot) -> None:
         self._bot = bot
 
-    async def _send(self, chat_id: int | None, text: str, reply_markup: Any = None) -> bool:
+    async def _send(
+        self,
+        chat_id: int | None,
+        text: str,
+        reply_markup: Any = None,
+        fallback_chat_id: int | None = None,
+    ) -> bool:
         if chat_id is None:
             # страховка: клиент без Telegram — use case'ы такие сообщения
             # не отправляют, но лучше промолчать, чем уронить операцию
@@ -67,10 +79,16 @@ class TelegramNotificationService(NotificationService):
             return True
         except (TelegramForbiddenError, TelegramBadRequest) as error:
             logger.warning("[Notification] chat_id=%s not delivered: %s", chat_id, error)
-            return False
+            if fallback_chat_id is None or fallback_chat_id == chat_id:
+                return False
+            # бота удалили из группы / группу удалили — иначе тренер так и не
+            # узнает о новой записи или отмене
+            return await self._send(fallback_chat_id, text + GROUP_FALLBACK_NOTE, reply_markup)
 
-    async def send(self, *, chat_id: int | None, text: str) -> None:
-        await self._send(chat_id, text)
+    async def send(
+        self, *, chat_id: int | None, text: str, fallback_chat_id: int | None = None
+    ) -> None:
+        await self._send(chat_id, text, fallback_chat_id=fallback_chat_id)
 
     async def notify_new_booking(self, data: NewBookingNotificationDTO) -> None:
         kb = InlineKeyboardBuilder()
@@ -111,7 +129,7 @@ class TelegramNotificationService(NotificationService):
             )
             text += f"\n\n📋 Анкета:\n{answers}"
 
-        await self._send(data.chat_id, text, kb.as_markup())
+        await self._send(data.chat_id, text, kb.as_markup(), data.fallback_chat_id)
 
 
     async def notify_training_reminder(self, data: TrainingReminderNotificationDTO) -> None:
@@ -169,7 +187,7 @@ class TelegramNotificationService(NotificationService):
             f"📞 {data.client_phone or '—'}\n\n"
             f"{escape(data.details)}"
         )
-        await self._send(data.chat_id, text, kb.as_markup())
+        await self._send(data.chat_id, text, kb.as_markup(), data.fallback_chat_id)
 
     async def notify_plan_next_training(
         self, data: PlanNextTrainingNotificationDTO
@@ -215,9 +233,9 @@ class TelegramNotificationService(NotificationService):
                 text = (
                     f"⏳ <b>Пробный период заканчивается через {left}</b>\n\n"
                     f"Действует до {until}. Чтобы клиенты и дальше записывались "
-                    f"сами, а напоминания и постоянные записи не остановились — "
-                    f"оформите подписку. Срок начнётся после пробного периода, "
-                    f"ни один день не пропадёт."
+                    f"сами, а тренировки постоянных клиентов создавались "
+                    f"автоматически — оформите подписку. Срок начнётся после "
+                    f"пробного периода, ни один день не пропадёт."
                 )
             else:
                 text = (

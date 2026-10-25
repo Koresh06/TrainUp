@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from html import escape
 
 from src.application.interfaces.booking_scheduler import BookingScheduler
 from src.application.interfaces.notification_service import NotificationService
@@ -81,7 +82,7 @@ class CreateBookingByTrainerUseCase(UseCase[CreateBookingByTrainerRequest, Booki
             await self.notification_service.send(
                 chat_id=client.tg_id,
                 text=(
-                    f"📅 <b>{trainer_name} записал вас на тренировку</b>\n\n"
+                    f"📅 <b>{escape(trainer_name)} записал вас на тренировку</b>\n\n"
                     f"📅 {slot.slot_date.strftime('%d.%m.%Y')}\n"
                     f"🕐 {slot.start_time.strftime('%H:%M')}\n\n"
                     f"Запись — в «📋 Мои записи»."

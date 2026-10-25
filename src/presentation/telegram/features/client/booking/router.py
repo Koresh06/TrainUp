@@ -61,12 +61,16 @@ async def on_reminder_cancel(
     callback_data: ReminderActionCD,
     mediator: FromDishka[Mediator],
 ) -> None:
-    booking: Booking = await mediator.handle(
-        GetBookingByIdRequest(booking_id=callback_data.booking_id)
-    )
-    client: Client = await mediator.handle(
-        GetClientByTgIdRequest(tg_id=callback.from_user.id)
-    )
+    try:
+        booking: Booking = await mediator.handle(
+            GetBookingByIdRequest(booking_id=callback_data.booking_id)
+        )
+        client: Client = await mediator.handle(
+            GetClientByTgIdRequest(tg_id=callback.from_user.id)
+        )
+    except (ClientNotFoundException, BookingNotFoundException):
+        await callback.answer("Это не ваша запись", show_alert=True)
+        return
     if booking.client_id != client.id:
         await callback.answer("Это не ваша запись", show_alert=True)
         return

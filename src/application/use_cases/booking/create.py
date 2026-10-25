@@ -97,6 +97,7 @@ class CreateBookingUseCase(UseCase[CreateBookingRequest, Booking]):
             await self.notification_service.notify_new_booking(
                 NewBookingNotificationDTO(
                     chat_id=trainer.notification_chat_id,
+                    fallback_chat_id=trainer.tg_id,
                     booking_id=saved.id,
                     date_label=slot.slot_date.strftime("%d.%m.%Y"),
                     time_label=slot.start_time.strftime("%H:%M"),

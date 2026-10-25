@@ -19,6 +19,8 @@ class NewBookingNotificationDTO:
     client_phone: str | None
     client_age: int | None
     client_answers: list[tuple[str, str]] = field(default_factory=list)  # (вопрос, ответ)
+    # личка тренера — если в рабочую группу доставить не удалось
+    fallback_chat_id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -42,6 +44,8 @@ class ClientRequestNotificationDTO:
     client_tg_id: int
     client_username: str | None
     client_phone: str | None
+    # личка тренера — если в рабочую группу доставить не удалось
+    fallback_chat_id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -136,7 +140,12 @@ class MailingResultDTO:
 
 
 class NotificationService(Protocol):
-    async def send(self, *, chat_id: int, text: str) -> None: ...
+    async def send(
+        self, *, chat_id: int, text: str, fallback_chat_id: int | None = None
+    ) -> None:
+        """fallback_chat_id — куда отправить, если chat_id недоступен (бота
+        удалили из рабочей группы тренера — дублируем тренеру в личку)."""
+        ...
 
     async def notify_new_booking(self, data: NewBookingNotificationDTO) -> None: ...
 

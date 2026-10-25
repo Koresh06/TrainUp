@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from src.application.interfaces.notification_service import (
     AttendanceRequestDTO,
@@ -9,6 +9,7 @@ from src.application.interfaces.notification_service import (
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.domain.constants import PROJECT_TIMEZONE, day_label
 from src.domain.entities.booking import Booking
+from src.domain.entities.trainer import Trainer
 from src.domain.enums.booking import BookingStatus
 from src.domain.exception.booking import BookingNotFoundException
 from src.domain.repositories.booking import BookingRepository, BookingView
@@ -63,56 +64,67 @@ class SendAttendanceRequestsUseCase(UseCase[SendAttendanceRequestsRequest, int])
         sent = 0
 
         for trainer in await self.trainer_repo.get_all_active():
-            settings = await self.booking_settings_repo.get_by_trainer_id(trainer.id)
-            if settings is not None and not settings.ask_attendance_confirmation:
-                continue
-            if await self.subscription_repo.get_active_by_trainer_id(trainer.id) is None:
-                continue
-            reminder = await self.reminder_settings_repo.get_by_trainer_id(trainer.id)
-            reminder_window = timedelta(
-                hours=reminder.hours_before if reminder else REMINDER_HOURS_BEFORE_TRAINING
-            )
-
-            views = await self.booking_repo.get_views(
-                trainer_id=trainer.id,
-                date_from=today,
-                date_to=today + timedelta(days=1),
-                statuses=(BookingStatus.CONFIRMED,),
-            )
-            for view in views:
-                booking = view.booking
-                training_at = _training_at(view)
-                created_at = booking.created_at
-                if created_at.tzinfo is None:
-                    created_at = created_at.replace(tzinfo=timezone.utc)
-                if (
-                    not view.client_has_telegram
-                    or booking.client_confirmed_at is not None
-                    or booking.attendance_requested_at is not None
-                    or not (now + reminder_window < training_at <= now + ATTENDANCE_REQUEST_BEFORE)
-                    or training_at - created_at < ATTENDANCE_REQUEST_BEFORE
-                ):
-                    continue
-
-                client = await self.client_repo.get_by_id(booking.client_id)
-                if client is None or not client.has_telegram:
-                    continue
-                await self.notification_service.notify_attendance_request(
-                    AttendanceRequestDTO(
-                        chat_id=client.tg_id,
-                        booking_id=booking.id,
-                        trainer_name=trainer.name,
-                        day_label=day_label(view.slot_date),
-                        time_label=view.start_time.strftime("%H:%M"),
-                        is_tomorrow=view.slot_date > today,
-                    )
-                )
-                booking.attendance_requested_at = now
-                await self.booking_repo.save(booking)
-                await self.transaction_manager.commit()
-                sent += 1
+            try:
+                sent += await self._process_trainer(trainer, now, today)
+            except Exception:
+                # сбой у одного тренера не должен оставлять без запроса клиентов
+                # остальных тренеров
+                await self.transaction_manager.rollback()
+                logger.exception("[SendAttendanceRequests:error] trainer_id=%s", trainer.id)
 
         logger.info("[SendAttendanceRequests:done] sent=%s", sent)
+        return sent
+
+    async def _process_trainer(self, trainer: Trainer, now: datetime, today: date) -> int:
+        sent = 0
+        settings = await self.booking_settings_repo.get_by_trainer_id(trainer.id)
+        if settings is not None and not settings.ask_attendance_confirmation:
+            return 0
+        if await self.subscription_repo.get_active_by_trainer_id(trainer.id) is None:
+            return 0
+        reminder = await self.reminder_settings_repo.get_by_trainer_id(trainer.id)
+        reminder_window = timedelta(
+            hours=reminder.hours_before if reminder else REMINDER_HOURS_BEFORE_TRAINING
+        )
+
+        views = await self.booking_repo.get_views(
+            trainer_id=trainer.id,
+            date_from=today,
+            date_to=today + timedelta(days=1),
+            statuses=(BookingStatus.CONFIRMED,),
+        )
+        for view in views:
+            booking = view.booking
+            training_at = _training_at(view)
+            created_at = booking.created_at
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            if (
+                not view.client_has_telegram
+                or booking.client_confirmed_at is not None
+                or booking.attendance_requested_at is not None
+                or not (now + reminder_window < training_at <= now + ATTENDANCE_REQUEST_BEFORE)
+                or training_at - created_at < ATTENDANCE_REQUEST_BEFORE
+            ):
+                continue
+
+            client = await self.client_repo.get_by_id(booking.client_id)
+            if client is None or not client.has_telegram or not client.is_active:
+                continue
+            await self.notification_service.notify_attendance_request(
+                AttendanceRequestDTO(
+                    chat_id=client.tg_id,
+                    booking_id=booking.id,
+                    trainer_name=trainer.name,
+                    day_label=day_label(view.slot_date),
+                    time_label=view.start_time.strftime("%H:%M"),
+                    is_tomorrow=view.slot_date > today,
+                )
+            )
+            booking.attendance_requested_at = now
+            await self.booking_repo.save(booking)
+            await self.transaction_manager.commit()
+            sent += 1
         return sent
 
 

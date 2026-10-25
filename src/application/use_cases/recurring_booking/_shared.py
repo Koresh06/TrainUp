@@ -1,3 +1,5 @@
+from html import escape
+
 from src.application.interfaces.booking_scheduler import BookingScheduler
 from src.application.interfaces.notification_service import NotificationService
 from src.application.use_cases.booking._shared import _schedule_booking_jobs
@@ -61,7 +63,7 @@ async def _create_recurring_occurrence(
 
         text = (
             f"📅 <b>Ваша постоянная тренировка запланирована</b>\n\n"
-            f"Тренер: {trainer.name}\n"
+            f"Тренер: {escape(trainer.name)}\n"
             f"📅 {slot.slot_date.strftime('%d.%m.%Y')}\n"
             f"🕐 {slot.start_time.strftime('%H:%M')}\n\n"
             f"Если понадобится перенести время — свяжитесь с тренером напрямую:\n"

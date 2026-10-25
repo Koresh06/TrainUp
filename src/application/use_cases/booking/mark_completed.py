@@ -68,7 +68,13 @@ class MarkBookingCompletedUseCase(UseCase[MarkBookingCompletedRequest, None]):
         client = await self.client_repo.get_by_id(client_id)
         trainer = await self.trainer_repo.get_by_id(trainer_id)
         slot = await self.slot_repo.get_by_id(slot_id)
-        if client is None or not client.has_telegram or trainer is None or slot is None:
+        if (
+            client is None
+            or not client.has_telegram
+            or not client.is_active
+            or trainer is None
+            or slot is None
+        ):
             return
         await self.notification_service.notify_rating_request(
             RatingRequestDTO(

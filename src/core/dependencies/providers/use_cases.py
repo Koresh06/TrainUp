@@ -903,10 +903,16 @@ class UseCasesProvider(Provider):
     def update_trainer_reminder_settings_use_case(
         self,
         trainer_reminder_settings_repo: TrainerReminderSettingsRepository,
+        booking_repo: BookingRepository,
+        slot_repo: CalendarSlotRepository,
+        booking_scheduler: BookingScheduler,
         transaction_manager: TransactionManager
     ) -> UpdateTrainerReminderSettingsUseCase:
         return UpdateTrainerReminderSettingsUseCase(
             settings_repo=trainer_reminder_settings_repo,
+            booking_repo=booking_repo,
+            slot_repo=slot_repo,
+            booking_scheduler=booking_scheduler,
             transaction_manager=transaction_manager,
         )
 

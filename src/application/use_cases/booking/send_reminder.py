@@ -50,15 +50,22 @@ class SendTrainingReminderUseCase(UseCase[SendTrainingReminderRequest, None]):
             )
             return
 
-        if not client.has_telegram:
-            # напоминание могли поставить до того, как карточку отвязали —
-            # клиенту без Telegram писать некуда
+        if not client.has_telegram or not client.is_active:
+            # напоминание могли поставить до того, как карточку отвязали или
+            # клиента заблокировали — писать некуда / кнопки всё равно не сработают
             return
 
         training_at_utc = get_training_datetime_utc(slot)
-        minutes_before = max(
-            int((training_at_utc - get_datetime_utc_now()).total_seconds() // 60), 0
-        )
+        seconds_before = (training_at_utc - get_datetime_utc_now()).total_seconds()
+        if seconds_before <= 0:
+            # планировщик лежал и задача сработала с опозданием — «через 1 минуту»
+            # о тренировке, которая уже идёт, только путает клиента
+            logger.info(
+                "[SendTrainingReminder:skip] booking_id=%s training already started",
+                command.booking_id,
+            )
+            return
+        minutes_before = int(seconds_before // 60)
 
         await self.notification_service.notify_training_reminder(
             TrainingReminderNotificationDTO(

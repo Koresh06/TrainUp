@@ -107,7 +107,7 @@ class FakeNotificationService:
         self.sent: list[tuple[int, str]] = []
         self.new_bookings: list = []
 
-    async def send(self, *, chat_id: int, text: str) -> None:
+    async def send(self, *, chat_id: int, text: str, fallback_chat_id: int | None = None) -> None:
         self.sent.append((chat_id, text))
 
     async def notify_new_booking(self, data) -> None:

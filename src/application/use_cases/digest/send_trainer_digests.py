@@ -36,9 +36,9 @@ class SendTrainerDigestsRequest(UseCaseRequest):
 class SendTrainerDigestsUseCase(UseCase[SendTrainerDigestsRequest, int]):
     """
     Сводка тренеру в личку: утром — «сегодня у вас…», вечером (если включено)
-    — «завтра у вас…». Cron запускается каждый час, а час отправки у каждого
-    тренера свой. Дата последней отправки хранится в настройках, поэтому
-    повторный запуск в тот же час ничего не дублирует.
+    — «завтра у вас…». Cron запускается каждые 15 минут, а час отправки у
+    каждого тренера свой. Дата последней отправки хранится в настройках, поэтому
+    повторные запуски в тот же час ничего не дублируют.
     """
 
     trainer_repo: TrainerRepository
@@ -51,38 +51,49 @@ class SendTrainerDigestsUseCase(UseCase[SendTrainerDigestsRequest, int]):
 
     async def __call__(self, command: SendTrainerDigestsRequest) -> int:
         local_now = (command.now or get_aware_utc_now()).astimezone(PROJECT_TIMEZONE)
-        today = local_now.date()
         sent = 0
 
         for trainer in await self.trainer_repo.get_all_active():
-            if await self.subscription_repo.get_active_by_trainer_id(trainer.id) is None:
-                continue
-            settings = await self.settings_repo.get_by_trainer_id(trainer.id)
-            settings = settings or TrainerReminderSettings(trainer_id=trainer.id)
-
-            changed = False
-            if (
-                settings.morning_digest_hour == local_now.hour
-                and settings.last_morning_digest_on != today
-            ):
-                sent += await self._send(trainer, settings, today, is_tomorrow=False)
-                settings.last_morning_digest_on = today
-                changed = True
-            if (
-                settings.evening_digest_hour == local_now.hour
-                and settings.last_evening_digest_on != today
-            ):
-                sent += await self._send(
-                    trainer, settings, today + timedelta(days=1), is_tomorrow=True
-                )
-                settings.last_evening_digest_on = today
-                changed = True
-
-            if changed:
-                await self.settings_repo.save(settings)
-                await self.transaction_manager.commit()
+            try:
+                sent += await self._process_trainer(trainer, local_now)
+            except Exception:
+                # сбой у одного тренера (флуд-лимит, сеть) не должен оставлять
+                # без сводки всех следующих по списку
+                await self.transaction_manager.rollback()
+                logger.exception("[SendTrainerDigests:error] trainer_id=%s", trainer.id)
 
         logger.info("[SendTrainerDigests:done] hour=%s sent=%s", local_now.hour, sent)
+        return sent
+
+    async def _process_trainer(self, trainer: Trainer, local_now: datetime) -> int:
+        today = local_now.date()
+        sent = 0
+        if await self.subscription_repo.get_active_by_trainer_id(trainer.id) is None:
+            return 0
+        settings = await self.settings_repo.get_by_trainer_id(trainer.id)
+        settings = settings or TrainerReminderSettings(trainer_id=trainer.id)
+
+        changed = False
+        if (
+            settings.morning_digest_hour == local_now.hour
+            and settings.last_morning_digest_on != today
+        ):
+            sent += await self._send(trainer, settings, today, is_tomorrow=False)
+            settings.last_morning_digest_on = today
+            changed = True
+        if (
+            settings.evening_digest_hour == local_now.hour
+            and settings.last_evening_digest_on != today
+        ):
+            sent += await self._send(
+                trainer, settings, today + timedelta(days=1), is_tomorrow=True
+            )
+            settings.last_evening_digest_on = today
+            changed = True
+
+        if changed:
+            await self.settings_repo.save(settings)
+            await self.transaction_manager.commit()
         return sent
 
     async def _send(

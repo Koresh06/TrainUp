@@ -131,6 +131,7 @@ class MaintainRecurringBookingsUseCase(UseCase[MaintainRecurringBookingsRequest,
             return
         await self.notification_service.send(
             chat_id=trainer.notification_chat_id,
+            fallback_chat_id=trainer.tg_id,
             text=(
                 f"⚠️ Не удалось автоматически создать постоянную тренировку "
                 f"на {next_date.strftime('%d.%m.%Y')} "

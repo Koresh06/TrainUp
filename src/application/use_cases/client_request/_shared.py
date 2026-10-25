@@ -84,6 +84,7 @@ async def _notify_trainer_about_request(
     await notification_service.notify_client_request(
         ClientRequestNotificationDTO(
             chat_id=trainer.notification_chat_id,
+            fallback_chat_id=trainer.tg_id,
             kind=request.kind,
             request_id=request.id,
             title=request.title,

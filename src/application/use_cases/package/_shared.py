@@ -42,6 +42,7 @@ async def _notify_low_balance(
         )
         await notification_service.send(
             chat_id=trainer.notification_chat_id,
+            fallback_chat_id=trainer.tg_id,
             text=(
                 f"🎫 У клиента <b>{escape(client.full_name)}</b> закончился абонемент "
                 f"«{escape(package.title)}». Предложите продление."

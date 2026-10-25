@@ -54,6 +54,7 @@ class ClaimClientInviteUseCase(UseCase[ClaimClientInviteRequest, Client]):
         if trainer is not None:
             await self.notification_service.send(
                 chat_id=trainer.notification_chat_id,
+                fallback_chat_id=trainer.tg_id,
                 text=(
                     f"🔗 <b>{escape(saved.full_name)}</b> подключился к боту по "
                     f"персональной ссылке — теперь он будет получать напоминания "

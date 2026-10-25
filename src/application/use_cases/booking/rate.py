@@ -49,10 +49,11 @@ class RateBookingUseCase(UseCase[RateBookingRequest, Booking]):
             if client is not None and trainer is not None and slot is not None:
                 await self.notification_service.send(
                     chat_id=trainer.notification_chat_id,
+                    fallback_chat_id=trainer.tg_id,
                     text=(
                         f"⚠️ <b>{escape(client.full_name)}</b> оценил тренировку "
                         f"{slot.slot_date.strftime('%d.%m')} в {slot.start_time.strftime('%H:%M')} "
-                        f"на {'⭐' * command.stars}\\n"
+                        f"на {'⭐' * command.stars}\n"
                         f"Стоит узнать, что пошло не так."
                     ),
                 )
