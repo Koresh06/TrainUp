@@ -28,7 +28,7 @@ client_program_dialog = Dialog(
     Window(
         Const(
             "🏋 <b>Программа тренировок</b>\n\n"
-            "Выберите формат занятий:"
+            "Выберите формат занятий — тренер подберёт программу под вас:"
         ),
         Group(
             Select(
@@ -45,7 +45,7 @@ client_program_dialog = Dialog(
         getter=program_types_getter,
     ),
     Window(
-        Const("Выберите направление:"),
+        Const("🎯 <b>Выберите направление:</b>"),
         Group(
             Select(
                 Format("{item[label]}"),
@@ -80,14 +80,14 @@ client_program_dialog = Dialog(
     ),
     Window(
         Format(
-            "Проверьте заявку:\n\n"
-            "📦 Формат: {program_type}\n"
-            "🎯 Направление: {direction}\n"
+            "✅ <b>Проверьте заявку</b>\n\n"
+            "📦 Формат: <b>{program_type}</b>\n"
+            "🎯 Направление: <b>{direction}</b>\n"
             "💬 Комментарий: {comment}\n\n"
-            "Детали и оплату (наличными или переводом) тренер обсудит с вами лично."
+            "<i>Детали и оплату тренер обсудит с вами лично.</i>"
         ),
         Button(
-            Const("✅ Отправить заявку"),
+            Const("📨 Отправить заявку"),
             id="confirm_program",
             on_click=on_program_confirm,
             style=Style(style=ButtonStyle.SUCCESS),

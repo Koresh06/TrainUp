@@ -148,6 +148,7 @@ async def test_trainer_digest_text() -> None:
     busy, empty = (m["text"] for m in bot.sent)
     assert "Сегодня, четверг 22 октября — 2 тренировки" in busy
     assert "Иван &lt;Петров&gt; 🔁" in busy and "📝 <i>колено</i>" in busy
-    assert "последняя в 18:00 · ≈ 6 000 BYN" in busy and "Ждут вашего подтверждения: 1" in busy
-    assert "Завтра, пятница 23 октября, тренировок нет" in empty
+    assert "🕐 09:00 – 18:00" in busy and "≈ 6 000 BYN" in busy
+    assert "Ждут подтверждения" in busy and "<b>1</b>" in busy
+    assert "Завтра, пятница 23 октября — тренировок нет" in empty
     assert bot.sent[0]["reply_markup"].inline_keyboard[0][0].callback_data == "digest:2026-10-22"

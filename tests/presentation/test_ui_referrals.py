@@ -10,7 +10,7 @@ from tests.presentation.test_ui_flows import activate_subscription
 async def test_trainer_invites_trainer(ui, run, trainer_setup) -> None:
     await activate_subscription(run, trainer_setup["trainer"].id)
     await ui.send(TRAINER_TG, "/trainer")
-    text = await ui.click(TRAINER_TG, "🎁 Пригласить тренера")
+    text = await ui.click(TRAINER_TG, "🎁 Пригласить")
     assert "Как это работает" in text and "платную" in text
     code = re.search(r"start=(tr_[0-9a-f]+)", text).group(1)
 

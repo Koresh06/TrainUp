@@ -17,9 +17,22 @@ from .states import TrainerProfileSG
 
 logger = logging.getLogger(__name__)
 
+
+async def _answer(callback: CallbackQuery, text: str) -> None:
+    # ReplyButton генерирует fake callback без поддержки .answer() — падаем на message
+    try:
+        await callback.answer(text, show_alert=True)
+    except ValueError:
+        await callback.message.answer(text)
+
+
 GROUP_TEST_TEXT = (
-    "✅ <b>TrainUp на связи</b>\n\n"
-    "Сюда будут приходить новые записи, отмены и заявки клиентов."
+    "🏋 <b>TrainUp подключён!</b>\n\n"
+    "Сюда будут приходить уведомления:\n"
+    "• 📅 Новые записи клиентов\n"
+    "• ❌ Отмены и переносы\n"
+    "• 📨 Заявки и вопросы\n\n"
+    "<i>Всё готово к работе ✅</i>"
 )
 
 
@@ -153,6 +166,6 @@ async def on_group_test(
         await callback.bot.send_message(trainer.notification_chat_id, GROUP_TEST_TEXT)
     except TelegramAPIError as error:
         logger.warning("[TrainerProfile] test message failed chat=%s: %s", trainer.notification_chat_id, error)
-        await callback.answer("❌ Не дошло — выберите группу заново", show_alert=True)
+        await _answer(callback, "❌ Не дошло — выберите группу заново")
         return
-    await callback.answer("✅ Проверочное сообщение отправлено в группу", show_alert=True)
+    await _answer(callback, "✅ Проверочное сообщение отправлено в группу")

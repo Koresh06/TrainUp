@@ -1,5 +1,7 @@
+from aiogram.enums import ButtonStyle
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.kbd import Back, Select, Button, Cancel, Group
+from aiogram_dialog.widgets.style import Style
 from aiogram_dialog.widgets.text import Const, Format
 
 from src.presentation.telegram.widgets.booking_calendar import BookingCalendar
@@ -19,14 +21,14 @@ from .getters import (
 
 booking_dialog = Dialog(
     Window(
-        Const("Календарь доступных дат:"),
+        Const("📅 <b>Выберите дату тренировки</b>\n\n<i>Синим выделены доступные дни</i>"),
         BookingCalendar(id="booking_calendar", on_click=on_date_clicked),
         Cancel(Const("⬅️ Назад")),
         state=BookingSG.select_day,
         getter=day_calendar_getter,
     ),
     Window(
-        Format("Свободное время на {selected_day_label}:{header_note}"),
+        Format("🕐 <b>Свободное время</b> — {selected_day_label}{header_note}"),
         Group(
             Select(
                 Format("{item[label]}"),
@@ -43,11 +45,16 @@ booking_dialog = Dialog(
         getter=times_getter,
     ),
     Window(
-        Format("Проверь данные записи:\n\n📅 {date} в {time}{price_label}\n\n"),
+        Format(
+            "✅ <b>Проверьте запись</b>\n\n"
+            "📅 <b>{date}</b>  ·  🕐 <b>{time}</b>{price_label}\n\n"
+            "<i>После подтверждения тренер получит уведомление.</i>"
+        ),
         Button(
-            Const("✅ Подтвердить"),
+            Const("✅ Записаться!"),
             id="confirm_booking",
             on_click=on_confirm_booking,
+            style=Style(style=ButtonStyle.SUCCESS),
         ),
         Back(Const("⬅️ Назад")),
         state=BookingSG.confirm,

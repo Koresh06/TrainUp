@@ -115,19 +115,18 @@ class TelegramNotificationService(NotificationService):
         )
 
         text = (
-            f"📅 Новая запись!\n\n"
-            f"👤 Клиент: {full_name} ({username_line})\n"
-            f"📞 Телефон: {data.client_phone or '—'}\n"
-            f"🎂 Возраст: {data.client_age or '—'}\n\n"
-            f"Дата: {data.date_label}\n"
-            f"Время: {data.time_label}\n"
-            f"Статус: ожидает подтверждения"
+            f"🔔 <b>Новая запись!</b>\n\n"
+            f"👤 <b>{full_name}</b>  ({username_line})\n"
+            f"📞 {data.client_phone or '—'}\n"
+            f"🎂 {data.client_age or '—'} лет\n\n"
+            f"📅 <b>{data.date_label}</b>  ·  🕐 <b>{data.time_label}</b>\n"
+            f"⏳ Ожидает вашего подтверждения"
         )
         if data.client_answers:
             answers = "\n".join(
-                f"• {escape(label)}: {escape(value)}" for label, value in data.client_answers
+                f"  • {escape(label)}: {escape(value)}" for label, value in data.client_answers
             )
-            text += f"\n\n📋 Анкета:\n{answers}"
+            text += f"\n\n📋 <b>Анкета:</b>\n{answers}"
 
         await self._send(data.chat_id, text, kb.as_markup(), data.fallback_chat_id)
 
@@ -150,10 +149,9 @@ class TelegramNotificationService(NotificationService):
     
         text = (
             f"⏰ <b>Напоминание о тренировке</b>\n\n"
-            f"{self.format_time_left(data.minutes_before)} — "
-            f"тренировка с <b>{escape(data.trainer_name)}</b>\n\n"
-            f"📅 {data.date_label}\n"
-            f"🕐 {data.time_label}"
+            f"{self.format_time_left(data.minutes_before)} — занятие с тренером "
+            f"<b>{escape(data.trainer_name)}</b>\n\n"
+            f"📅 {data.date_label}  ·  🕐 {data.time_label}"
         )
         await self._send(data.chat_id, text, kb.as_markup())
     
@@ -181,11 +179,11 @@ class TelegramNotificationService(NotificationService):
             f"@{data.client_username}" if data.client_username else "нет username"
         )
         text = (
-            f"📨 <b>Новая заявка: {escape(data.title)}</b>\n\n"
-            f"👤 Клиент: {escape(data.client_full_name)} ({username_line})\n"
-            f'💬 <a href="tg://user?id={data.client_tg_id}">Написать клиенту</a>\n'
-            f"📞 {data.client_phone or '—'}\n\n"
-            f"{escape(data.details)}"
+            f"📨 <b>Заявка: {escape(data.title)}</b>\n\n"
+            f"👤 <b>{escape(data.client_full_name)}</b>  ({username_line})\n"
+            f'💬 <a href="tg://user?id={data.client_tg_id}">Написать клиенту</a>'
+            f"  ·  📞 {data.client_phone or '—'}\n\n"
+            f"<blockquote>{escape(data.details)}</blockquote>"
         )
         await self._send(data.chat_id, text, kb.as_markup(), data.fallback_chat_id)
 
@@ -196,11 +194,11 @@ class TelegramNotificationService(NotificationService):
         kb.button(text="📅 Записаться", callback_data=PlanNextTrainingCD().pack())
 
         text = (
-            f"💪 <b>Пора запланировать следующую тренировку!</b>\n\n"
-            f"С прошлого занятия прошло уже {data.days_since_training} "
-            f"{self.pluralize_days(data.days_since_training)}. "
-            f"Выберите удобное время у тренера <b>{escape(data.trainer_name)}</b> — "
-            f"регулярность важнее интенсивности 😉"
+            f"💪 <b>Пора на тренировку!</b>\n\n"
+            f"Прошло уже {data.days_since_training} "
+            f"{self.pluralize_days(data.days_since_training)} с последнего занятия. "
+            f"Запишитесь к <b>{escape(data.trainer_name)}</b> — "
+            f"регулярность важнее интенсивности 🔥"
         )
         await self._send(data.chat_id, text, kb.as_markup())
 
@@ -266,14 +264,14 @@ class TelegramNotificationService(NotificationService):
         )
 
         when = "Завтра" if data.is_tomorrow else "Сегодня"
-        greeting = "🌙 " if data.is_tomorrow else "☀️ <b>Доброе утро!</b>\n"
+        greeting = "🌙 <b>Добрый вечер!</b>\n" if data.is_tomorrow else "☀️ <b>Доброе утро!</b>\n"
         count = len(data.items)
         if not count:
-            text = f"{greeting}{when}, {data.day_label}, тренировок нет — свободный день 🙌"
+            text = f"{greeting}{when}, {data.day_label} — тренировок нет, свободный день 🙌"
         else:
             lines = []
             for item in data.items:
-                line = f"<code>{item.time_label}</code> {escape(item.client_name)}"
+                line = f"<code>{item.time_label}</code>  {escape(item.client_name)}"
                 if item.is_recurring:
                     line += " 🔁"
                 if item.is_offline:
@@ -281,24 +279,25 @@ class TelegramNotificationService(NotificationService):
                 if item.is_pending:
                     line += " ⏳ <i>не подтверждена</i>"
                 elif item.client_confirmed:
-                    line += " 👍"
+                    line += " ✅"
                 if item.trainer_note:
-                    line += f"\n      📝 <i>{escape(item.trainer_note)}</i>"
+                    line += f"\n        📝 <i>{escape(item.trainer_note)}</i>"
                 lines.append(line)
-            footer = f"Первая в {data.items[0].time_label}"
+            footer_parts = []
             if count > 1:
-                footer += f" · последняя в {data.items[-1].time_label}"
+                footer_parts.append(f"🕐 {data.items[0].time_label} – {data.items[-1].time_label}")
             if data.expected_income:
                 amount = f"{data.expected_income:,.0f}".replace(",", " ")
-                footer += f" · ≈ {amount} BYN"
+                footer_parts.append(f"💰 ≈ {amount} BYN")
+            footer = "  ·  ".join(footer_parts)
             text = (
                 f"{greeting}<b>{when}, {data.day_label} — {count} "
                 f"{self.pluralize_trainings(count)}</b>\n\n"
                 + "\n".join(lines)
-                + f"\n\n{footer}"
+                + (f"\n\n{footer}" if footer else "")
             )
         if data.pending_total:
-            text += f"\n⏳ Ждут вашего подтверждения: {data.pending_total}"
+            text += f"\n\n⏳ Ждут подтверждения: <b>{data.pending_total}</b>"
         await self._send(data.chat_id, text, kb.as_markup())
 
     async def notify_attendance_request(self, data: AttendanceRequestDTO) -> None:
@@ -318,10 +317,10 @@ class TelegramNotificationService(NotificationService):
         kb.adjust(2)
         when = "Завтра" if data.is_tomorrow else "Сегодня"
         text = (
-            f"📅 <b>{when}, {data.day_label}, в {data.time_label}</b> — тренировка "
-            f"с <b>{escape(data.trainer_name)}</b>.\n\n"
-            f"Подтвердите, пожалуйста, что придёте. Если планы изменились — "
-            f"отмените, и время освободится для других."
+            f"{'🌙' if data.is_tomorrow else '🗓'} <b>{when} тренировка!</b>\n\n"
+            f"📅 {data.day_label}  ·  🕐 {data.time_label}\n"
+            f"🏋 Тренер: <b>{escape(data.trainer_name)}</b>\n\n"
+            f"Придёте? Подтвердите или отмените — тренер ждёт ответа 🙌"
         )
         await self._send(data.chat_id, text, kb.as_markup())
 
@@ -334,9 +333,9 @@ class TelegramNotificationService(NotificationService):
             )
         kb.adjust(5)
         text = (
-            f"🏁 <b>Как прошла тренировка?</b>\n\n"
-            f"{data.date_label} с <b>{escape(data.trainer_name)}</b>. "
-            f"Оцените от 1 до 5 — тренер увидит оценку и станет ещё лучше 💪"
+            f"🏆 <b>Как прошла тренировка?</b>\n\n"
+            f"📅 {data.date_label}  ·  тренер <b>{escape(data.trainer_name)}</b>\n\n"
+            f"Оставьте оценку от 1⭐ до 5⭐ — это важно для тренера 💪"
         )
         await self._send(data.chat_id, text, kb.as_markup())
 

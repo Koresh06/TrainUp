@@ -207,7 +207,11 @@ list_bookings_dialog = Dialog(
     ),
     Window(
         Format(
-            "❌ Отменить тренировку?\n\n👤 {client_name}\n📅 {when}{recurring_hint}\n\n{notify_hint}"
+            "❌ <b>Отменить тренировку?</b>\n\n"
+            "👤 {client_name}\n"
+            "📅 {when}"
+            "{recurring_hint}\n\n"
+            "{notify_hint}"
         ),
         Button(
             Const("❌ Да, отменить"),
@@ -215,7 +219,7 @@ list_bookings_dialog = Dialog(
             on_click=on_cancel_confirmed,
             style=Style(style=ButtonStyle.DANGER),
         ),
-        SwitchTo(Const("⬅️ Нет"), id="cancel_no", state=TrainerBookingsSG.detail),
+        SwitchTo(Const("↩️ Нет, оставить"), id="cancel_no", state=TrainerBookingsSG.detail),
         state=TrainerBookingsSG.cancel_confirm,
         getter=cancel_confirm_getter,
     ),
@@ -243,7 +247,11 @@ list_bookings_dialog = Dialog(
         getter=reschedule_times_getter,
     ),
     Window(
-        Format("Перенести на:\n\n📅 {date} в {time}\n\nПодтвердить перенос?"),
+        Format(
+            "🔁 <b>Перенос тренировки</b>\n\n"
+            "Новое время: 📅 <b>{date}</b>  ·  🕐 <b>{time}</b>\n\n"
+            "Подтвердить перенос?"
+        ),
         Button(
             Const("✅ Подтвердить перенос"),
             id="confirm_reschedule",
@@ -291,8 +299,10 @@ list_bookings_dialog = Dialog(
     ),
     Window(
         Format(
-            "Записать <b>{client_name}</b>\n📅 {when}\n\n"
-            "Запись сразу будет подтверждена.\n{notify_hint}"
+            "➕ <b>Подтверждение записи</b>\n\n"
+            "👤 {client_name}\n"
+            "📅 {when}\n\n"
+            "<i>Запись сразу будет подтверждена.</i>\n{notify_hint}"
         ),
         Button(
             Const("✅ Записать"),

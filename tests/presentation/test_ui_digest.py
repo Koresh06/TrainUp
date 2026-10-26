@@ -18,7 +18,7 @@ async def test_digest_settings(ui, run, trainer_setup) -> None:
     await activate_subscription(run, trainer_id)
     await ui.send(TRAINER_TG, "/trainer")
     await ui.click(TRAINER_TG, "⚙️ Настройки")
-    text = await ui.click(TRAINER_TG, "🔔 Напоминания и сводки")
+    text = await ui.click(TRAINER_TG, "🔔 Напоминания")
     assert "в 08:00" in text and "выключена" in text
 
     await ui.click(TRAINER_TG, "🌙 Вечерняя сводка")

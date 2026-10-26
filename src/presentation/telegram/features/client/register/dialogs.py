@@ -47,18 +47,18 @@ from .getters import (
 client_register_dialog = Dialog(
     Window(
         Format(
-            "Привет! 👋\n\n"
-            "Ты переходишь в бота тренера <b>{trainer_name}</b>.\n"
-            "{trainer_bio}\n\n"
-            "Для записи на тренировки нужно немного познакомиться — "
-            "заполним короткую анкету."
+            "👋 <b>Привет!</b>\n\n"
+            "Вы переходите к тренеру <b>{trainer_name}</b>.\n"
+            "<blockquote>{trainer_bio}</blockquote>\n\n"
+            "Для записи на тренировки нужно познакомиться — "
+            "заполним короткую анкету (займёт 1 минуту) 📝"
         ),
-        Next(Const("Начать →")),
+        Next(Const("🚀 Начать")),
         state=ClientRegisterSG.welcome,
         getter=welcome_getter,
     ),
     Window(
-        Const("👤 <b>Укажите Ваше имя и фамилию:</b>\nНапример: <i>Иван Иванов</i>"),
+        Const("👤 <b>Ваше имя и фамилия</b>\n\nНапример: <i>Иван Иванов</i>"),
         TextInput(
             id="full_name",
             type_factory=validate_full_name,
@@ -69,7 +69,7 @@ client_register_dialog = Dialog(
         state=ClientRegisterSG.full_name,
     ),
     Window(
-        Const("Укажите Ваш возраст"),
+        Const("🎂 <b>Ваш возраст</b>\n\nВведите число, например: <i>25</i>"),
         TextInput(
             id="age",
             type_factory=validate_age,
@@ -158,20 +158,20 @@ client_register_dialog = Dialog(
     ),
     Window(
         Format(
-            "Проверь данные:\n\n"
-            "👤 {full_name}\n"
+            "✅ <b>Проверьте данные</b>\n\n"
+            "👤 <b>{full_name}</b>\n"
             "📞 {phone}\n"
             "🎂 {age} лет\n"
             "🏋️ Стаж: {sport_experience}\n\n"
             "{answers_summary}"
         ),
         Button(
-            Const("✅ Всё верно"),
+            Const("✅ Всё верно, записаться!"),
             id="confirm_register",
             on_click=on_register_confirm,
             style=Style(style=ButtonStyle.SUCCESS),
         ),
-        Button(Const("⬅️ Назад"), id="confirm_back", on_click=on_confirm_back),
+        Button(Const("✏️ Исправить"), id="confirm_back", on_click=on_confirm_back),
         state=ClientRegisterSG.confirm,
         getter=register_confirm_getter,
     ),

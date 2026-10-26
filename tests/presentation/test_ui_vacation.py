@@ -11,7 +11,7 @@ async def test_trainer_closes_period(ui, run, trainer_setup) -> None:
 
     await ui.send(TRAINER_TG, "/trainer")
     await ui.click(TRAINER_TG, "⚙️ Настройки")
-    await ui.click(TRAINER_TG, "🚫 Блокировка дней/слотов")
+    await ui.click(TRAINER_TG, "🚫 Блокировки")
     assert "Запланированных периодов нет" in await ui.click(TRAINER_TG, "🏖 Отпуск / больничный")
     await ui.click(TRAINER_TG, "➕ Закрыть период")
     await ui.click(TRAINER_TG, str(tomorrow.day))

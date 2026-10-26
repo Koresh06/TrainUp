@@ -4,7 +4,6 @@ from aiogram_dialog.widgets.input import TextInput
 from aiogram_dialog.widgets.kbd import (
     Button,
     Cancel,
-    Column,
     ScrollingGroup,
     Select,
     SwitchTo,
@@ -29,24 +28,10 @@ from .states import ClientFeedbackSG
 
 client_feedback_dialog = Dialog(
     Window(
-        Const("✉️ <b>Обратная связь</b>\n\nЧем можем помочь?"),
-        Column(
-            SwitchTo(
-                Const("📞 Заказать обратный звонок"),
-                id="to_callback",
-                state=ClientFeedbackSG.callback_confirm,
-            ),
-            SwitchTo(
-                Const("✉️ Написать тренеру"),
-                id="to_message",
-                state=ClientFeedbackSG.message,
-            ),
-            SwitchTo(
-                Const("❓ Частые вопросы"),
-                id="to_faq",
-                state=ClientFeedbackSG.faq_list,
-            ),
-        ),
+        Const("✉️ <b>Обратная связь</b>\n\nКак хотите связаться?"),
+        SwitchTo(Const("📞 Заказать обратный звонок"), id="to_callback", state=ClientFeedbackSG.callback_confirm),
+        SwitchTo(Const("✉️ Написать тренеру"), id="to_message", state=ClientFeedbackSG.message),
+        SwitchTo(Const("❓ Частые вопросы"), id="to_faq", state=ClientFeedbackSG.faq_list),
         Cancel(Const("⬅️ Назад")),
         state=ClientFeedbackSG.main,
     ),
@@ -91,7 +76,7 @@ client_feedback_dialog = Dialog(
         state=ClientFeedbackSG.callback_phone,
     ),
     Window(
-        Const("✉️ Напишите сообщение тренеру — он получит его и ответит вам лично:"),
+        Const("✉️ <b>Сообщение тренеру</b>\n\nНапишите — тренер получит его и ответит лично:"),
         TextInput(
             id="feedback_message_input",
             type_factory=validate_feedback_message,

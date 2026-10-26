@@ -4,7 +4,6 @@ from urllib.parse import quote
 from dishka.integrations.aiogram_dialog import inject, FromDishka
 from aiogram_dialog import DialogManager
 
-from src.domain.constants import WEEKDAY_LABELS_FULL
 from src.domain.entities.booking import Booking
 from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.client import Client
@@ -77,6 +76,8 @@ async def my_bookings_getter(
         GetTrainerByIdRequest(trainer_id=trainer_id)
     )
 
+    _WEEKDAY_SHORT = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"]
+
     lines = []
     for booking in bookings:
         slot: CalendarSlot = await mediator.handle(
@@ -84,24 +85,24 @@ async def my_bookings_getter(
         )
         status = CLIENT_BOOKING_STATUS_LABELS.get(booking.status, "")
         recurring_mark = " 🔁" if booking.recurring_booking_id is not None else ""
+        weekday = _WEEKDAY_SHORT[slot.slot_date.weekday()]
         lines.append(
-            f"📅 {slot.slot_date.strftime('%d.%m.%Y')} "
-            f"({WEEKDAY_LABELS_FULL[slot.slot_date.weekday()].lower()}) "
-            f"в {slot.start_time.strftime('%H:%M')}{recurring_mark}\n"
-            f"     {status}"
+            f"<b>{slot.slot_date.strftime('%d.%m')}</b> ({weekday})"
+            f"  🕐 <b>{slot.start_time.strftime('%H:%M')}</b>{recurring_mark}\n"
+            f"   {status}"
         )
 
     contact = f'<a href="tg://user?id={trainer.tg_id}">написать тренеру</a>'
     if trainer.phone:
-        contact += f" или позвонить: {trainer.phone}"
+        contact += f" · 📞 {trainer.phone}"
 
     return {
-        "bookings_block": "\n\n".join(lines) if lines else "У вас пока нет предстоящих записей.",
+        "bookings_block": "\n\n".join(lines) if lines else "У вас пока нет предстоящих записей 🗓",
         "contact_hint": (
-            f"ℹ️ Чтобы отменить или перенести тренировку — {contact}.\n"
-            f"🔁 — постоянная тренировка."
+            f"ℹ️ Чтобы отменить — {contact}\n"
+            f"🔁 — постоянная тренировка"
             if lines
-            else "Записаться можно в разделе «📅 Записаться на занятия»."
+            else "Записаться можно в разделе «📅 Записаться на тренировку»."
         ),
     }
 

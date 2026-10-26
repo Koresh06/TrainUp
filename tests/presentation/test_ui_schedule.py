@@ -17,10 +17,10 @@ async def test_schedule_day_pending_and_history(ui, run, trainer_setup, session)
 
     # клиент записался сам на завтра → запись ждёт подтверждения
     await register_client(ui, trainer_setup["token"])
-    await ui.click(CLIENT_TG, "📅 Записаться на занятия")
+    await ui.click(CLIENT_TG, "📅 Записаться на тренировку")
     await ui.click(CLIENT_TG, str(trainer_setup["tomorrow"].day))
     await ui.click(CLIENT_TG, "10:00 (2)")
-    await ui.click(CLIENT_TG, "✅ Подтвердить")
+    await ui.click(CLIENT_TG, "✅ Записаться!")
 
     # а сегодня утром у тренера уже была тренировка с клиентом без Telegram
     oleg = await run(CreateOfflineClientRequest(trainer_id=trainer.id, first_name="Олег", last_name="Ким"))
@@ -107,10 +107,10 @@ async def test_client_confirms_attendance(ui, run, trainer_setup, notifications)
 
     await activate_subscription(run, trainer_setup["trainer"].id)
     await register_client(ui, trainer_setup["token"])
-    await ui.click(CLIENT_TG, "📅 Записаться на занятия")
+    await ui.click(CLIENT_TG, "📅 Записаться на тренировку")
     await ui.click(CLIENT_TG, str(trainer_setup["tomorrow"].day))
     await ui.click(CLIENT_TG, "10:00 (2)")
-    await ui.click(CLIENT_TG, "✅ Подтвердить")
+    await ui.click(CLIENT_TG, "✅ Записаться!")
     [new_booking] = notifications.of("notify_new_booking")
     await run(ConfirmBookingRequest(booking_id=new_booking.booking_id))
 

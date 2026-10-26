@@ -31,13 +31,13 @@ client_profile_dialog = Dialog(
         Format(
             "📝 <b>Моя анкета</b>\n\n"
             "{packages_block}"
-            "👤 {full_name}\n"
+            "👤 <b>{full_name}</b>\n"
             "📞 {phone}\n"
             "🎂 {age}\n"
             "🏋️ Стаж: {sport_experience}\n\n"
             "{answers_summary}\n\n"
-            "Цели, здоровье и пожелания видны тренеру при каждой записи — "
-            "держите их актуальными."
+            "<i>Тренер видит ваши цели и пожелания при каждой записи — "
+            "держите их актуальными.</i>"
         ),
         Button(
             Const("✏️ Обновить ответы"),
@@ -87,7 +87,7 @@ client_profile_dialog = Dialog(
         getter=questions_getter,
     ),
     Window(
-        Format("Проверьте ответы:\n\n{answers_summary}"),
+        Format("✅ <b>Проверьте ответы</b>\n\n{answers_summary}"),
         Button(
             Const("💾 Сохранить"),
             id="save_answers",

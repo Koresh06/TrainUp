@@ -13,7 +13,7 @@ async def activate_subscription(run, trainer_id: int, days: int = 30) -> None:
 
 async def register_client(ui, token: str) -> None:
     assert "Привет" in await ui.send(CLIENT_TG, f"/start {token}")
-    await ui.click(CLIENT_TG, "Начать →")
+    await ui.click(CLIENT_TG, "🚀 Начать")
     for value in ["Пётр Петров", "30", "+375291234567"]:
         await ui.send(CLIENT_TG, value)
     await ui.click(CLIENT_TG, "Нет опыта")
@@ -28,19 +28,19 @@ async def register_client(ui, token: str) -> None:
     await ui.click(CLIENT_TG, "Далее ➡️")
 
     await ui.click(CLIENT_TG, "⬜ Базовая (Целевые мышцы)")
-    assert "Проверь данные" in await ui.click(CLIENT_TG, "Далее ➡️")
+    assert "Проверьте данные" in await ui.click(CLIENT_TG, "Далее ➡️")
     assert "Другое: болит колено" in ui.text
-    assert "Выберите подходящую" in await ui.click(CLIENT_TG, "✅ Всё верно")
+    assert "Главное меню" in await ui.click(CLIENT_TG, "✅ Всё верно, записаться!")
 
 
 async def test_client_journey(ui, run, trainer_setup, notifications) -> None:
     await activate_subscription(run, trainer_setup["trainer"].id)
     await register_client(ui, trainer_setup["token"])
 
-    await ui.click(CLIENT_TG, "📅 Записаться на занятия")
+    await ui.click(CLIENT_TG, "📅 Записаться на тренировку")
     await ui.click(CLIENT_TG, str(trainer_setup["tomorrow"].day))
     await ui.click(CLIENT_TG, "10:00 (2)")
-    await ui.click(CLIENT_TG, "✅ Подтвердить")
+    await ui.click(CLIENT_TG, "✅ Записаться!")
     [new_booking] = notifications.of("notify_new_booking")
     assert ("Ваше состояние здоровья и тела", "Другое: болит колено") in new_booking.client_answers
 
@@ -48,13 +48,13 @@ async def test_client_journey(ui, run, trainer_setup, notifications) -> None:
     assert "ожидает подтверждения" in await ui.click(CLIENT_TG, "📋 Мои записи")
     await ui.click(CLIENT_TG, "⬅️ Назад")
 
-    await ui.click(CLIENT_TG, "🏋 Программа тренировок")
+    await ui.click(CLIENT_TG, "🏋 Программа")
     await ui.click(CLIENT_TG, "Неделя (3 занятия)")
     await ui.click(CLIENT_TG, "Конкретная цель")
     assert "Пропустить ➡️" not in ui.buttons
     await ui.send(CLIENT_TG, "Подтянуться 10 раз <3")
     assert "&lt;3" in ui.text
-    await ui.click(CLIENT_TG, "✅ Отправить заявку")
+    await ui.click(CLIENT_TG, "📨 Отправить заявку")
 
     await ui.click(CLIENT_TG, "✉️ Обратная связь")
     assert "+375291234567" in await ui.click(CLIENT_TG, "📞 Заказать обратный звонок")
@@ -79,10 +79,10 @@ async def test_client_journey(ui, run, trainer_setup, notifications) -> None:
 async def test_trainer_cabinet(ui, run, trainer_setup) -> None:
     await activate_subscription(run, trainer_setup["trainer"].id)
     await register_client(ui, trainer_setup["token"])
-    await ui.click(CLIENT_TG, "💬 Консультация с тренером")
+    await ui.click(CLIENT_TG, "💬 Консультация")
     await ui.click(CLIENT_TG, "Бесплатная")
     await ui.click(CLIENT_TG, "Пропустить ➡️")
-    await ui.click(CLIENT_TG, "✅ Отправить заявку")
+    await ui.click(CLIENT_TG, "📨 Отправить заявку")
 
     assert "Кабинет тренера" in await ui.send(TRAINER_TG, "/trainer")
     assert "Подписка до" in ui.text
@@ -96,7 +96,7 @@ async def test_trainer_cabinet(ui, run, trainer_setup) -> None:
     await ui.click(TRAINER_TG, "⬅️ Назад")
 
     await ui.click(TRAINER_TG, "⚙️ Настройки")
-    await ui.click(TRAINER_TG, "🚫 Блокировка дней/слотов")
+    await ui.click(TRAINER_TG, "🚫 Блокировки")
     await ui.click(TRAINER_TG, str(trainer_setup["tomorrow"].day))
     await ui.click(TRAINER_TG, "🟢 10:00 (0/2)")
     assert "🚫 10:00 (0/2)" in ui.buttons
@@ -210,5 +210,5 @@ async def test_calendar_has_no_month_zoom(ui, run, trainer_setup) -> None:
     # регресс: «🔍» под календарём переключал на выбор месяцев → KeyError MONTHS
     await activate_subscription(run, trainer_setup["trainer"].id)
     await register_client(ui, trainer_setup["token"])
-    await ui.click(CLIENT_TG, "📅 Записаться на занятия")
+    await ui.click(CLIENT_TG, "📅 Записаться на тренировку")
     assert "🔍" not in ui.buttons

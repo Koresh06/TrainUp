@@ -82,7 +82,7 @@ async def test_referral_link_registration(ui, run, trainer_setup) -> None:
 
     friend_tg = CLIENT_TG + 1
     assert "Привет" in await ui.send(friend_tg, f"/start {code}")
-    await ui.click(friend_tg, "Начать →")
+    await ui.click(friend_tg, "🚀 Начать")
     for value in ["Анна Друг", "25", "+375291234568"]:
         await ui.send(friend_tg, value)
     await ui.click(friend_tg, "Нет опыта")
@@ -90,7 +90,7 @@ async def test_referral_link_registration(ui, run, trainer_setup) -> None:
     await ui.click(friend_tg, "Далее ➡️")
     await ui.click(friend_tg, "⬜ Базовая (Целевые мышцы)")
     await ui.click(friend_tg, "Далее ➡️")
-    await ui.click(friend_tg, "✅ Всё верно")
+    await ui.click(friend_tg, "✅ Всё верно, записаться!")
 
     friend = await run(GetClientByTgIdRequest(tg_id=friend_tg))
     me = await run(GetClientByTgIdRequest(tg_id=CLIENT_TG))

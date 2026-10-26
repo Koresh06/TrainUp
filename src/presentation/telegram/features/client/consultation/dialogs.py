@@ -21,7 +21,7 @@ from .states import ClientConsultationSG
 
 client_consultation_dialog = Dialog(
     Window(
-        Const("💬 <b>Консультация с тренером</b>\n\n" "Выберите тип консультации:"),
+        Const("💬 <b>Консультация с тренером</b>\n\nКакой вопрос хотите обсудить?"),
         Group(
             Select(
                 Format("{item[label]}"),
@@ -38,8 +38,9 @@ client_consultation_dialog = Dialog(
     ),
     Window(
         Const(
-            "💬 Коротко опишите, с каким вопросом хотите обратиться, "
-            "или пропустите этот шаг."
+            "💬 <b>Ваш вопрос</b>\n\n"
+            "Коротко опишите, что хотите обсудить — тренер прочитает до встречи.\n"
+            "Или пропустите этот шаг."
         ),
         TextInput(
             id="consultation_comment_input",
@@ -57,13 +58,13 @@ client_consultation_dialog = Dialog(
     ),
     Window(
         Format(
-            "Проверьте заявку:\n\n"
-            "💬 Консультация: {consultation_type}\n"
+            "✅ <b>Проверьте заявку</b>\n\n"
+            "💬 Тема: <b>{consultation_type}</b>\n"
             "📝 Вопрос: {comment}\n\n"
-            "Тренер получит заявку и свяжется с вами."
+            "<i>Тренер получит заявку и свяжется с вами.</i>"
         ),
         Button(
-            Const("✅ Отправить заявку"),
+            Const("📨 Отправить заявку"),
             id="confirm_consultation",
             on_click=on_consultation_confirm,
             style=Style(style=ButtonStyle.SUCCESS),
