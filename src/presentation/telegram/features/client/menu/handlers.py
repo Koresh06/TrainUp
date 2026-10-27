@@ -61,8 +61,14 @@ async def on_my_progress_click(
     dialog_manager: DialogManager,
     mediator: FromDishka[Mediator],
 ) -> None:
-    client: Client = await mediator.handle(GetClientByTgIdRequest(tg_id=callback.from_user.id))
+    client: Client = await mediator.handle(
+        GetClientByTgIdRequest(tg_id=callback.from_user.id)
+    )
     await dialog_manager.start(
         state=ProgressSG.main,
-        data={"trainer_id": client.trainer_id, "client_id": client.id, "as_trainer": False},
+        data={
+            "trainer_id": client.trainer_id,
+            "client_id": client.id,
+            "as_trainer": False,
+        },
     )

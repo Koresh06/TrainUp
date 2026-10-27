@@ -9,6 +9,7 @@ from aiogram_dialog.widgets.kbd import (
     ScrollingGroup,
     Select,
     SwitchTo,
+    Back,
 )
 from aiogram_dialog.widgets.style import Style
 from aiogram_dialog.widgets.text import Const, Format
@@ -65,7 +66,11 @@ admin_trainers_dialog = Dialog(
         Format("{card_text}"),
         period_row(on_admin_period_selected),
         Column(
-            SwitchTo(Const("🎁 Выдать подписку"), id="to_grant", state=AdminTrainersSG.grant_type),
+            SwitchTo(
+                Const("🎁 Выдать подписку"),
+                id="to_grant",
+                state=AdminTrainersSG.grant_type,
+            ),
             Button(
                 Const("📢 Рассылка его клиентам"),
                 id="mail_clients",
@@ -86,7 +91,7 @@ admin_trainers_dialog = Dialog(
                 when="is_blocked",
             ),
         ),
-        SwitchTo(Const("⬅️ К списку"), id="back_to_list", state=AdminTrainersSG.list),
+        Back(Const("⬅️ К списку")),
         LinkPreview(is_disabled=True),
         state=AdminTrainersSG.card,
         getter=admin_trainer_card_getter,
@@ -108,7 +113,7 @@ admin_trainers_dialog = Dialog(
                 state=AdminTrainersSG.grant_days,
             ),
         ),
-        SwitchTo(Const("⬅️ Назад"), id="back_to_card", state=AdminTrainersSG.card),
+        Back(Const("⬅️ Назад")),
         state=AdminTrainersSG.grant_type,
     ),
     Window(
@@ -122,7 +127,7 @@ admin_trainers_dialog = Dialog(
                 on_click=on_grant_plan_selected,
             ),
         ),
-        SwitchTo(Const("⬅️ Назад"), id="back_to_type", state=AdminTrainersSG.grant_type),
+        Back(Const("⬅️ Назад")),
         state=AdminTrainersSG.grant_plan,
         getter=admin_grant_plans_getter,
     ),
@@ -144,7 +149,11 @@ admin_trainers_dialog = Dialog(
             on_success=on_grant_days_entered,
             on_error=on_input_error,
         ),
-        SwitchTo(Const("⬅️ Назад"), id="back_to_type", state=AdminTrainersSG.grant_type),
+        SwitchTo(
+            Const("⬅️ Назад"),
+            id="back_to_type",
+            state=AdminTrainersSG.grant_type,
+        ),
         state=AdminTrainersSG.grant_days,
         getter=admin_grant_days_getter,
     ),
@@ -156,7 +165,11 @@ admin_trainers_dialog = Dialog(
             on_click=on_grant_confirm,
             style=Style(style=ButtonStyle.SUCCESS),
         ),
-        SwitchTo(Const("⬅️ Назад"), id="back_to_type", state=AdminTrainersSG.grant_type),
+        SwitchTo(
+            Const("⬅️ Назад"),
+            id="back_to_type",
+            state=AdminTrainersSG.grant_type,
+        ),
         state=AdminTrainersSG.grant_confirm,
         getter=admin_grant_confirm_getter,
     ),
@@ -165,8 +178,16 @@ admin_trainers_dialog = Dialog(
             "Изменить доступ тренера <b>{trainer_name}</b>?\n\n"
             "Блокировка закрывает ему кабинет, а его клиентам — запись и заявки."
         ),
-        Button(Const("✅ Подтвердить"), id="block_confirm", on_click=on_toggle_block_confirm),
-        SwitchTo(Const("⬅️ Назад"), id="back_to_card", state=AdminTrainersSG.card),
+        Button(
+            Const("✅ Подтвердить"),
+            id="block_confirm",
+            on_click=on_toggle_block_confirm,
+        ),
+        SwitchTo(
+            Const("⬅️ Назад"),
+            id="back_to_card",
+            state=AdminTrainersSG.card,
+        ),
         state=AdminTrainersSG.block_confirm,
         getter=admin_trainer_name_getter,
     ),

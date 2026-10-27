@@ -57,5 +57,10 @@ async def on_toggle_client_block(
     client: Client = await mediator.handle(
         GetClientByIdRequest(client_id=dialog_manager.dialog_data["client_id"])
     )
-    await mediator.handle(SetClientBlockedRequest(client_id=client.id, blocked=client.is_active))
+    await mediator.handle(
+        SetClientBlockedRequest(
+            client_id=client.id,
+            blocked=client.is_active,
+        )
+    )
     await callback.answer("⛔ Заблокирован" if client.is_active else "✅ Разблокирован")

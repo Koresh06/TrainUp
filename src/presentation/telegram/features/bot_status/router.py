@@ -1,4 +1,3 @@
-
 from aiogram import F, Router
 from aiogram.filters import KICKED, MEMBER, ChatMemberUpdatedFilter
 from aiogram.types import ChatMemberUpdated

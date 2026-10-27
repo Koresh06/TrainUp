@@ -22,8 +22,16 @@ admin_stats_dialog = Dialog(
     Window(
         Format("{stats_text}"),
         Row(
-            SwitchTo(Const("👥 Пользователи"), id="to_users", state=AdminStatsSG.users),
-            SwitchTo(Const("📈 Графики"), id="to_charts", state=AdminStatsSG.charts),
+            SwitchTo(
+                Const("👥 Пользователи"),
+                id="to_users",
+                state=AdminStatsSG.users,
+            ),
+            SwitchTo(
+                Const("📈 Графики"),
+                id="to_charts",
+                state=AdminStatsSG.charts,
+            ),
         ),
         period_row(on_admin_period_selected),
         Cancel(Const("⬅️ Назад")),
@@ -32,9 +40,17 @@ admin_stats_dialog = Dialog(
     ),
     Window(
         Format("{users_text}"),
-        SwitchTo(Const("📈 Графики"), id="users_to_charts", state=AdminStatsSG.charts),
+        SwitchTo(
+            Const("📈 Графики"),
+            id="users_to_charts",
+            state=AdminStatsSG.charts,
+        ),
         period_row(on_admin_period_selected),
-        SwitchTo(Const("⬅️ К общей статистике"), id="users_back", state=AdminStatsSG.main),
+        SwitchTo(
+            Const("⬅️ К общей статистике"),
+            id="users_back",
+            state=AdminStatsSG.main,
+        ),
         state=AdminStatsSG.users,
         getter=admin_users_getter,
     ),
@@ -44,8 +60,16 @@ admin_stats_dialog = Dialog(
         chart_group(ADMIN_CHART_LABELS, on_chart_selected),
         period_row(on_admin_period_selected),
         Row(
-            SwitchTo(Const("👥 Пользователи"), id="charts_to_users", state=AdminStatsSG.users),
-            SwitchTo(Const("⬅️ К цифрам"), id="charts_back", state=AdminStatsSG.main),
+            SwitchTo(
+                Const("👥 Пользователи"),
+                id="charts_to_users",
+                state=AdminStatsSG.users,
+            ),
+            SwitchTo(
+                Const("⬅️ К цифрам"),
+                id="charts_back",
+                state=AdminStatsSG.main,
+            ),
         ),
         state=AdminStatsSG.charts,
         getter=admin_chart_getter,

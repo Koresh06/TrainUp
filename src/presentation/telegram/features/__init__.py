@@ -18,7 +18,9 @@ from src.presentation.telegram.features.trainer.requests.router import (
     router as trainer_requests_router,
 )
 from src.presentation.telegram.features.admin.router import router as admin_router
-from src.presentation.telegram.features.bot_status.router import router as bot_status_router
+from src.presentation.telegram.features.bot_status.router import (
+    router as bot_status_router,
+)
 from src.presentation.telegram.features.trainer.register.router import (
     router as trainer_subscription_router,
 )
@@ -87,8 +89,12 @@ from src.presentation.telegram.features.client.feedback.dialogs import (
 from src.presentation.telegram.features.client.profile.dialogs import (
     client_profile_dialog,
 )
-from src.presentation.telegram.features.admin.modules.menu.dialogs import admin_menu_dialog
-from src.presentation.telegram.features.admin.modules.stats.dialogs import admin_stats_dialog
+from src.presentation.telegram.features.admin.modules.menu.dialogs import (
+    admin_menu_dialog,
+)
+from src.presentation.telegram.features.admin.modules.stats.dialogs import (
+    admin_stats_dialog,
+)
 from src.presentation.telegram.features.admin.modules.trainers.dialogs import (
     admin_trainers_dialog,
 )
@@ -98,14 +104,21 @@ from src.presentation.telegram.features.admin.modules.clients.dialogs import (
 from src.presentation.telegram.features.admin.modules.mailing.dialogs import (
     admin_mailing_dialog,
 )
-from src.presentation.telegram.features.admin.modules.faq.dialogs import admin_faq_dialog
+from src.presentation.telegram.features.admin.modules.faq.dialogs import (
+    admin_faq_dialog,
+)
 from src.presentation.telegram.features.admin.modules.exports.dialogs import (
     admin_export_dialog,
 )
 from src.presentation.telegram.features.trainer.help.dialogs import trainer_help_dialog
-from src.presentation.telegram.features.trainer.vacation.dialogs import trainer_vacation_dialog
+from src.presentation.telegram.features.trainer.vacation.dialogs import (
+    trainer_vacation_dialog,
+)
 from src.presentation.telegram.features.progress.dialogs import progress_dialog
-from src.presentation.telegram.features.trainer.referral.dialogs import trainer_referral_dialog
+from src.presentation.telegram.features.trainer.referral.dialogs import (
+    trainer_referral_dialog,
+)
+
 
 def get_all_routers() -> list[Router]:
     return [
@@ -174,4 +187,9 @@ OPEN_DIALOGS: list[Dialog] = [
 
 
 def get_all_dialogs() -> list[Dialog]:
-    return [*OPEN_DIALOGS, *TRAINER_CABINET_DIALOGS, *CLIENT_DIALOGS, *ADMIN_DIALOGS]
+    return [
+        *OPEN_DIALOGS,
+        *TRAINER_CABINET_DIALOGS,
+        *CLIENT_DIALOGS,
+        *ADMIN_DIALOGS,
+    ]

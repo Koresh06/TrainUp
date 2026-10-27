@@ -2,7 +2,14 @@ from aiogram import F
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.input import MessageInput, TextInput
-from aiogram_dialog.widgets.kbd import Button, Cancel, Row, ScrollingGroup, Select, SwitchTo
+from aiogram_dialog.widgets.kbd import (
+    Button,
+    Cancel,
+    Row,
+    ScrollingGroup,
+    Select,
+    SwitchTo,
+)
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
 
@@ -35,7 +42,12 @@ progress_dialog = Dialog(
         Format("{text}"),
         SwitchTo(Const("➕ Новая запись"), id="add", state=ProgressSG.add),
         Row(
-            SwitchTo(Const("📊 График"), id="chart", state=ProgressSG.chart, when="has_chart"),
+            SwitchTo(
+                Const("📊 График"),
+                id="chart",
+                state=ProgressSG.chart,
+                when="has_chart",
+            ),
             SwitchTo(
                 Format("🖼 Фото ({photos_count})"),
                 id="photos",
@@ -57,8 +69,18 @@ progress_dialog = Dialog(
         DynamicMedia("chart"),
         Format("{caption}"),
         Row(
-            Button(Const("⚖️ Вес"), id="weight", on_click=on_chart_kind, when=~F["is_weight"]),
-            Button(Const("📏 Обхваты"), id="girth", on_click=on_chart_kind, when="is_weight"),
+            Button(
+                Const("⚖️ Вес"),
+                id="weight",
+                on_click=on_chart_kind,
+                when=~F["is_weight"],
+            ),
+            Button(
+                Const("📏 Обхваты"),
+                id="girth",
+                on_click=on_chart_kind,
+                when="is_weight",
+            ),
         ),
         to_main,
         state=ProgressSG.chart,
@@ -79,14 +101,25 @@ progress_dialog = Dialog(
             on_success=on_values_input,
             on_error=on_input_error,
         ),
-        Button(Const("📷 Только фото"), id="only_photo", on_click=on_only_photo),
+        Button(
+            Const("📷 Только фото"),
+            id="only_photo",
+            on_click=on_only_photo,
+        ),
         to_main,
         state=ProgressSG.add,
     ),
     Window(
         Const("📷 Прикрепите фото (по желанию) — потом удобно сравнивать «до/после»."),
-        MessageInput(func=on_photo_received, content_types=[ContentType.PHOTO]),
-        Button(Const("✅ Сохранить без фото"), id="save", on_click=on_save_without_photo),
+        MessageInput(
+            func=on_photo_received,
+            content_types=[ContentType.PHOTO],
+        ),
+        Button(
+            Const("✅ Сохранить без фото"),
+            id="save",
+            on_click=on_save_without_photo,
+        ),
         SwitchTo(Const("⬅️ Назад"), id="back_to_add", state=ProgressSG.add),
         state=ProgressSG.add_photo,
     ),
@@ -112,13 +145,21 @@ progress_dialog = Dialog(
     Window(
         DynamicMedia("photo"),
         Format("{caption}"),
-        SwitchTo(Const("⬅️ К фото"), id="to_photos", state=ProgressSG.photos),
+        SwitchTo(
+            Const("⬅️ К фото"),
+            id="to_photos",
+            state=ProgressSG.photos,
+        ),
         state=ProgressSG.photo,
         getter=photo_getter,
     ),
     Window(
         Format("🗑 Удалить последнюю запись?\n\n{entry}"),
-        Button(Const("🗑 Удалить"), id="delete_yes", on_click=on_delete_last),
+        Button(
+            Const("🗑 Удалить"),
+            id="delete_yes",
+            on_click=on_delete_last,
+        ),
         to_main,
         state=ProgressSG.delete_confirm,
         getter=delete_confirm_getter,

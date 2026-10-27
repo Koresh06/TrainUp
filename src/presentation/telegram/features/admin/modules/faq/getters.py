@@ -20,7 +20,12 @@ FAQ_AUDIENCE_HINTS: dict[FaqAudience, str] = {
 
 
 def current_audience(dialog_manager: DialogManager) -> FaqAudience:
-    return FaqAudience(dialog_manager.dialog_data.get("faq_audience", FaqAudience.CLIENT.value))
+    return FaqAudience(
+        dialog_manager.dialog_data.get(
+            "faq_audience",
+            FaqAudience.CLIENT.value,
+        )
+    )
 
 
 @inject
@@ -30,7 +35,9 @@ async def admin_faq_list_getter(
     **kwargs,
 ) -> dict:
     audience = current_audience(dialog_manager)
-    items: list[FaqItem] = await mediator.handle(GetActiveFaqItemsRequest(audience=audience))
+    items: list[FaqItem] = await mediator.handle(
+        GetActiveFaqItemsRequest(audience=audience)
+    )
     return {
         "audience_label": FAQ_AUDIENCE_LABELS[audience],
         "audience_hint": FAQ_AUDIENCE_HINTS[audience],
@@ -51,5 +58,7 @@ async def admin_faq_detail_getter(
     return {"question": escape(item.question), "answer": escape(item.answer)}
 
 
-async def admin_faq_new_question_getter(dialog_manager: DialogManager, **kwargs) -> dict:
+async def admin_faq_new_question_getter(
+    dialog_manager: DialogManager, **kwargs
+) -> dict:
     return {"new_question": escape(dialog_manager.dialog_data.get("new_question", ""))}

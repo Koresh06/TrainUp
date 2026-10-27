@@ -24,10 +24,15 @@ router = Router(name="admin")
 
 
 @router.message(Command("admin"))
-async def process_admin_command(message: Message, dialog_manager: DialogManager) -> None:
+async def process_admin_command(
+    message: Message, dialog_manager: DialogManager
+) -> None:
     if not is_admin(message.from_user):
         return
-    await dialog_manager.start(state=AdminMenuSG.main, mode=StartMode.RESET_STACK)
+    await dialog_manager.start(
+        state=AdminMenuSG.main,
+        mode=StartMode.RESET_STACK,
+    )
 
 
 @router.callback_query(ManualPaymentCD.filter())
@@ -44,10 +49,14 @@ async def on_manual_payment_action(
     approve = callback_data.action == ManualPaymentAction.APPROVE
     try:
         if approve:
-            await mediator.handle(ConfirmPaymentRequest(external_id=callback_data.external_id))
+            await mediator.handle(
+                ConfirmPaymentRequest(external_id=callback_data.external_id)
+            )
         else:
             await mediator.handle(
-                RejectPaymentRequest(external_id=callback_data.external_id, notify_trainer=True)
+                RejectPaymentRequest(
+                    external_id=callback_data.external_id, notify_trainer=True
+                )
             )
     except (PaymentNotFoundException, PaymentStatusTransitionException):
         await callback.answer("Заявка уже обработана", show_alert=True)
@@ -55,8 +64,11 @@ async def on_manual_payment_action(
         return
 
     who = callback.from_user.full_name
-    status = "✅ Оплата подтверждена, подписка активирована" if approve else "❌ Отклонено"
+    status = (
+        "✅ Оплата подтверждена, подписка активирована" if approve else "❌ Отклонено"
+    )
     await callback.answer(status)
     await callback.message.edit_text(
-        f"{callback.message.html_text}\n\n<b>{status}</b> ({who})", reply_markup=None
+        f"{callback.message.html_text}\n\n<b>{status}</b> ({who})",
+        reply_markup=None,
     )

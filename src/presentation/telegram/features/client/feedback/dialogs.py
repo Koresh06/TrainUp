@@ -29,9 +29,9 @@ from .states import ClientFeedbackSG
 client_feedback_dialog = Dialog(
     Window(
         Const("✉️ <b>Обратная связь</b>\n\nКак хотите связаться?"),
-        SwitchTo(Const("📞 Заказать обратный звонок"), id="to_callback", state=ClientFeedbackSG.callback_confirm),
-        SwitchTo(Const("✉️ Написать тренеру"), id="to_message", state=ClientFeedbackSG.message),
-        SwitchTo(Const("❓ Частые вопросы"), id="to_faq", state=ClientFeedbackSG.faq_list),
+        SwitchTo(Const("📞 Заказать обратный звонок"), id="to_callback", state=ClientFeedbackSG.callback_confirm,),
+        SwitchTo(Const("✉️ Написать тренеру"), id="to_message", state=ClientFeedbackSG.message,),
+        SwitchTo(Const("❓ Частые вопросы"), id="to_faq", state=ClientFeedbackSG.faq_list,),
         Cancel(Const("⬅️ Назад")),
         state=ClientFeedbackSG.main,
     ),

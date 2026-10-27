@@ -1,7 +1,15 @@
 from aiogram.enums import ContentType
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Button, Cancel, Column, ScrollingGroup, Select, SwitchTo
+from aiogram_dialog.widgets.kbd import (
+    Button,
+    Cancel,
+    Column,
+    ScrollingGroup,
+    Select,
+    SwitchTo,
+    Back,
+)
 from aiogram_dialog.widgets.text import Const, Format
 
 from src.domain.enums.mailing import MailingTarget
@@ -20,7 +28,11 @@ admin_mailing_dialog = Dialog(
         Const("📢 <b>Рассылка</b>\n\nКому отправляем?"),
         Column(
             *(
-                Button(Const(target.label()), id=target.value, on_click=on_mailing_target_selected)
+                Button(
+                    Const(target.label()),
+                    id=target.value,
+                    on_click=on_mailing_target_selected,
+                )
                 for target in MailingTarget
             )
         ),
@@ -42,7 +54,7 @@ admin_mailing_dialog = Dialog(
             height=8,
             hide_on_single_page=True,
         ),
-        SwitchTo(Const("⬅️ Назад"), id="back_to_target", state=AdminMailingSG.target),
+        Back(Const("⬅️ Назад")),
         state=AdminMailingSG.select_trainer,
         getter=mailing_trainers_getter,
     ),
@@ -52,8 +64,11 @@ admin_mailing_dialog = Dialog(
             "Текст, фото, видео, документ — любой тип, с форматированием. "
             "После отправки покажу предпросмотр."
         ),
-        MessageInput(func=on_mailing_message_received, content_types=ContentType.ANY),
-        SwitchTo(Const("⬅️ Назад"), id="back_to_target", state=AdminMailingSG.target),
+        MessageInput(
+            func=on_mailing_message_received,
+            content_types=ContentType.ANY,
+        ),
+        Back(Const("⬅️ Назад")),
         state=AdminMailingSG.compose,
     ),
     Window(
@@ -64,8 +79,16 @@ admin_mailing_dialog = Dialog(
             "✅ Запустить?"
         ),
         Column(
-            Button(Const("🚀 Отправить"), id="confirm_send", on_click=on_mailing_confirm),
-            SwitchTo(Const("✏️ Изменить сообщение"), id="to_compose", state=AdminMailingSG.compose),
+            Button(
+                Const("🚀 Отправить"),
+                id="confirm_send",
+                on_click=on_mailing_confirm,
+            ),
+            SwitchTo(
+                Const("✏️ Изменить сообщение"),
+                id="to_compose",
+                state=AdminMailingSG.compose,
+            ),
             Cancel(Const("❌ Отменить")),
         ),
         state=AdminMailingSG.confirm,

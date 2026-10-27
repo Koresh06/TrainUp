@@ -1,7 +1,14 @@
 from aiogram.enums import ButtonStyle
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.input import TextInput
-from aiogram_dialog.widgets.kbd import Button, Cancel, Column, ScrollingGroup, Select, SwitchTo
+from aiogram_dialog.widgets.kbd import (
+    Button,
+    Cancel,
+    Column,
+    ScrollingGroup,
+    Select,
+    SwitchTo,
+)
 from aiogram_dialog.widgets.style import Style
 from aiogram_dialog.widgets.text import Const, Format
 
@@ -29,7 +36,9 @@ admin_faq_dialog = Dialog(
         Const("❓ <b>FAQ</b>\n\nКакой раздел редактируем?"),
         Column(
             *(
-                Button(Const(label), id=audience.value, on_click=on_faq_audience_selected)
+                Button(
+                    Const(label), id=audience.value, on_click=on_faq_audience_selected
+                )
                 for audience, label in FAQ_AUDIENCE_LABELS.items()
             )
         ),
@@ -57,7 +66,11 @@ admin_faq_dialog = Dialog(
             state=AdminFaqSG.add_question,
             style=Style(style=ButtonStyle.SUCCESS),
         ),
-        SwitchTo(Const("⬅️ Назад"), id="back_to_audience", state=AdminFaqSG.audience),
+        SwitchTo(
+            Const("⬅️ Назад"),
+            id="back_to_audience",
+            state=AdminFaqSG.audience,
+        ),
         state=AdminFaqSG.list,
         getter=admin_faq_list_getter,
     ),
@@ -69,7 +82,11 @@ admin_faq_dialog = Dialog(
             on_click=on_faq_delete_click,
             style=Style(style=ButtonStyle.DANGER),
         ),
-        SwitchTo(Const("⬅️ Назад"), id="back_to_list", state=AdminFaqSG.list),
+        SwitchTo(
+            Const("⬅️ Назад"),
+            id="back_to_list",
+            state=AdminFaqSG.list,
+        ),
         state=AdminFaqSG.detail,
         getter=admin_faq_detail_getter,
     ),
@@ -81,7 +98,11 @@ admin_faq_dialog = Dialog(
             on_success=on_faq_question_entered,
             on_error=on_input_error,
         ),
-        SwitchTo(Const("⬅️ Назад"), id="back_to_list", state=AdminFaqSG.list),
+        SwitchTo(
+            Const("⬅️ Назад"),
+            id="back_to_list",
+            state=AdminFaqSG.list,
+        ),
         state=AdminFaqSG.add_question,
     ),
     Window(
@@ -92,7 +113,11 @@ admin_faq_dialog = Dialog(
             on_success=on_faq_answer_entered,
             on_error=on_input_error,
         ),
-        SwitchTo(Const("⬅️ Назад"), id="back_to_question", state=AdminFaqSG.add_question),
+        SwitchTo(
+            Const("⬅️ Назад"),
+            id="back_to_question",
+            state=AdminFaqSG.add_question,
+        ),
         state=AdminFaqSG.add_answer,
         getter=admin_faq_new_question_getter,
     ),
