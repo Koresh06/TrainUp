@@ -9,11 +9,11 @@ from dishka.integrations.aiogram import CONTAINER_NAME
 
 from src.application.mediator import Mediator
 from src.application.use_cases.staff.get_access import GetAdminAccessRequest
+from src.application.use_cases.trainer.review import TRAINER_REJECTED_TEXT
 from src.application.use_cases.access.get_user_access import (
     GetUserAccessRequest,
     UserAccessDTO,
 )
-from src.core.config import settings
 from src.domain.entities.bot_admin import AdminAccess
 from src.domain.entities.trainer import Trainer
 from src.domain.enums.admin import AdminPermission
@@ -46,8 +46,7 @@ TRAINER_PENDING_TEXT = (
 def trainer_not_approved_text(trainer: Trainer) -> str:
     if trainer.approval_status == TrainerApprovalStatus.PENDING:
         return TRAINER_PENDING_TEXT
-    contact = settings.payment.manual.admin_contact
-    return "❌ <b>Заявка не одобрена.</b>" + (f" Вопросы: {contact}" if contact else "")
+    return TRAINER_REJECTED_TEXT
 
 
 Handler = Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]]

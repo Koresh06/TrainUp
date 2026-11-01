@@ -2033,6 +2033,5 @@ class UseCasesProvider(Provider):
             subscription_repo=subscription_repo,
             notification_service=notification_service,
             transaction_manager=transaction_manager,
-            support_contact=settings.payment.manual.admin_contact,
             trial_days=TRAINER_TRIAL_DAYS,
         )

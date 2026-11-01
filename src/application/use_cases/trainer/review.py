@@ -17,6 +17,8 @@ from src.infrastructure.database.transaction_manager.base import TransactionMana
 
 logger = logging.getLogger(__name__)
 
+TRAINER_REJECTED_TEXT = "❌ <b>Заявка не одобрена.</b>"
+
 
 @dataclass(frozen=True, eq=False)
 class ReviewTrainerRequest(UseCaseRequest):
@@ -38,7 +40,6 @@ class ReviewTrainerUseCase(UseCase[ReviewTrainerRequest, Trainer]):
     subscription_repo: TrainerSubscriptionRepository
     notification_service: NotificationService
     transaction_manager: TransactionManager
-    support_contact: str = ""
     trial_days: int = TRAINER_TRIAL_DAYS
     referral_friend_days: int = TRAINER_REFERRAL_FRIEND_DAYS
 
@@ -95,5 +96,4 @@ class ReviewTrainerUseCase(UseCase[ReviewTrainerRequest, Trainer]):
         if approved:
             trial = f"🎁 Пробный период: <b>{trial_days} дн.</b>\n" if trial_days else ""
             return f"✅ <b>Заявка одобрена!</b>\n\n{trial}Откройте кабинет: /trainer"
-        contact = f" Вопросы: {self.support_contact}" if self.support_contact else ""
-        return f"❌ <b>Заявка не одобрена.</b>{contact}"
+        return TRAINER_REJECTED_TEXT
