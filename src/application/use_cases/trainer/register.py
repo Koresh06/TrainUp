@@ -1,20 +1,22 @@
 from dataclasses import dataclass
-from decimal import Decimal
 import logging
 import secrets
 
-from html import escape
-
 from src.application.interfaces.notification_service import NotificationService
+from src.application.services.admin_notifier import AdminNotifier
 from src.application.use_cases.base import UseCase, UseCaseRequest
-from src.application.use_cases.subscription._shared import _activate_subscription
+from src.application.use_cases.trainer._shared import (
+    notify_referrer,
+    start_trial,
+    trainer_application_text,
+)
 from src.domain.constants import (
     DEFAULT_CALENDAR_HORIZON_DAYS,
     DEFAULT_MAX_ACTIVE_BOOKINGS,
     GOAL_LABELS,
     HEALTH_CONDITION_LABELS,
-    TRAINER_REFERRAL_BONUS_DAYS,
     TRAINER_REFERRAL_FRIEND_DAYS,
+    TRAINER_APPROVAL_REQUIRED,
     TRAINER_TRIAL_DAYS,
 )
 from src.domain.entities.registration_question import RegistrationQuestion
@@ -22,7 +24,7 @@ from src.domain.entities.trainer import Trainer
 from src.domain.entities.trainer_booking_settings import TrainerBookingSettings
 from src.domain.entities.trainer_invite_link import TrainerInviteLink
 from src.domain.enums.question_type import QuestionType
-from src.domain.enums.subscription import SubscriptionPlan, SubscriptionSource
+from src.domain.enums.trainer import TrainerApprovalStatus
 from src.domain.repositories.invite_link import TrainerInviteLinkRepository
 from src.domain.repositories.registration_question import RegistrationQuestionRepository
 from src.domain.repositories.subscription import TrainerSubscriptionRepository
@@ -45,6 +47,9 @@ class RegisterTrainerRequest(UseCaseRequest):
     phone: str | None = None
     # пришёл по ссылке «пригласить тренера» другого тренера
     referred_by_trainer_id: int | None = None
+    # только для заявки админу, в профиле не хранятся
+    username: str | None = None
+    group_title: str | None = None
 
 
 @dataclass(kw_only=True)
@@ -55,9 +60,11 @@ class RegisterTrainerUseCase(UseCase[RegisterTrainerRequest, Trainer]):
     question_repo: RegistrationQuestionRepository
     subscription_repo: TrainerSubscriptionRepository
     notification_service: NotificationService
+    admin_notifier: AdminNotifier
     transaction_manager: TransactionManager
     trial_days: int = TRAINER_TRIAL_DAYS  # APP_CONFIG__BUSINESS__TRAINER_TRIAL_DAYS, 0 — без триала
     referral_friend_days: int = TRAINER_REFERRAL_FRIEND_DAYS
+    approval_required: bool = TRAINER_APPROVAL_REQUIRED
 
     async def __call__(self, command: RegisterTrainerRequest) -> Trainer:
         referrer = (
@@ -74,6 +81,11 @@ class RegisterTrainerUseCase(UseCase[RegisterTrainerRequest, Trainer]):
             photo_file_id=command.photo_file_id,
             phone=command.phone,
             referred_by_trainer_id=referrer.id if referrer is not None else None,
+            approval_status=(
+                TrainerApprovalStatus.PENDING
+                if self.approval_required
+                else TrainerApprovalStatus.APPROVED
+            ),
         )
         saved_trainer = await self.trainer_repo.save(trainer)
 
@@ -114,37 +126,30 @@ class RegisterTrainerUseCase(UseCase[RegisterTrainerRequest, Trainer]):
             )
         )
 
-        # пробный период — сразу при регистрации, чтобы тренер успел настроить
-        # расписание и позвать клиентов до решения о покупке. Регистрация
-        # одна на tg_id, так что повторно триал не получить
-        # по приглашению другого тренера пробный период длиннее
-        trial_days = self.trial_days + (self.referral_friend_days if referrer else 0)
-        if trial_days > 0:
-            await _activate_subscription(
+        # пробный период — сразу, если заявки выключены: тренер успевает настроить
+        # расписание и позвать клиентов до решения о покупке. Иначе — при одобрении
+        trial_days = 0
+        if not self.approval_required:
+            trial_days = await start_trial(
+                saved_trainer,
+                has_referrer=referrer is not None,
                 subscription_repo=self.subscription_repo,
-                trainer_id=saved_trainer.id,
-                plan=SubscriptionPlan.CUSTOM,
-                amount=Decimal("0"),
-                source=SubscriptionSource.TRIAL,
-                days=trial_days,
+                trial_days=self.trial_days,
+                referral_friend_days=self.referral_friend_days,
             )
 
         await self.transaction_manager.commit()
 
-        if referrer is not None:
-            bonus = (
-                f" Когда он оформит подписку, вам начислится "
-                f"<b>+{TRAINER_REFERRAL_BONUS_DAYS} дней</b> бесплатно."
-                if TRAINER_REFERRAL_BONUS_DAYS
-                else ""
-            )
-            await self.notification_service.send(
-                chat_id=referrer.tg_id,
-                text=(
-                    f"🎉 Тренер <b>{escape(saved_trainer.name)}</b> зарегистрировался "
-                    f"по вашей ссылке.{bonus}"
+        if self.approval_required:
+            await self.admin_notifier.notify_trainer_application(
+                trainer_id=saved_trainer.id,
+                text=trainer_application_text(
+                    saved_trainer, referrer, command.username, command.group_title
                 ),
+                photo_file_id=saved_trainer.photo_file_id,
             )
+        elif referrer is not None:
+            await notify_referrer(saved_trainer, referrer, self.notification_service)
 
         logger.info(
             "[RegisterTrainer:done] trainer_id=%s trial_days=%s referrer_id=%s",

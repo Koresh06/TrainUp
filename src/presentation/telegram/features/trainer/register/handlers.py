@@ -129,6 +129,8 @@ async def on_onboarding_confirm(
                 referred_by_trainer_id=(dialog_manager.start_data or {}).get(
                     "referred_by_trainer_id"
                 ),
+                username=callback.from_user.username,
+                group_title=data.get("group_title"),
             )
         )
     except TrainerAlreadyExistsException:
@@ -141,6 +143,10 @@ async def on_onboarding_confirm(
         return
 
     await callback.answer()
+    if not trainer.is_approved:
+        await dialog_manager.switch_to(TrainerOnboardingSG.pending_approval)
+        return
+
     # пробный период выдаётся при регистрации (если включён в конфиге) —
     # тогда сразу в кабинет через экран «что делать дальше», иначе к оплате
     subscription = await mediator.handle(GetActiveSubscriptionRequest(trainer_id=trainer.id))

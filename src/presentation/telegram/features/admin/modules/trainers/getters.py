@@ -6,6 +6,7 @@ from aiogram_dialog import DialogManager
 
 from src.application.mediator import Mediator
 from src.domain.enums.admin import AdminPermission
+from src.domain.enums.trainer import TrainerApprovalStatus
 from src.presentation.telegram.features.admin.common import current_admin
 from src.application.use_cases.admin.get_trainer_report import (
     AdminTrainerReportDTO,
@@ -52,7 +53,11 @@ async def admin_trainers_list_getter(
         subscription: TrainerSubscription | None = await mediator.handle(
             GetActiveSubscriptionRequest(trainer_id=trainer.id)
         )
-        if not trainer.is_active:
+        if trainer.approval_status == TrainerApprovalStatus.PENDING:
+            icon, until = "🕓", "ждёт подтверждения"
+        elif trainer.approval_status == TrainerApprovalStatus.REJECTED:
+            icon, until = "🚫", "заявка отклонена"
+        elif not trainer.is_active:
             icon, until = "⛔", "заблокирован"
         elif subscription is not None:
             icon, until = "✅", f"до {_date(subscription.expired_at)}"

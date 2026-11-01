@@ -39,6 +39,10 @@ from src.infrastructure.notifications.callback_data.plan_next import PlanNextTra
 from src.infrastructure.notifications.callback_data.rating import RateTrainingCD
 from src.infrastructure.notifications.callback_data.reminder import ReminderAction, ReminderActionCD
 from src.infrastructure.notifications.callback_data.request import RequestActionCD
+from src.infrastructure.notifications.callback_data.trainer_approval import (
+    TrainerApprovalAction,
+    TrainerApprovalCD,
+)
 from src.infrastructure.notifications.callback_data.subscription import (
     RenewSubscriptionCD,
 )
@@ -364,6 +368,33 @@ class TelegramNotificationService(NotificationService):
             f"подписка активируется автоматически."
         )
         for chat_id in chat_ids:
+            await self._send(chat_id, text, kb.as_markup())
+
+    async def notify_trainer_application(
+        self,
+        trainer_id: int,
+        text: str,
+        photo_file_id: str | None,
+        chat_ids: list[int],
+    ) -> None:
+        kb = InlineKeyboardBuilder()
+        for label, action in (
+            ("✅ Подтвердить", TrainerApprovalAction.APPROVE),
+            ("❌ Отклонить", TrainerApprovalAction.REJECT),
+        ):
+            kb.button(
+                text=label,
+                callback_data=TrainerApprovalCD(action=action, trainer_id=trainer_id).pack(),
+            )
+        kb.adjust(2)
+        for chat_id in chat_ids:
+            # фото отдельным сообщением: решение дописывается в текст заявки,
+            # а у подписи к фото свой лимит и другой метод редактирования
+            if photo_file_id:
+                try:
+                    await self._bot.send_photo(chat_id=chat_id, photo=photo_file_id)
+                except (TelegramForbiddenError, TelegramBadRequest) as error:
+                    logger.warning("[Notification] photo to %s failed: %s", chat_id, error)
             await self._send(chat_id, text, kb.as_markup())
 
     async def notify_admins(self, chat_ids: list[int], text: str) -> None:

@@ -12,13 +12,13 @@ class IsTrainerAvailableRequest(UseCaseRequest):
 
 @dataclass(kw_only=True)
 class IsTrainerAvailableUseCase(UseCase[IsTrainerAvailableRequest, bool]):
-    """Тренер принимает клиентов: не заблокирован админом и подписка действует."""
+    """Тренер принимает клиентов: подтверждён, не заблокирован и подписка действует."""
 
     trainer_repo: TrainerRepository
     subscription_repo: TrainerSubscriptionRepository
 
     async def __call__(self, command: IsTrainerAvailableRequest) -> bool:
         trainer = await self.trainer_repo.get_by_id(command.trainer_id)
-        if trainer is None or not trainer.is_active:
+        if trainer is None or not trainer.is_active or not trainer.is_approved:
             return False
         return await self.subscription_repo.get_active_by_trainer_id(trainer.id) is not None

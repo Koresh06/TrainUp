@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.entities.trainer import Trainer
+from src.domain.enums.trainer import TrainerApprovalStatus
 from src.domain.exception.trainer import (
     TrainerAlreadyExistsException,
     TrainerNotFoundException,
@@ -43,10 +44,22 @@ class SQLAlchemyTrainerRepo(TrainerRepository):
         model = result.scalar_one_or_none()
         return model.to_entity() if model is not None else None
 
+    async def get_by_id_for_update(self, trainer_id: int) -> Trainer | None:
+        query = (
+            select(TrainerModel).where(TrainerModel.id == trainer_id).with_for_update()
+        )
+        result = await self._session.execute(query)
+        model = result.scalar_one_or_none()
+        return model.to_entity() if model is not None else None
+
     async def get_all_active(self) -> list[Trainer]:
+        # без заявок: сводки, рассылки и календарь — только для допущенных тренеров
         query = (
             select(TrainerModel)
-            .where(TrainerModel.is_active.is_(True))
+            .where(
+                TrainerModel.is_active.is_(True),
+                TrainerModel.approval_status == TrainerApprovalStatus.APPROVED,
+            )
             .order_by(TrainerModel.id)
         )
         result = await self._session.execute(query)

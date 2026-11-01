@@ -175,6 +175,8 @@ PLAN_NEXT_TRAINING_REMINDER_DAYS = _business.plan_next_training_reminder_days
 SUBSCRIPTION_WARNING_HOURS: list[int] = sorted(_business.subscription_warning_hours, reverse=True)
 # бесплатный пробный период, который новый тренер получает при регистрации (0 — без триала)
 TRAINER_TRIAL_DAYS = max(_business.trainer_trial_days, 0)
+# False — новый тренер сразу попадает в кабинет, без заявки
+TRAINER_APPROVAL_REQUIRED = _business.trainer_approval_required
 
 # --- Тестовый режим постоянных клиентов ---
 # cron maintain_recurring_bookings бежит раз в 2 минуты вместо раза в сутки,

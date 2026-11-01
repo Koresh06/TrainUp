@@ -23,12 +23,24 @@ class AdminNotifier:
             await self.notification_service.notify_admins(recipients, text)
 
     async def notify_manual_payment(self, data: ManualPaymentRequestDTO) -> None:
-        # заявку нельзя потерять: тренер ждёт подписку, а подтвердить её больше
-        # некому — если все выключили уведомление, она всё равно уйдёт супер-админам
-        recipients = await self._recipients(AdminNotification.MANUAL_PAYMENT)
         await self.notification_service.notify_manual_payment_request(
-            data, recipients or list(self.super_admin_ids)
+            data, await self._never_lost(AdminNotification.MANUAL_PAYMENT)
         )
+
+    async def notify_trainer_application(
+        self, trainer_id: int, text: str, photo_file_id: str | None
+    ) -> None:
+        await self.notification_service.notify_trainer_application(
+            trainer_id=trainer_id,
+            text=text,
+            photo_file_id=photo_file_id,
+            chat_ids=await self._never_lost(AdminNotification.TRAINER_APPLICATION),
+        )
+
+    async def _never_lost(self, kind: AdminNotification) -> list[int]:
+        # такую заявку нельзя потерять: человек ждёт решения, а принять его больше
+        # некому — если все выключили уведомление, она всё равно уйдёт супер-админам
+        return await self._recipients(kind) or list(self.super_admin_ids)
 
     async def _recipients(self, kind: AdminNotification) -> list[int]:
         admins = {admin.tg_id: admin for admin in await self.admin_repo.get_all()}

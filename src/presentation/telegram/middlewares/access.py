@@ -13,8 +13,11 @@ from src.application.use_cases.access.get_user_access import (
     GetUserAccessRequest,
     UserAccessDTO,
 )
+from src.core.config import settings
 from src.domain.entities.bot_admin import AdminAccess
+from src.domain.entities.trainer import Trainer
 from src.domain.enums.admin import AdminPermission
+from src.domain.enums.trainer import TrainerApprovalStatus
 from src.infrastructure.notifications.callback_data.subscription import (
     RenewSubscriptionCD,
 )
@@ -32,6 +35,20 @@ SUBSCRIPTION_EXPIRED_TEXT = (
     "⛔ <b>Подписка закончилась</b>\n\n"
     "Кабинет тренера и запись ваших клиентов приостановлены до продления."
 )
+
+TRAINER_PENDING_TEXT = (
+    "⏳ <b>Заявка на проверке</b>\n\n"
+    "Администратор посмотрит её и при необходимости свяжется с вами. "
+    "Кабинет откроется сразу после подтверждения — бот пришлёт сообщение."
+)
+
+
+def trainer_not_approved_text(trainer: Trainer) -> str:
+    if trainer.approval_status == TrainerApprovalStatus.PENDING:
+        return TRAINER_PENDING_TEXT
+    contact = settings.payment.manual.admin_contact
+    return "❌ <b>Заявка не одобрена.</b>" + (f" Вопросы: {contact}" if contact else "")
+
 
 Handler = Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]]
 
@@ -94,7 +111,12 @@ class TrainerSubscriptionGuard(BaseMiddleware):
 
     async def __call__(self, handler: Handler, event: TelegramObject, data: dict[str, Any]) -> Any:
         access: UserAccessDTO | None = data.get(USER_ACCESS_KEY)
-        if access is None or access.trainer is None or access.trainer_subscription_active:
+        if access is None or access.trainer is None:
+            return await handler(event, data)
+        if not access.trainer.is_approved:
+            await _reply(event, trainer_not_approved_text(access.trainer))
+            return None
+        if access.trainer_subscription_active:
             return await handler(event, data)
         await _reply(event, SUBSCRIPTION_EXPIRED_TEXT, renew_subscription_markup())
         return None

@@ -169,6 +169,14 @@ class NotificationService(Protocol):
 
     async def notify_admins(self, chat_ids: list[int], text: str) -> None: ...
 
+    async def notify_trainer_application(
+        self,
+        trainer_id: int,
+        text: str,
+        photo_file_id: str | None,
+        chat_ids: list[int],
+    ) -> None: ...
+
     async def broadcast_copy(
         self, *, chat_ids: list[int], from_chat_id: int, message_id: int
     ) -> MailingResultDTO: ...

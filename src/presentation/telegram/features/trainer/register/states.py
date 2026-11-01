@@ -17,4 +17,5 @@ class TrainerOnboardingSG(StatesGroup):
     group = State()
     final = State()
     trial_started = State()
+    pending_approval = State()
     benefits = State()

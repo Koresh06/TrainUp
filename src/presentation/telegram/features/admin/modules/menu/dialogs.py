@@ -10,10 +10,15 @@ from src.application.use_cases.admin.get_overview_stats import (
     GetAdminOverviewStatsRequest,
 )
 from src.application.use_cases.stats.period import StatsPeriod
+from src.application.use_cases.trainer.get_applications import (
+    GetTrainerApplicationsRequest,
+)
 from src.domain.enums.admin import AdminPermission
+from src.domain.enums.trainer import TrainerApprovalStatus
 from src.presentation.telegram.features.admin.common import current_admin, money
 from src.presentation.telegram.middlewares.access import NO_PERMISSION_TEXT
 from src.presentation.telegram.features.admin.states import (
+    AdminApplicationsSG,
     AdminClientsSG,
     AdminExportSG,
     AdminFaqSG,
@@ -32,6 +37,7 @@ ADMIN_MENU_TARGETS = {
     "mailing": AdminMailingSG.target,
     "faq": AdminFaqSG.audience,
     "exports": AdminExportSG.main,
+    "applications": AdminApplicationsSG.list,
     "staff": AdminStaffSG.list,
     "notifications": AdminNotificationsSG.main,
 }
@@ -39,6 +45,7 @@ ADMIN_MENU_TARGETS = {
 # кнопка видна, если есть хотя бы одно из прав. «notifications» — всем админам,
 # «staff» проверяется отдельно: это только супер-админ
 ADMIN_MENU_PERMISSIONS: dict[str, tuple[AdminPermission, ...]] = {
+    "applications": (AdminPermission.TRAINERS_APPROVE,),
     "stats": (AdminPermission.STATS,),
     "trainers": (AdminPermission.TRAINERS_VIEW,),
     "clients": (AdminPermission.CLIENTS_VIEW,),
@@ -69,6 +76,13 @@ async def admin_menu_getter(
         f"can_{section}": _section_allowed(admin, section)
         for section in ADMIN_MENU_TARGETS
     }
+    if sections["can_applications"]:
+        trainers = await mediator.handle(GetTrainerApplicationsRequest())
+        pending = sum(1 for t in trainers if t.approval_status == TrainerApprovalStatus.PENDING)
+        sections["applications_label"] = f"🛂 Заявки тренеров ({pending})"
+    else:
+        sections["applications_label"] = ""
+
     # сводка с выручкой — та же статистика, без права её не показываем
     if not sections["can_stats"]:
         return {**sections, "summary": ""}
@@ -105,6 +119,7 @@ admin_menu_dialog = Dialog(
     Window(
         Format("🛠 <b>Панель администратора</b>{summary}"),
         Column(
+            Button(Format("{applications_label}"), id="applications", on_click=on_admin_menu_click, when="can_applications"),
             Button(Const("📊 Статистика"), id="stats", on_click=on_admin_menu_click, when="can_stats"),
             Button(Const("👨‍🏫 Тренеры"), id="trainers", on_click=on_admin_menu_click, when="can_trainers"),
             Button(Const("👥 Клиенты"), id="clients", on_click=on_admin_menu_click, when="can_clients"),

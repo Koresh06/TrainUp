@@ -19,6 +19,8 @@ os.environ.update(
         # база тестов — без триала: старые сценарии ждут тренера без подписки,
         # пробный период проверяется отдельно с явным trial_days
         "APP_CONFIG__BUSINESS__TRAINER_TRIAL_DAYS": "0",
+        # заявки проверяются отдельно: остальным сценариям нужен готовый тренер
+        "APP_CONFIG__BUSINESS__TRAINER_APPROVAL_REQUIRED": "False",
         "APP_CONFIG__TELEGRAM__ADMIN_IDS": "[777000]",
         "APP_CONFIG__TELEGRAM__BOT_TOKEN": "123456:TEST-TOKEN-not-real",
         # способы оплаты в тестах: ручная + тестовая; ЮKassa/Stars — фейками в тестах

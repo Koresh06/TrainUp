@@ -271,6 +271,14 @@ from src.application.use_cases.staff.notifications import (
     ToggleAdminNotificationRequest,
     ToggleAdminNotificationUseCase,
 )
+from src.application.use_cases.trainer.get_applications import (
+    GetTrainerApplicationsRequest,
+    GetTrainerApplicationsUseCase,
+)
+from src.application.use_cases.trainer.review import (
+    ReviewTrainerRequest,
+    ReviewTrainerUseCase,
+)
 from src.application.use_cases.faq.get_active import (
     GetActiveFaqItemsRequest,
     GetActiveFaqItemsUseCase,
@@ -530,6 +538,8 @@ class MediatorProvider(Provider):
         remove_admin_use_case: RemoveAdminUseCase,
         get_muted_notifications_use_case: GetMutedNotificationsUseCase,
         toggle_admin_notification_use_case: ToggleAdminNotificationUseCase,
+        get_trainer_applications_use_case: GetTrainerApplicationsUseCase,
+        review_trainer_use_case: ReviewTrainerUseCase,
         get_active_faq_items_use_case: GetActiveFaqItemsUseCase,
         get_faq_item_by_id_use_case: GetFaqItemByIdUseCase,
         add_faq_item_use_case: AddFaqItemUseCase,
@@ -722,6 +732,8 @@ class MediatorProvider(Provider):
         mediator.register(RemoveAdminRequest, remove_admin_use_case)
         mediator.register(GetMutedNotificationsRequest, get_muted_notifications_use_case)
         mediator.register(ToggleAdminNotificationRequest, toggle_admin_notification_use_case)
+        mediator.register(GetTrainerApplicationsRequest, get_trainer_applications_use_case)
+        mediator.register(ReviewTrainerRequest, review_trainer_use_case)
         mediator.register(GetActiveFaqItemsRequest, get_active_faq_items_use_case)
         mediator.register(GetFaqItemByIdRequest, get_faq_item_by_id_use_case)
         mediator.register(AddFaqItemRequest, add_faq_item_use_case)

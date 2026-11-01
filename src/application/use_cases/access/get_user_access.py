@@ -51,6 +51,7 @@ class GetUserAccessUseCase(UseCase[GetUserAccessRequest, UserAccessDTO]):
             client_trainer_available = (
                 client_trainer is not None
                 and client_trainer.is_active
+                and client_trainer.is_approved
                 and await self.subscription_repo.get_active_by_trainer_id(client_trainer.id)
                 is not None
             )

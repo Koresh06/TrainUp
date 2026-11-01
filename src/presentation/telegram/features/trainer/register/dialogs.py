@@ -48,6 +48,8 @@ from .getters import (
 )
 from .texts import BENEFITS_FULL
 from .validaters import validate_trainer_name, validate_trainer_bio
+from src.presentation.telegram.middlewares.access import TRAINER_PENDING_TEXT
+
 from .states import SubscriptionSG, TrainerOnboardingSG
 
 trainer_onboarding_dialog = Dialog(
@@ -204,6 +206,10 @@ trainer_onboarding_dialog = Dialog(
         getter=trial_started_getter,
     ),
     # окна вне основного пути — в конце: Next/Back ходят по порядку окон
+    Window(
+        Const(TRAINER_PENDING_TEXT),
+        state=TrainerOnboardingSG.pending_approval,
+    ),
     Window(
         Const(BENEFITS_FULL),
         SwitchTo(Const("🚀 Начать регистрацию"), id="benefits_start", state=TrainerOnboardingSG.name),

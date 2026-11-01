@@ -16,6 +16,15 @@ class TrainerNotFoundException(DomainError):
 
 
 @dataclass
+class TrainerAlreadyReviewedException(DomainError):
+    trainer_id: int
+
+    @property
+    def message(self) -> str:
+        return f"Заявка тренера {self.trainer_id} уже обработана"
+
+
+@dataclass
 class TrainerAlreadyExistsException(DomainError):
     tg_id: int
 

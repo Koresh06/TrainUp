@@ -34,6 +34,7 @@ from tests.fakes.common import (
     FakeTrainers,
     RecordingNotifications,
     _IdRepo,
+    make_admin_notifier,
 )
 
 
@@ -45,6 +46,7 @@ def register_use_case(subs: FakeSubscriptions, trial_days: int) -> RegisterTrain
         question_repo=_IdRepo(),
         subscription_repo=subs,
         notification_service=RecordingNotifications(),
+        admin_notifier=make_admin_notifier(RecordingNotifications()),
         transaction_manager=FakeTransactionManager(),
         trial_days=trial_days,
     )

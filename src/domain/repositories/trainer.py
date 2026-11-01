@@ -10,6 +10,9 @@ class TrainerRepository(Protocol):
     async def get_by_id(self, trainer_id: int) -> Trainer | None:
         ...
 
+    async def get_by_id_for_update(self, trainer_id: int) -> Trainer | None:
+        ...
+
     async def get_by_tg_id(self, tg_id: int) -> Trainer | None:
         ...
 

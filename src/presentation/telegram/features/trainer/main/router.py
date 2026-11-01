@@ -21,6 +21,8 @@ from src.presentation.telegram.features.trainer.register.states import (
     TrainerOnboardingSG,
 )
 
+from src.presentation.telegram.middlewares.access import trainer_not_approved_text
+
 from .states import TrainerMainSG
 
 logger = logging.getLogger(__name__)
@@ -43,6 +45,10 @@ async def process_trainer_command(
         await dialog_manager.start(
             state=TrainerOnboardingSG.welcome, mode=StartMode.RESET_STACK
         )
+        return
+
+    if not trainer.is_approved:
+        await message.answer(trainer_not_approved_text(trainer))
         return
 
     subscription: TrainerSubscription = await mediator.handle(

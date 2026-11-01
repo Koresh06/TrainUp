@@ -1,4 +1,7 @@
 from src.domain.enums.admin import AdminPermission
+from src.presentation.telegram.features.admin.modules.applications.dialogs import (
+    admin_applications_dialog,
+)
 from src.presentation.telegram.features.admin.modules.notifications.dialogs import (
     admin_notifications_dialog,
 )
@@ -181,6 +184,7 @@ ADMIN_DIALOGS: list[Dialog] = [
     admin_mailing_dialog,
     admin_faq_dialog,
     admin_export_dialog,
+    admin_applications_dialog,
     admin_staff_dialog,
     admin_notifications_dialog,
 ]
@@ -194,6 +198,7 @@ ADMIN_DIALOG_GUARDS: list[tuple[Dialog, AdminGuard]] = [
     (admin_mailing_dialog, AdminGuard(AdminPermission.MAILING)),
     (admin_faq_dialog, AdminGuard(AdminPermission.FAQ)),
     (admin_export_dialog, AdminGuard(AdminPermission.EXPORTS)),
+    (admin_applications_dialog, AdminGuard(AdminPermission.TRAINERS_APPROVE)),
     (admin_staff_dialog, AdminGuard(super_only=True)),
     (admin_notifications_dialog, AdminGuard()),
 ]

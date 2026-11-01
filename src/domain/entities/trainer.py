@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from src.domain.entities.base import Entity
+from src.domain.enums.trainer import TrainerApprovalStatus
 
 
 @dataclass(kw_only=True)
@@ -19,3 +20,8 @@ class Trainer(Entity):
     referral_code: str | None = None
     referred_by_trainer_id: int | None = None
     referral_rewarded_at: datetime | None = None
+    approval_status: TrainerApprovalStatus = TrainerApprovalStatus.APPROVED
+
+    @property
+    def is_approved(self) -> bool:
+        return self.approval_status == TrainerApprovalStatus.APPROVED

@@ -160,6 +160,10 @@ class RecordingNotifications:
         self.calls.append(("notify_manual_payment_request", data))
         self.manual_payment_recipients = list(chat_ids)
 
+    async def notify_trainer_application(self, trainer_id, text, photo_file_id, chat_ids) -> None:
+        self.calls.append(("notify_trainer_application", text))
+        self.application_recipients = list(chat_ids)
+
     async def notify_admins(self, chat_ids, text: str) -> None:
         self.calls.append(("notify_admins", text))
         self.admin_recipients = list(chat_ids)

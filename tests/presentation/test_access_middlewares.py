@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from src.application.use_cases.access.get_user_access import UserAccessDTO
 from src.domain.entities.bot_admin import AdminAccess
 from src.domain.enums.admin import AdminPermission
+from src.domain.enums.trainer import TrainerApprovalStatus
 from src.presentation.telegram.middlewares.access import (
     ADMIN_ACCESS_KEY,
     USER_ACCESS_KEY,
@@ -39,13 +40,23 @@ def _access(**kwargs) -> UserAccessDTO:
 
 
 async def test_trainer_guard_passes_with_subscription() -> None:
-    access = _access(trainer=SimpleNamespace(is_active=True), trainer_subscription_active=True)
+    access = _access(trainer=SimpleNamespace(is_active=True, is_approved=True), trainer_subscription_active=True)
     result, called, _ = await _call(TrainerSubscriptionGuard(), {USER_ACCESS_KEY: access})
     assert called and result == "handled"
 
 
 async def test_trainer_guard_blocks_without_subscription() -> None:
-    access = _access(trainer=SimpleNamespace(is_active=True), trainer_subscription_active=False)
+    access = _access(trainer=SimpleNamespace(is_active=True, is_approved=True), trainer_subscription_active=False)
+    _, called, _ = await _call(TrainerSubscriptionGuard(), {USER_ACCESS_KEY: access})
+    assert not called
+
+
+async def test_trainer_guard_blocks_pending_even_with_subscription() -> None:
+    # админ мог выдать подписку ещё не подтверждённому тренеру
+    trainer = SimpleNamespace(
+        is_active=True, is_approved=False, approval_status=TrainerApprovalStatus.PENDING
+    )
+    access = _access(trainer=trainer, trainer_subscription_active=True)
     _, called, _ = await _call(TrainerSubscriptionGuard(), {USER_ACCESS_KEY: access})
     assert not called
 

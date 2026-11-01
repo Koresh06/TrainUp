@@ -12,6 +12,10 @@ from src.application.use_cases.staff.notifications import (
     GetMutedNotificationsUseCase,
     ToggleAdminNotificationUseCase,
 )
+from src.application.use_cases.trainer.get_applications import (
+    GetTrainerApplicationsUseCase,
+)
+from src.application.use_cases.trainer.review import ReviewTrainerUseCase
 from src.core.config import settings
 from src.domain.repositories.bot_admin import BotAdminRepository
 from src.application.interfaces.booking_scheduler import BookingScheduler
@@ -182,7 +186,7 @@ from src.application.use_cases.payment.get_by_external_id import GetPaymentByExt
 from src.application.services.payment_provider_registry import PaymentProviderRegistry
 from src.domain.repositories.payment import PaymentRepository
 from src.domain.repositories.bot_user import BotUserRepository
-from src.domain.constants import TRAINER_TRIAL_DAYS
+from src.domain.constants import TRAINER_APPROVAL_REQUIRED, TRAINER_TRIAL_DAYS
 from src.application.use_cases.admin.get_analytics import GetAdminAnalyticsUseCase
 from src.application.use_cases.bot_user.track_activity import TrackUserActivityUseCase
 from src.application.use_cases.bot_user.set_bot_blocked import SetBotBlockedByUserUseCase
@@ -521,6 +525,7 @@ class UseCasesProvider(Provider):
         question_repo: RegistrationQuestionRepository,
         subscription_repo: TrainerSubscriptionRepository,
         notification_service: NotificationService,
+        admin_notifier: AdminNotifier,
         transaction_manager: TransactionManager,
     ) -> RegisterTrainerUseCase:
         return RegisterTrainerUseCase(
@@ -530,6 +535,8 @@ class UseCasesProvider(Provider):
             question_repo=question_repo,
             subscription_repo=subscription_repo,
             trial_days=TRAINER_TRIAL_DAYS,
+            approval_required=TRAINER_APPROVAL_REQUIRED,
+            admin_notifier=admin_notifier,
             notification_service=notification_service,
             transaction_manager=transaction_manager,
         )
@@ -2002,4 +2009,30 @@ class UseCasesProvider(Provider):
         return ToggleAdminNotificationUseCase(
             admin_repo=admin_repo,
             transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_trainer_applications_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+    ) -> GetTrainerApplicationsUseCase:
+        return GetTrainerApplicationsUseCase(
+            trainer_repo=trainer_repo,
+        )
+
+    @provide
+    def review_trainer_use_case(
+        self,
+        trainer_repo: TrainerRepository,
+        subscription_repo: TrainerSubscriptionRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> ReviewTrainerUseCase:
+        return ReviewTrainerUseCase(
+            trainer_repo=trainer_repo,
+            subscription_repo=subscription_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+            support_contact=settings.payment.manual.admin_contact,
+            trial_days=TRAINER_TRIAL_DAYS,
         )

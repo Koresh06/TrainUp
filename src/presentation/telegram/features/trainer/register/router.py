@@ -20,6 +20,8 @@ from src.infrastructure.notifications.callback_data.subscription import (
     RenewSubscriptionCD,
 )
 
+from src.presentation.telegram.middlewares.access import trainer_not_approved_text
+
 from .states import SubscriptionSG
 
 logger = logging.getLogger(__name__)
@@ -40,6 +42,11 @@ async def on_renew_subscription_click(
         )
     except TrainerNotFoundException:
         await callback.answer("Профиль тренера не найден", show_alert=True)
+        return
+
+    if not trainer.is_approved:
+        await callback.answer()
+        await callback.message.answer(trainer_not_approved_text(trainer))
         return
 
     await callback.answer()

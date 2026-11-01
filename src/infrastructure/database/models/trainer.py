@@ -10,9 +10,11 @@ from sqlalchemy import (
     VARCHAR,
     Boolean,
 )
+from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.dialects.postgresql import JSONB
 
 from src.domain.entities.trainer import Trainer
+from src.domain.enums.trainer import TrainerApprovalStatus
 from src.infrastructure.database.models.trainer_invite_link import (
     TrainerInviteLinkModel,
 )
@@ -54,6 +56,12 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     )
     referral_rewarded_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
+    )
+    approval_status: Mapped[TrainerApprovalStatus] = mapped_column(
+        SqlEnum(TrainerApprovalStatus),
+        default=TrainerApprovalStatus.APPROVED,
+        server_default=TrainerApprovalStatus.APPROVED.name,
+        index=True,
     )
 
     clients: Mapped[list["ClientModel"]] = relationship(
@@ -118,6 +126,7 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             referral_code=entity.referral_code,
             referred_by_trainer_id=entity.referred_by_trainer_id,
             referral_rewarded_at=entity.referral_rewarded_at,
+            approval_status=entity.approval_status,
         )
 
     def to_entity(self) -> "Trainer":
@@ -134,6 +143,7 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             referral_code=self.referral_code,
             referred_by_trainer_id=self.referred_by_trainer_id,
             referral_rewarded_at=self.referral_rewarded_at,
+            approval_status=self.approval_status,
             created_at=self.created_at,
         )
 
@@ -149,3 +159,4 @@ class TrainerModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.referral_code = entity.referral_code
         self.referred_by_trainer_id = entity.referred_by_trainer_id
         self.referral_rewarded_at = entity.referral_rewarded_at
+        self.approval_status = entity.approval_status
