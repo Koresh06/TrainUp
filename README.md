@@ -241,7 +241,7 @@ Telegram) и подписка, постоянные клиенты с ежене
 ```bash
 uv sync
 uv run alembic upgrade head
-uv run python -m src.main          # бот
+uv run python -m src.presentation.telegram.app  # бот
 uv run taskiq worker src.worker:broker       # воркер фоновых задач
 uv run taskiq scheduler src.scheduler:scheduler  # планировщик (cron-генерация календаря)
 uv run uvicorn src.presentation.web.app:create_app --port 8080 --factory  # webhook ЮKassa

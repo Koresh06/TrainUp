@@ -4,7 +4,8 @@
 `webhook` (FastAPI: webhook ЮKassa + страница возврата) и `caddy` (HTTPS-прокси
 на webhook, сертификат Let's Encrypt выпускается и продлевается автоматически).
 
-На сервере в одной папке лежат `docker-compose.yml`, `Caddyfile` и `.env`.
+На сервере в одной папке лежат `docker-compose.yml`, `Caddyfile`, `Makefile` и `.env`.
+Список команд управления: `make`.
 Образ `ghcr.io/koresh06/trainup:latest` собирается GitHub Actions при push в `main`
 (после зелёного CI).
 
@@ -32,15 +33,11 @@
 ## Обновление
 
 ```bash
-docker exec trainup_db pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc > backup_$(date +%F_%H%M).dump
-docker compose pull
-docker compose stop bot worker scheduler webhook
-docker compose run --rm bot alembic upgrade head
-docker compose up -d          # именно up -d: restart не перечитывает .env
+make update   # бэкап, образ, миграции, запуск
 docker compose logs bot webhook | grep Payments   # какие способы оплаты подхватились
 ```
 
-Миграции не запускаются сами: выполняйте команду выше при каждом обновлении, иначе
+Миграции не запускаются сами: `make update` или `make migrate` при каждом обновлении, иначе
 бот упадёт на новых таблицах и колонках. После миграции подтверждения тренеров
 работающие тренеры остаются подтверждёнными, а новые ждут решения админа
 (`APP_CONFIG__BUSINESS__TRAINER_APPROVAL_REQUIRED=False` выключает проверку).
@@ -57,4 +54,4 @@ docker compose run --rm bot alembic downgrade <ревизия прошлой в�
 docker compose up -d
 ```
 Миграции с переносом данных схему откатывают, данные — нет; для полного отката
-`pg_restore --clean` из бэкапа.
+`make restore f=backups/<файл>.dump`.

@@ -93,3 +93,6 @@ my_database.db
 .env/
 README-logic.md
 .coverage
+
+# бэкапы БД с персональными данными
+backups/
