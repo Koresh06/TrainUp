@@ -2,14 +2,12 @@ import logging
 import uuid
 from dataclasses import dataclass
 
-from src.application.interfaces.notification_service import (
-    ManualPaymentRequestDTO,
-    NotificationService,
-)
+from src.application.interfaces.notification_service import ManualPaymentRequestDTO
 from src.application.interfaces.payment_provider import (
     InvoiceRequestDTO,
     PaymentInstructionsDTO,
 )
+from src.application.services.admin_notifier import AdminNotifier
 from src.application.services.payment_provider_registry import PaymentProviderRegistry
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.application.use_cases.payment._shared import plan_description, usd
@@ -54,7 +52,7 @@ class CreateSubscriptionPaymentUseCase(
     payment_repo: PaymentRepository
     provider_registry: PaymentProviderRegistry
     confirm_use_case: ConfirmPaymentUseCase
-    notification_service: NotificationService
+    admin_notifier: AdminNotifier
     transaction_manager: TransactionManager
 
     async def __call__(self, command: CreateSubscriptionPaymentRequest) -> CreatedPaymentDTO:
@@ -103,7 +101,7 @@ class CreateSubscriptionPaymentUseCase(
         )
 
         if provider.requires_admin_confirmation:
-            await self.notification_service.notify_manual_payment_request(
+            await self.admin_notifier.notify_manual_payment(
                 ManualPaymentRequestDTO(
                     external_id=external_id,
                     trainer_name=trainer.name,

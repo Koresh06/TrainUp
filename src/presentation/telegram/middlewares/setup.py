@@ -1,7 +1,7 @@
 from aiogram import Dispatcher
 
 from src.presentation.telegram.features import (
-    ADMIN_DIALOGS,
+    ADMIN_DIALOG_GUARDS,
     CLIENT_DIALOGS,
     TRAINER_CABINET_DIALOGS,
 )
@@ -9,7 +9,6 @@ from src.presentation.telegram.features.error_handler import setup_error_handlin
 from src.presentation.telegram.middlewares.activity import ActivityTrackingMiddleware
 from src.presentation.telegram.middlewares.logging_context import LoggingContextMiddleware
 from src.presentation.telegram.middlewares.access import (
-    AdminGuard,
     ClientTrainerGuard,
     TrainerSubscriptionGuard,
     UserAccessMiddleware,
@@ -34,8 +33,11 @@ def setup_middlewares(dp: Dispatcher) -> None:
     for guard, dialogs in (
         (TrainerSubscriptionGuard(), TRAINER_CABINET_DIALOGS),
         (ClientTrainerGuard(), CLIENT_DIALOGS),
-        (AdminGuard(), ADMIN_DIALOGS),
     ):
         for dialog in dialogs:
             dialog.message.middleware(guard)
             dialog.callback_query.middleware(guard)
+
+    for dialog, guard in ADMIN_DIALOG_GUARDS:
+        dialog.message.middleware(guard)
+        dialog.callback_query.middleware(guard)

@@ -247,6 +247,30 @@ from src.application.use_cases.client_request.update_status import (
     UpdateClientRequestStatusRequest,
     UpdateClientRequestStatusUseCase,
 )
+from src.application.use_cases.staff.get_access import (
+    GetAdminAccessRequest,
+    GetAdminAccessUseCase,
+)
+from src.application.use_cases.staff.get_admins import (
+    GetAdminRequest,
+    GetAdminsRequest,
+    GetAdminsUseCase,
+    GetAdminUseCase,
+)
+from src.application.use_cases.staff.manage import (
+    AddAdminRequest,
+    AddAdminUseCase,
+    RemoveAdminRequest,
+    RemoveAdminUseCase,
+    ToggleAdminPermissionRequest,
+    ToggleAdminPermissionUseCase,
+)
+from src.application.use_cases.staff.notifications import (
+    GetMutedNotificationsRequest,
+    GetMutedNotificationsUseCase,
+    ToggleAdminNotificationRequest,
+    ToggleAdminNotificationUseCase,
+)
 from src.application.use_cases.faq.get_active import (
     GetActiveFaqItemsRequest,
     GetActiveFaqItemsUseCase,
@@ -498,6 +522,14 @@ class MediatorProvider(Provider):
         get_client_requests_by_trainer_use_case: GetClientRequestsByTrainerUseCase,
         get_client_request_by_id_use_case: GetClientRequestByIdUseCase,
         update_client_request_status_use_case: UpdateClientRequestStatusUseCase,
+        get_admin_access_use_case: GetAdminAccessUseCase,
+        get_admins_use_case: GetAdminsUseCase,
+        get_admin_use_case: GetAdminUseCase,
+        add_admin_use_case: AddAdminUseCase,
+        toggle_admin_permission_use_case: ToggleAdminPermissionUseCase,
+        remove_admin_use_case: RemoveAdminUseCase,
+        get_muted_notifications_use_case: GetMutedNotificationsUseCase,
+        toggle_admin_notification_use_case: ToggleAdminNotificationUseCase,
         get_active_faq_items_use_case: GetActiveFaqItemsUseCase,
         get_faq_item_by_id_use_case: GetFaqItemByIdUseCase,
         add_faq_item_use_case: AddFaqItemUseCase,
@@ -682,6 +714,14 @@ class MediatorProvider(Provider):
         mediator.register(GetClientRequestsByTrainerRequest, get_client_requests_by_trainer_use_case)
         mediator.register(GetClientRequestByIdRequest, get_client_request_by_id_use_case)
         mediator.register(UpdateClientRequestStatusRequest, update_client_request_status_use_case)
+        mediator.register(GetAdminAccessRequest, get_admin_access_use_case)
+        mediator.register(GetAdminsRequest, get_admins_use_case)
+        mediator.register(GetAdminRequest, get_admin_use_case)
+        mediator.register(AddAdminRequest, add_admin_use_case)
+        mediator.register(ToggleAdminPermissionRequest, toggle_admin_permission_use_case)
+        mediator.register(RemoveAdminRequest, remove_admin_use_case)
+        mediator.register(GetMutedNotificationsRequest, get_muted_notifications_use_case)
+        mediator.register(ToggleAdminNotificationRequest, toggle_admin_notification_use_case)
         mediator.register(GetActiveFaqItemsRequest, get_active_faq_items_use_case)
         mediator.register(GetFaqItemByIdRequest, get_faq_item_by_id_use_case)
         mediator.register(AddFaqItemRequest, add_faq_item_use_case)

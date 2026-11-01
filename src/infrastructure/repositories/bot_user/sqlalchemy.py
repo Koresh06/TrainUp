@@ -24,6 +24,16 @@ class SQLAlchemyBotUserRepo(BotUserRepository):
         model = result.scalar_one_or_none()
         return model.to_entity() if model is not None else None
 
+    async def get_by_username(self, username: str) -> BotUser | None:
+        result = await self._session.execute(
+            select(BotUserModel)
+            .where(func.lower(BotUserModel.username) == username.lower())
+            .order_by(BotUserModel.last_activity_at.desc().nulls_last())
+            .limit(1)
+        )
+        model = result.scalar_one_or_none()
+        return model.to_entity() if model is not None else None
+
     async def touch_activity(
         self,
         *,

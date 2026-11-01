@@ -5,6 +5,8 @@ from dishka.integrations.aiogram_dialog import inject, FromDishka
 from aiogram_dialog import DialogManager
 
 from src.application.mediator import Mediator
+from src.domain.enums.admin import AdminPermission
+from src.presentation.telegram.features.admin.common import current_admin
 from src.application.use_cases.admin.get_trainer_report import (
     AdminTrainerReportDTO,
     GetAdminTrainerReportRequest,
@@ -100,10 +102,14 @@ async def admin_trainer_card_getter(
         f"├ Отменено: {r.trainings_cancelled}\n"
         f"└ Заявок: {r.requests_total}"
     )
+    admin = current_admin(dialog_manager)
+    can_manage = admin.can(AdminPermission.TRAINERS_MANAGE)
     return {
         "card_text": text,
-        "is_blocked": not t.is_active,
-        "is_active": t.is_active,
+        "can_manage": can_manage,
+        "can_mail": admin.can(AdminPermission.MAILING),
+        "can_block": can_manage and t.is_active,
+        "can_unblock": can_manage and not t.is_active,
         **period_flags(period),
     }
 

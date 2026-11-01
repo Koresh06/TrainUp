@@ -1,5 +1,19 @@
 from dishka import Provider, provide, Scope
 
+from src.application.services.admin_notifier import AdminNotifier
+from src.application.use_cases.staff.get_access import GetAdminAccessUseCase
+from src.application.use_cases.staff.get_admins import GetAdminsUseCase, GetAdminUseCase
+from src.application.use_cases.staff.manage import (
+    AddAdminUseCase,
+    RemoveAdminUseCase,
+    ToggleAdminPermissionUseCase,
+)
+from src.application.use_cases.staff.notifications import (
+    GetMutedNotificationsUseCase,
+    ToggleAdminNotificationUseCase,
+)
+from src.core.config import settings
+from src.domain.repositories.bot_admin import BotAdminRepository
 from src.application.interfaces.booking_scheduler import BookingScheduler
 from src.application.use_cases.booking.cancel import CancelBookingUseCase
 from src.application.use_cases.booking.confirm import ConfirmBookingUseCase
@@ -1330,13 +1344,13 @@ class UseCasesProvider(Provider):
         self,
         trainer_repo: TrainerRepository,
         client_repo: ClientRepository,
-        notification_service: NotificationService,
+        admin_notifier: AdminNotifier,
         task_queue: TaskQueue,
     ) -> ExecuteMailingUseCase:
         return ExecuteMailingUseCase(
             trainer_repo=trainer_repo,
             client_repo=client_repo,
-            notification_service=notification_service,
+            admin_notifier=admin_notifier,
             task_queue=task_queue,
         )
 
@@ -1344,10 +1358,12 @@ class UseCasesProvider(Provider):
     def execute_mailing_batch_use_case(
         self,
         notification_service: NotificationService,
+        admin_notifier: AdminNotifier,
         progress_store: MailingProgressStore,
     ) -> ExecuteMailingBatchUseCase:
         return ExecuteMailingBatchUseCase(
             notification_service=notification_service,
+            admin_notifier=admin_notifier,
             progress_store=progress_store,
         )
 
@@ -1370,7 +1386,7 @@ class UseCasesProvider(Provider):
         payment_repo: PaymentRepository,
         provider_registry: PaymentProviderRegistry,
         confirm_use_case: ConfirmPaymentUseCase,
-        notification_service: NotificationService,
+        admin_notifier: AdminNotifier,
         transaction_manager: TransactionManager,
     ) -> CreateSubscriptionPaymentUseCase:
         return CreateSubscriptionPaymentUseCase(
@@ -1379,7 +1395,7 @@ class UseCasesProvider(Provider):
             payment_repo=payment_repo,
             provider_registry=provider_registry,
             confirm_use_case=confirm_use_case,
-            notification_service=notification_service,
+            admin_notifier=admin_notifier,
             transaction_manager=transaction_manager,
         )
 
@@ -1391,6 +1407,7 @@ class UseCasesProvider(Provider):
         subscription_repo: TrainerSubscriptionRepository,
         trainer_repo: TrainerRepository,
         notification_service: NotificationService,
+        admin_notifier: AdminNotifier,
         referral_reward: TrainerReferralRewardService,
         transaction_manager: TransactionManager,
     ) -> ConfirmPaymentUseCase:
@@ -1400,6 +1417,7 @@ class UseCasesProvider(Provider):
             subscription_repo=subscription_repo,
             trainer_repo=trainer_repo,
             notification_service=notification_service,
+            admin_notifier=admin_notifier,
             referral_reward=referral_reward,
             transaction_manager=transaction_manager,
         )
@@ -1895,4 +1913,93 @@ class UseCasesProvider(Provider):
     ) -> ResolveTrainerReferralCodeUseCase:
         return ResolveTrainerReferralCodeUseCase(
             trainer_repo=trainer_repo,
+        )
+
+    @provide
+    def get_admin_access_use_case(
+        self,
+        admin_repo: BotAdminRepository,
+    ) -> GetAdminAccessUseCase:
+        return GetAdminAccessUseCase(
+            admin_repo=admin_repo,
+            super_admin_ids=settings.telegram.admin_ids,
+        )
+
+    @provide
+    def get_admins_use_case(
+        self,
+        admin_repo: BotAdminRepository,
+    ) -> GetAdminsUseCase:
+        return GetAdminsUseCase(
+            admin_repo=admin_repo,
+            super_admin_ids=settings.telegram.admin_ids,
+        )
+
+    @provide
+    def get_admin_use_case(
+        self,
+        admin_repo: BotAdminRepository,
+    ) -> GetAdminUseCase:
+        return GetAdminUseCase(
+            admin_repo=admin_repo,
+        )
+
+    @provide
+    def add_admin_use_case(
+        self,
+        admin_repo: BotAdminRepository,
+        bot_user_repo: BotUserRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> AddAdminUseCase:
+        return AddAdminUseCase(
+            admin_repo=admin_repo,
+            bot_user_repo=bot_user_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+            super_admin_ids=settings.telegram.admin_ids,
+        )
+
+    @provide
+    def toggle_admin_permission_use_case(
+        self,
+        admin_repo: BotAdminRepository,
+        transaction_manager: TransactionManager,
+    ) -> ToggleAdminPermissionUseCase:
+        return ToggleAdminPermissionUseCase(
+            admin_repo=admin_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def remove_admin_use_case(
+        self,
+        admin_repo: BotAdminRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> RemoveAdminUseCase:
+        return RemoveAdminUseCase(
+            admin_repo=admin_repo,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def get_muted_notifications_use_case(
+        self,
+        admin_repo: BotAdminRepository,
+    ) -> GetMutedNotificationsUseCase:
+        return GetMutedNotificationsUseCase(
+            admin_repo=admin_repo,
+        )
+
+    @provide
+    def toggle_admin_notification_use_case(
+        self,
+        admin_repo: BotAdminRepository,
+        transaction_manager: TransactionManager,
+    ) -> ToggleAdminNotificationUseCase:
+        return ToggleAdminNotificationUseCase(
+            admin_repo=admin_repo,
+            transaction_manager=transaction_manager,
         )

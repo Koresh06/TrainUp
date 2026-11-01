@@ -20,7 +20,7 @@ async def test_trainer_adds_and_books_offline_client(ui, run, trainer_setup) -> 
     assert "Олег Ким" in card and "Без Telegram" in card and "+79991234567" in card
 
     await ui.click(TRAINER_TG, "📅 Записать на тренировку")
-    await ui.click(TRAINER_TG, str(trainer_setup["tomorrow"].day))
+    await ui.click(TRAINER_TG, f"{trainer_setup["tomorrow"].day:02d}")
     await ui.click(TRAINER_TG, "10:00 (2)")
     assert "предупредите его сами" in ui.text
     card = await ui.click(TRAINER_TG, "✅ Записать")

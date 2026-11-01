@@ -1,0 +1,13 @@
+from typing import Protocol
+
+from src.domain.entities.bot_admin import BotAdmin
+
+
+class BotAdminRepository(Protocol):
+    async def get_all(self) -> list[BotAdmin]: ...
+
+    async def get_by_tg_id(self, tg_id: int) -> BotAdmin | None: ...
+
+    async def save(self, admin: BotAdmin) -> BotAdmin: ...
+
+    async def delete(self, tg_id: int) -> None: ...

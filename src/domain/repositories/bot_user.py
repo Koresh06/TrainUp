@@ -9,6 +9,10 @@ class BotUserRepository(Protocol):
 
     async def get_by_tg_id(self, tg_id: int) -> BotUser | None: ...
 
+    async def get_by_username(self, username: str) -> BotUser | None:
+        """Без учёта регистра: в Telegram @Name и @name — один пользователь."""
+        ...
+
     async def touch_activity(
         self,
         *,

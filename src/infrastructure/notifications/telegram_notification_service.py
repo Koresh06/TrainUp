@@ -25,7 +25,6 @@ from src.application.interfaces.notification_service import (
     TrainerDigestDTO,
     TrainingReminderNotificationDTO,
 )
-from src.core.config import settings
 from src.domain.enums.request import RequestStatus
 from src.infrastructure.notifications.callback_data.booking import (
     BookingAction,
@@ -339,7 +338,9 @@ class TelegramNotificationService(NotificationService):
         )
         await self._send(data.chat_id, text, kb.as_markup())
 
-    async def notify_manual_payment_request(self, data: ManualPaymentRequestDTO) -> None:
+    async def notify_manual_payment_request(
+        self, data: ManualPaymentRequestDTO, chat_ids: list[int]
+    ) -> None:
         kb = InlineKeyboardBuilder()
         for action, text in (
             (ManualPaymentAction.APPROVE, "✅ Оплата получена"),
@@ -362,12 +363,12 @@ class TelegramNotificationService(NotificationService):
             f"Свяжитесь с тренером, примите оплату и нажмите «Оплата получена» — "
             f"подписка активируется автоматически."
         )
-        for admin_id in settings.telegram.admin_ids:
-            await self._send(admin_id, text, kb.as_markup())
+        for chat_id in chat_ids:
+            await self._send(chat_id, text, kb.as_markup())
 
-    async def notify_admins(self, text: str) -> None:
-        for admin_id in settings.telegram.admin_ids:
-            await self._send(admin_id, text)
+    async def notify_admins(self, chat_ids: list[int], text: str) -> None:
+        for chat_id in chat_ids:
+            await self._send(chat_id, text)
 
     async def broadcast_copy(
         self,

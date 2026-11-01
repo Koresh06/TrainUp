@@ -7,6 +7,8 @@ from dishka.integrations.aiogram import FromDishka, inject
 from src.application.mediator import Mediator
 from src.application.use_cases.payment.confirm import ConfirmPaymentRequest
 from src.application.use_cases.payment.reject import RejectPaymentRequest
+from src.domain.entities.bot_admin import AdminAccess
+from src.domain.enums.admin import AdminPermission
 from src.domain.exception.payment import (
     PaymentNotFoundException,
     PaymentStatusTransitionException,
@@ -16,7 +18,7 @@ from src.infrastructure.notifications.callback_data.payment import (
     ManualPaymentCD,
 )
 
-from src.presentation.telegram.middlewares.access import is_admin
+from src.presentation.telegram.middlewares.access import NO_PERMISSION_TEXT
 
 from .states import AdminMenuSG
 
@@ -25,9 +27,11 @@ router = Router(name="admin")
 
 @router.message(Command("admin"))
 async def process_admin_command(
-    message: Message, dialog_manager: DialogManager
+    message: Message,
+    dialog_manager: DialogManager,
+    admin_access: AdminAccess | None = None,
 ) -> None:
-    if not is_admin(message.from_user):
+    if admin_access is None:
         return
     await dialog_manager.start(
         state=AdminMenuSG.main,
@@ -41,9 +45,13 @@ async def on_manual_payment_action(
     callback: CallbackQuery,
     callback_data: ManualPaymentCD,
     mediator: FromDishka[Mediator],
+    admin_access: AdminAccess | None = None,
 ) -> None:
-    if not is_admin(callback.from_user):
+    if admin_access is None:
         await callback.answer()
+        return
+    if not admin_access.can(AdminPermission.PAYMENTS):
+        await callback.answer(NO_PERMISSION_TEXT, show_alert=True)
         return
 
     approve = callback_data.action == ManualPaymentAction.APPROVE

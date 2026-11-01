@@ -18,7 +18,7 @@ async def test_schedule_day_pending_and_history(ui, run, trainer_setup, session)
     # клиент записался сам на завтра → запись ждёт подтверждения
     await register_client(ui, trainer_setup["token"])
     await ui.click(CLIENT_TG, "📅 Записаться на тренировку")
-    await ui.click(CLIENT_TG, str(trainer_setup["tomorrow"].day))
+    await ui.click(CLIENT_TG, f"{trainer_setup["tomorrow"].day:02d}")
     await ui.click(CLIENT_TG, "10:00 (2)")
     await ui.click(CLIENT_TG, "✅ Записаться!")
 
@@ -86,7 +86,7 @@ async def test_schedule_pick_date(ui, run, trainer_setup) -> None:
     await ui.send(TRAINER_TG, "/trainer")
     await ui.click(TRAINER_TG, "📅 Расписание")
     await ui.click(TRAINER_TG, "📆 Дата")
-    day = await ui.click(TRAINER_TG, str(trainer_setup["tomorrow"].day))
+    day = await ui.click(TRAINER_TG, f"{trainer_setup["tomorrow"].day:02d}")
     assert "Завтра" in day
 
 
@@ -108,7 +108,7 @@ async def test_client_confirms_attendance(ui, run, trainer_setup, notifications)
     await activate_subscription(run, trainer_setup["trainer"].id)
     await register_client(ui, trainer_setup["token"])
     await ui.click(CLIENT_TG, "📅 Записаться на тренировку")
-    await ui.click(CLIENT_TG, str(trainer_setup["tomorrow"].day))
+    await ui.click(CLIENT_TG, f"{trainer_setup["tomorrow"].day:02d}")
     await ui.click(CLIENT_TG, "10:00 (2)")
     await ui.click(CLIENT_TG, "✅ Записаться!")
     [new_booking] = notifications.of("notify_new_booking")

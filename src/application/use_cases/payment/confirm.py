@@ -8,11 +8,13 @@ from src.application.interfaces.notification_service import (
     SubscriptionNotificationDTO,
 )
 from src.application.services.trainer_referral_reward import TrainerReferralRewardService
+from src.application.services.admin_notifier import AdminNotifier
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.application.use_cases.payment._shared import usd
 from src.application.use_cases.subscription._shared import _activate_subscription
 from src.domain.entities.payment import Payment
 from src.domain.entities.trainer_subscription import TrainerSubscription
+from src.domain.enums.admin import AdminNotification
 from src.domain.enums.payment import PaymentMethod, PaymentPurpose, PaymentStatus
 from src.domain.enums.subscription import SubscriptionSource
 from src.domain.exception.payment import (
@@ -47,6 +49,7 @@ class ConfirmPaymentUseCase(UseCase[ConfirmPaymentRequest, Payment]):
     subscription_repo: TrainerSubscriptionRepository
     trainer_repo: TrainerRepository
     notification_service: NotificationService
+    admin_notifier: AdminNotifier
     referral_reward: TrainerReferralRewardService
     transaction_manager: TransactionManager
 
@@ -77,12 +80,13 @@ class ConfirmPaymentUseCase(UseCase[ConfirmPaymentRequest, Payment]):
                     expired_at=subscription.expired_at,
                 )
             )
-            await self.notification_service.notify_admins(
+            await self.admin_notifier.notify(
+                AdminNotification.PAYMENT_PAID,
                 f"💸 <b>Оплата подписки</b>\n\n"
                 f"👤 {trainer.name} (<code>{trainer.tg_id}</code>)\n"
                 f"{payment.description or ''}\n"
                 f"💰 {usd(payment.amount)} · {payment.method.label()}\n"
-                f"🧾 <code>{payment.external_id}</code>"
+                f"🧾 <code>{payment.external_id}</code>",
             )
 
         logger.info("[ConfirmPayment:done] external_id=%s", payment.external_id)

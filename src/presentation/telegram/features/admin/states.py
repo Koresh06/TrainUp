@@ -44,3 +44,14 @@ class AdminFaqSG(StatesGroup):
 
 class AdminExportSG(StatesGroup):
     main = State()
+
+
+class AdminStaffSG(StatesGroup):
+    list = State()
+    add = State()
+    card = State()
+    remove_confirm = State()
+
+
+class AdminNotificationsSG(StatesGroup):
+    main = State()

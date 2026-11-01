@@ -1,9 +1,10 @@
 from types import SimpleNamespace
 
-from aiogram.types import User
-
 from src.application.use_cases.access.get_user_access import UserAccessDTO
+from src.domain.entities.bot_admin import AdminAccess
+from src.domain.enums.admin import AdminPermission
 from src.presentation.telegram.middlewares.access import (
+    ADMIN_ACCESS_KEY,
     USER_ACCESS_KEY,
     AdminGuard,
     ClientTrainerGuard,
@@ -65,12 +66,20 @@ async def test_guards_skip_when_no_access_info() -> None:
 
 
 async def test_admin_guard() -> None:
-    admin = User(id=777000, is_bot=False, first_name="A")
-    stranger = User(id=1, is_bot=False, first_name="S")
-    _, called, _ = await _call(AdminGuard(), {"event_from_user": admin})
-    assert called
-    _, called, _ = await _call(AdminGuard(), {"event_from_user": stranger})
-    assert not called
+    admin = AdminAccess(tg_id=1, is_super=False, permissions=frozenset({AdminPermission.FAQ}))
+    boss = AdminAccess(tg_id=2, is_super=True)
+
+    for guard, access, allowed in (
+        (AdminGuard(), admin, True),
+        (AdminGuard(), None, False),
+        (AdminGuard(AdminPermission.FAQ), admin, True),
+        (AdminGuard(AdminPermission.STATS), admin, False),
+        (AdminGuard(AdminPermission.STATS), boss, True),
+        (AdminGuard(super_only=True), admin, False),
+        (AdminGuard(super_only=True), boss, True),
+    ):
+        _, called, _ = await _call(guard, {ADMIN_ACCESS_KEY: access})
+        assert called is allowed
 
 
 def test_blocked_flag() -> None:

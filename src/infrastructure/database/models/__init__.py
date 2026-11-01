@@ -18,6 +18,7 @@ from .client_answer import ClientAnswerModel
 from .recurring_booking import RecurringBookingModel
 from .trainer_reminder_settings import TrainerReminderSettingsModel
 from .payment import PaymentModel
+from .bot_admin import BotAdminModel
 from .bot_user import BotUserActivityModel, BotUserModel
 from .client_package import ClientPackageModel
 from .trainer_vacation import TrainerVacationModel
@@ -26,6 +27,7 @@ from .client_measurement import ClientMeasurementModel
 
 __all__ = [
     "BaseModel",
+    "BotAdminModel",
     "ClientModel",
     "TrainerModel",
     "TrainerInviteLinkModel",

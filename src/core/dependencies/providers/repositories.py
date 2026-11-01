@@ -2,6 +2,7 @@ from dishka import Provider, provide, Scope
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.repositories.client import ClientRepository
+from src.domain.repositories.bot_admin import BotAdminRepository
 from src.domain.repositories.bot_user import BotUserRepository
 from src.infrastructure.repositories.bot_user.sqlalchemy import SQLAlchemyBotUserRepo
 from src.domain.repositories.payment import PaymentRepository
@@ -51,6 +52,7 @@ from src.infrastructure.repositories.invite_link.sqlalchemy import (
     SQLAlchemyTrainerInviteLinkRepo,
 )
 from src.infrastructure.repositories.feedback.sqlalchemy import SQLAlchemyFeedbackRepo
+from src.infrastructure.repositories.bot_admin.sqlalchemy import SQLAlchemyBotAdminRepo
 from src.infrastructure.repositories.faq.sqlalchemy import SQLAlchemyFaqRepo
 from src.infrastructure.repositories.slot_template.sqlalchemy import (
     SQLAlchemySlotTemplateRepo,
@@ -117,6 +119,10 @@ class RepositoriesProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_feedback_repository(self, session: AsyncSession) -> FeedbackRepository:
         return SQLAlchemyFeedbackRepo(session=session)
+
+    @provide(scope=Scope.REQUEST)
+    def get_bot_admin_repository(self, session: AsyncSession) -> BotAdminRepository:
+        return SQLAlchemyBotAdminRepo(session=session)
 
     @provide(scope=Scope.REQUEST)
     def get_faq_repository(self, session: AsyncSession) -> FaqRepository:

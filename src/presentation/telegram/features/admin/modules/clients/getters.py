@@ -4,6 +4,8 @@ from dishka.integrations.aiogram_dialog import inject, FromDishka
 from aiogram_dialog import DialogManager
 
 from src.application.mediator import Mediator
+from src.domain.enums.admin import AdminPermission
+from src.presentation.telegram.features.admin.common import current_admin
 from src.application.use_cases.booking.get_upcoming_by_client import (
     GetUpcomingBookingsByClientRequest,
 )
@@ -70,9 +72,10 @@ async def admin_client_card_getter(
         f"🗓 В боте с {to_moscow(client.created_at).strftime('%d.%m.%Y')}\n"
         f"📅 Предстоящих записей: {len(upcoming)}"
     )
+    can_manage = current_admin(dialog_manager).can(AdminPermission.CLIENTS_MANAGE)
     return {
         "card_text": text,
         "client_name": escape(client.first_name),
-        "is_active": client.is_active,
-        "is_blocked": not client.is_active,
+        "can_block": can_manage and client.is_active,
+        "can_unblock": can_manage and not client.is_active,
     }

@@ -4,6 +4,7 @@ from datetime import datetime
 
 from src.application.interfaces.mailing_progress import MailingProgressDTO
 from src.application.interfaces.notification_service import MailingResultDTO
+from src.application.services.admin_notifier import AdminNotifier
 from src.domain.entities.client import Client
 from src.domain.entities.trainer import Trainer
 from src.domain.entities.trainer_subscription import TrainerSubscription
@@ -32,6 +33,22 @@ class _IdRepo:
             self._next_id += 1
         self.items[item.id] = item
         return item
+
+
+class FakeBotAdmins(_IdRepo):
+    async def get_by_tg_id(self, tg_id: int):
+        return next((a for a in self.items.values() if a.tg_id == tg_id), None)
+
+    async def delete(self, tg_id: int) -> None:
+        self.items = {k: a for k, a in self.items.items() if a.tg_id != tg_id}
+
+
+def make_admin_notifier(notifications, admins=None, super_admin_ids=(777000,)):
+    return AdminNotifier(
+        admin_repo=FakeBotAdmins(admins),
+        notification_service=notifications,
+        super_admin_ids=list(super_admin_ids),
+    )
 
 
 class FakeTrainers(_IdRepo):
@@ -139,11 +156,13 @@ class RecordingNotifications:
     async def notify_trainer_digest(self, data) -> None:
         self.calls.append(("notify_trainer_digest", data))
 
-    async def notify_manual_payment_request(self, data) -> None:
+    async def notify_manual_payment_request(self, data, chat_ids) -> None:
         self.calls.append(("notify_manual_payment_request", data))
+        self.manual_payment_recipients = list(chat_ids)
 
-    async def notify_admins(self, text: str) -> None:
+    async def notify_admins(self, chat_ids, text: str) -> None:
         self.calls.append(("notify_admins", text))
+        self.admin_recipients = list(chat_ids)
 
     async def broadcast_copy(self, *, chat_ids, from_chat_id, message_id) -> MailingResultDTO:
         self.calls.append(("broadcast_copy", list(chat_ids)))

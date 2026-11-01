@@ -3,7 +3,9 @@ from dataclasses import dataclass
 
 from src.application.interfaces.mailing_progress import MailingProgressStore
 from src.application.interfaces.notification_service import NotificationService
+from src.application.services.admin_notifier import AdminNotifier
 from src.application.use_cases.base import UseCase, UseCaseRequest
+from src.domain.enums.admin import AdminNotification
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +25,7 @@ class ExecuteMailingBatchUseCase(UseCase[ExecuteMailingBatchRequest, None]):
     """Отправляет батч и копит счётчики; последний батч шлёт админам отчёт."""
 
     notification_service: NotificationService
+    admin_notifier: AdminNotifier
     progress_store: MailingProgressStore
 
     async def __call__(self, command: ExecuteMailingBatchRequest) -> None:
@@ -46,11 +49,12 @@ class ExecuteMailingBatchUseCase(UseCase[ExecuteMailingBatchRequest, None]):
             return
 
         total = progress.success + progress.blocked + progress.failed
-        await self.notification_service.notify_admins(
+        await self.admin_notifier.notify(
+            AdminNotification.MAILING_REPORT,
             f"✅ Рассылка <b>{command.target_label}</b> завершена\n\n"
             f"📬 Доставлено: <b>{progress.success}</b>\n"
             f"🚫 Заблокировали бота: <b>{progress.blocked}</b>\n"
             f"❌ Другие ошибки: <b>{progress.failed}</b>\n"
-            f"👥 Всего: <b>{total}</b>"
+            f"👥 Всего: <b>{total}</b>",
         )
         await self.progress_store.clear(mailing_id=command.mailing_id)

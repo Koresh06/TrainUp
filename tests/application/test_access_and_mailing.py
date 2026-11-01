@@ -38,6 +38,7 @@ from tests.fakes.common import (
     FakeTaskQueue,
     FakeTrainers,
     RecordingNotifications,
+    make_admin_notifier,
 )
 
 
@@ -112,7 +113,7 @@ class TestMailing:
                 [make_trainer(1, 100), make_trainer(2, 200), make_trainer(3, 300, is_active=False)]
             ),
             client_repo=FakeClients(clients),
-            notification_service=notifications or RecordingNotifications(),
+            admin_notifier=make_admin_notifier(notifications or RecordingNotifications()),
             task_queue=queue,
         )
 
@@ -165,7 +166,11 @@ class TestMailing:
     async def test_report_after_last_batch(self) -> None:
         notifications = RecordingNotifications(MailingResultDTO(success=2, blocked=1, failed=0))
         store = FakeProgressStore()
-        use_case = ExecuteMailingBatchUseCase(notification_service=notifications, progress_store=store)
+        use_case = ExecuteMailingBatchUseCase(
+            notification_service=notifications,
+            admin_notifier=make_admin_notifier(notifications),
+            progress_store=store,
+        )
         request = dict(from_chat_id=1, message_id=2, total_batches=2, target_label="X", mailing_id="m1")
 
         await use_case(ExecuteMailingBatchRequest(chat_ids=[1, 2, 3], **request))

@@ -8,6 +8,8 @@ from src.application.mediator import Mediator
 from src.application.use_cases.client.get_by_id import GetClientByIdRequest
 from src.application.use_cases.client.set_blocked import SetClientBlockedRequest
 from src.domain.entities.client import Client
+from src.domain.enums.admin import AdminPermission
+from src.presentation.telegram.features.admin.common import require_permission
 from src.presentation.telegram.features.admin.states import AdminClientsSG
 
 
@@ -47,6 +49,7 @@ async def on_client_selected(
     await dialog_manager.switch_to(AdminClientsSG.card)
 
 
+@require_permission(AdminPermission.CLIENTS_MANAGE)
 @inject
 async def on_toggle_client_block(
     callback: CallbackQuery,

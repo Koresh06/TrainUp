@@ -38,7 +38,7 @@ async def test_client_journey(ui, run, trainer_setup, notifications) -> None:
     await register_client(ui, trainer_setup["token"])
 
     await ui.click(CLIENT_TG, "📅 Записаться на тренировку")
-    await ui.click(CLIENT_TG, str(trainer_setup["tomorrow"].day))
+    await ui.click(CLIENT_TG, f"{trainer_setup["tomorrow"].day:02d}")
     await ui.click(CLIENT_TG, "10:00 (2)")
     await ui.click(CLIENT_TG, "✅ Записаться!")
     [new_booking] = notifications.of("notify_new_booking")
@@ -97,7 +97,7 @@ async def test_trainer_cabinet(ui, run, trainer_setup) -> None:
 
     await ui.click(TRAINER_TG, "⚙️ Настройки")
     await ui.click(TRAINER_TG, "🚫 Блокировки")
-    await ui.click(TRAINER_TG, str(trainer_setup["tomorrow"].day))
+    await ui.click(TRAINER_TG, f"{trainer_setup["tomorrow"].day:02d}")
     await ui.click(TRAINER_TG, "🟢 10:00 (0/2)")
     assert "🚫 10:00 (0/2)" in ui.buttons
     await ui.click(TRAINER_TG, "✅ Открыть весь день")

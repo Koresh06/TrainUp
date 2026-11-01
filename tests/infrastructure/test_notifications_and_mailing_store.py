@@ -102,10 +102,10 @@ async def test_subscription_notifications(event, hours_left, expected_text, has_
     assert (message["reply_markup"] is not None) == has_button
 
 
-async def test_notify_admins_sends_to_every_admin() -> None:
+async def test_notify_admins_sends_to_given_chats() -> None:
     bot = FakeBot()
-    await TelegramNotificationService(bot=bot).notify_admins("report")
-    assert [m["chat_id"] for m in bot.sent] == [777000]  # из tests/conftest.py
+    await TelegramNotificationService(bot=bot).notify_admins([777000, 42], "report")
+    assert [m["chat_id"] for m in bot.sent] == [777000, 42]
 
 
 async def test_redis_mailing_progress_store() -> None:

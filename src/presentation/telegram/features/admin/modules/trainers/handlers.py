@@ -10,8 +10,10 @@ from src.application.use_cases.trainer.get_by_id import GetTrainerByIdRequest
 from src.application.use_cases.trainer.set_blocked import SetTrainerBlockedRequest
 from src.domain.entities.trainer import Trainer
 from src.domain.entities.trainer_subscription import TrainerSubscription
+from src.domain.enums.admin import AdminPermission
 from src.domain.enums.mailing import MailingTarget
 from src.domain.enums.subscription import SubscriptionSource
+from src.presentation.telegram.features.admin.common import require_permission
 from src.presentation.telegram.features.admin.states import AdminMailingSG, AdminTrainersSG
 from src.utils.timezone import to_moscow
 
@@ -63,6 +65,7 @@ async def on_grant_days_entered(
     await dialog_manager.switch_to(AdminTrainersSG.grant_confirm)
 
 
+@require_permission(AdminPermission.TRAINERS_MANAGE)
 @inject
 async def on_grant_confirm(
     callback: CallbackQuery,
@@ -91,6 +94,7 @@ async def on_grant_confirm(
     await dialog_manager.switch_to(AdminTrainersSG.card)
 
 
+@require_permission(AdminPermission.TRAINERS_MANAGE)
 @inject
 async def on_toggle_block_confirm(
     callback: CallbackQuery,
@@ -108,6 +112,7 @@ async def on_toggle_block_confirm(
     await dialog_manager.switch_to(AdminTrainersSG.card)
 
 
+@require_permission(AdminPermission.MAILING)
 async def on_mail_trainer_clients(
     callback: CallbackQuery,
     button: Button,

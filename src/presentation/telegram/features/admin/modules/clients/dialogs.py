@@ -68,14 +68,14 @@ admin_clients_dialog = Dialog(
             id="block_client",
             on_click=on_toggle_client_block,
             style=Style(style=ButtonStyle.DANGER),
-            when="is_active",
+            when="can_block",
         ),
         Button(
             Const("✅ Разблокировать"),
             id="unblock_client",
             on_click=on_toggle_client_block,
             style=Style(style=ButtonStyle.SUCCESS),
-            when="is_blocked",
+            when="can_unblock",
         ),
         SwitchTo(
             Const("⬅️ К списку"),

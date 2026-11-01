@@ -15,12 +15,14 @@ from src.domain.repositories.client_package import ClientPackageRepository
 from src.domain.repositories.trainer import TrainerRepository
 from src.domain.repositories.trainer_booking_settings import TrainerBookingSettingsRepository
 from src.domain.repositories.trainer_vacation import TrainerVacationRepository
-from src.core.config import settings
 from src.infrastructure.payment.providers.manual import ManualPaymentProvider
 from src.infrastructure.payment.providers.telegram_stars import TelegramStarsProvider
 from src.infrastructure.payment.providers.test import TestPaymentProvider
 from src.infrastructure.payment.providers.yookassa import YooKassaProvider
 from src.application.interfaces.notification_service import NotificationService
+from src.application.services.admin_notifier import AdminNotifier
+from src.core.config import settings
+from src.domain.repositories.bot_admin import BotAdminRepository
 from src.domain.repositories.booking import BookingRepository
 from src.domain.repositories.calendar_slot import CalendarSlotRepository
 from src.domain.repositories.slot_template import SlotTemplateRepository
@@ -33,6 +35,18 @@ logger = logging.getLogger(__name__)
 
 
 class ServicesProvider(Provider):
+    @provide(scope=Scope.REQUEST)
+    def get_admin_notifier(
+        self,
+        admin_repo: BotAdminRepository,
+        notification_service: NotificationService,
+    ) -> AdminNotifier:
+        return AdminNotifier(
+            admin_repo=admin_repo,
+            notification_service=notification_service,
+            super_admin_ids=settings.telegram.admin_ids,
+        )
+
     @provide(scope=Scope.REQUEST)
     def get_trainer_referral_reward_service(
         self,

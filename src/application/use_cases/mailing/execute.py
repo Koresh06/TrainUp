@@ -2,9 +2,10 @@ import logging
 import uuid
 from dataclasses import dataclass
 
-from src.application.interfaces.notification_service import NotificationService
 from src.application.interfaces.task_queue import TaskQueue
+from src.application.services.admin_notifier import AdminNotifier
 from src.application.use_cases.base import UseCase, UseCaseRequest
+from src.domain.enums.admin import AdminNotification
 from src.domain.enums.mailing import MailingTarget
 from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.trainer import TrainerRepository
@@ -30,7 +31,7 @@ class ExecuteMailingUseCase(UseCase[ExecuteMailingRequest, int]):
 
     trainer_repo: TrainerRepository
     client_repo: ClientRepository
-    notification_service: NotificationService
+    admin_notifier: AdminNotifier
     task_queue: TaskQueue
 
     async def __call__(self, command: ExecuteMailingRequest) -> int:
@@ -38,14 +39,16 @@ class ExecuteMailingUseCase(UseCase[ExecuteMailingRequest, int]):
             chat_ids = await self._recipients(command)
         except Exception as error:
             logger.exception("[ExecuteMailing] failed to collect recipients")
-            await self.notification_service.notify_admins(
-                f"❌ Ошибка рассылки ({command.target.label()}):\n<code>{error}</code>"
+            await self.admin_notifier.notify(
+                AdminNotification.MAILING_REPORT,
+                f"❌ Ошибка рассылки ({command.target.label()}):\n<code>{error}</code>",
             )
             return 0
 
         if not chat_ids:
-            await self.notification_service.notify_admins(
-                f"ℹ️ Рассылка <b>{command.target.label()}</b>: получателей нет"
+            await self.admin_notifier.notify(
+                AdminNotification.MAILING_REPORT,
+                f"ℹ️ Рассылка <b>{command.target.label()}</b>: получателей нет",
             )
             return 0
 
