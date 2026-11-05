@@ -25,6 +25,7 @@ from src.presentation.telegram.features.admin.states import (
     AdminMailingSG,
     AdminMenuSG,
     AdminNotificationsSG,
+    AdminPricesSG,
     AdminStaffSG,
     AdminStatsSG,
     AdminTrainersSG,
@@ -37,6 +38,7 @@ ADMIN_MENU_TARGETS = {
     "mailing": AdminMailingSG.target,
     "faq": AdminFaqSG.audience,
     "exports": AdminExportSG.main,
+    "prices": AdminPricesSG.list,
     "applications": AdminApplicationsSG.list,
     "staff": AdminStaffSG.list,
     "notifications": AdminNotificationsSG.main,
@@ -52,6 +54,7 @@ ADMIN_MENU_PERMISSIONS: dict[str, tuple[AdminPermission, ...]] = {
     "mailing": (AdminPermission.MAILING,),
     "faq": (AdminPermission.FAQ,),
     "exports": (AdminPermission.EXPORTS,),
+    "prices": (AdminPermission.PRICES,),
 }
 
 
@@ -126,6 +129,7 @@ admin_menu_dialog = Dialog(
             Button(Const("📢 Рассылка"), id="mailing", on_click=on_admin_menu_click, when="can_mailing"),
             Button(Const("❓ FAQ"), id="faq", on_click=on_admin_menu_click, when="can_faq"),
             Button(Const("📥 Выгрузки (CSV)"), id="exports", on_click=on_admin_menu_click, when="can_exports"),
+            Button(Const("💲 Цены подписки"), id="prices", on_click=on_admin_menu_click, when="can_prices"),
             Button(Const("👮 Администраторы"), id="staff", on_click=on_admin_menu_click, when="can_staff"),
             Button(Const("🔔 Уведомления"), id="notifications", on_click=on_admin_menu_click, when="can_notifications"),
         ),

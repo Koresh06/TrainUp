@@ -60,3 +60,8 @@ class AdminStaffSG(StatesGroup):
 
 class AdminNotificationsSG(StatesGroup):
     main = State()
+
+
+class AdminPricesSG(StatesGroup):
+    list = State()
+    edit = State()

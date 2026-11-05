@@ -15,6 +15,7 @@ class AdminPermission(str, Enum):
     MAILING = "mailing"
     FAQ = "faq"
     EXPORTS = "exports"
+    PRICES = "prices"
 
     def label(self) -> str:
         return ADMIN_PERMISSION_LABELS[self]
@@ -31,6 +32,7 @@ ADMIN_PERMISSION_LABELS: dict[AdminPermission, str] = {
     AdminPermission.MAILING: "📢 Рассылки",
     AdminPermission.FAQ: "❓ FAQ",
     AdminPermission.EXPORTS: "📥 Выгрузки (телефоны и анкеты)",
+    AdminPermission.PRICES: "💲 Цены подписки",
 }
 
 

@@ -265,6 +265,11 @@ from src.application.use_cases.trainer.referral import GetTrainerReferralInfoUse
 
 from src.application.use_cases.trainer.referral import ResolveTrainerReferralCodeUseCase
 
+from src.application.use_cases.subscription.price_plans import (
+    GetAllPricePlansUseCase,
+    UpdatePricePlanPriceUseCase,
+)
+
 
 class UseCasesProvider(Provider):
     scope = Scope.REQUEST
@@ -2034,4 +2039,22 @@ class UseCasesProvider(Provider):
             notification_service=notification_service,
             transaction_manager=transaction_manager,
             trial_days=TRAINER_TRIAL_DAYS,
+        )
+
+    @provide
+    def get_all_price_plans_use_case(
+        self,
+        price_plan_repo: SubscriptionPricePlanRepository,
+    ) -> GetAllPricePlansUseCase:
+        return GetAllPricePlansUseCase(price_plan_repo=price_plan_repo)
+
+    @provide
+    def update_price_plan_price_use_case(
+        self,
+        price_plan_repo: SubscriptionPricePlanRepository,
+        transaction_manager: TransactionManager,
+    ) -> UpdatePricePlanPriceUseCase:
+        return UpdatePricePlanPriceUseCase(
+            price_plan_repo=price_plan_repo,
+            transaction_manager=transaction_manager,
         )

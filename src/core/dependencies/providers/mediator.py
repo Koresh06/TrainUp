@@ -462,6 +462,14 @@ from src.application.use_cases.trainer.referral import GetTrainerReferralInfoReq
 from src.application.use_cases.trainer.referral import ResolveTrainerReferralCodeRequest, ResolveTrainerReferralCodeUseCase
 
 
+from src.application.use_cases.subscription.price_plans import (
+    GetAllPricePlansRequest,
+    GetAllPricePlansUseCase,
+    UpdatePricePlanPriceRequest,
+    UpdatePricePlanPriceUseCase,
+)
+
+
 class MediatorProvider(Provider):
     scope = Scope.REQUEST
 
@@ -603,6 +611,8 @@ class MediatorProvider(Provider):
         resolve_referral_code_use_case: ResolveReferralCodeUseCase,
         get_trainer_referral_info_use_case: GetTrainerReferralInfoUseCase,
         resolve_trainer_referral_code_use_case: ResolveTrainerReferralCodeUseCase,
+        get_all_price_plans_use_case: GetAllPricePlansUseCase,
+        update_price_plan_price_use_case: UpdatePricePlanPriceUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -801,4 +811,6 @@ class MediatorProvider(Provider):
         mediator.register(ResolveReferralCodeRequest, resolve_referral_code_use_case)
         mediator.register(GetTrainerReferralInfoRequest, get_trainer_referral_info_use_case)
         mediator.register(ResolveTrainerReferralCodeRequest, resolve_trainer_referral_code_use_case)
+        mediator.register(GetAllPricePlansRequest, get_all_price_plans_use_case)
+        mediator.register(UpdatePricePlanPriceRequest, update_price_plan_price_use_case)
         return mediator

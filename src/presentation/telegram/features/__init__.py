@@ -8,6 +8,9 @@ from src.presentation.telegram.features.admin.modules.notifications.dialogs impo
 from src.presentation.telegram.features.admin.modules.staff.dialogs import (
     admin_staff_dialog,
 )
+from src.presentation.telegram.features.admin.modules.prices.dialogs import (
+    admin_prices_dialog,
+)
 from src.presentation.telegram.middlewares.access import AdminGuard
 from aiogram import Router
 from aiogram_dialog import Dialog
@@ -187,6 +190,7 @@ ADMIN_DIALOGS: list[Dialog] = [
     admin_applications_dialog,
     admin_staff_dialog,
     admin_notifications_dialog,
+    admin_prices_dialog,
 ]
 
 # право проверяется на каждом нажатии, поэтому отзыв работает и в открытом окне
@@ -201,6 +205,7 @@ ADMIN_DIALOG_GUARDS: list[tuple[Dialog, AdminGuard]] = [
     (admin_applications_dialog, AdminGuard(AdminPermission.TRAINERS_APPROVE)),
     (admin_staff_dialog, AdminGuard(super_only=True)),
     (admin_notifications_dialog, AdminGuard()),
+    (admin_prices_dialog, AdminGuard(AdminPermission.PRICES)),
 ]
 
 # доступны всегда: регистрация клиента, онбординг/оплата тренера, помощь,
