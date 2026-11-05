@@ -13,7 +13,8 @@ class UserAccessDTO:
     trainer: Trainer | None
     trainer_subscription_active: bool
     client: Client | None
-    # тренер клиента не заблокирован и у него действует подписка
+    # тренер клиента не заблокирован, у него действует подписка и клиент
+    # не в архиве у тренера
     client_trainer_available: bool
 
     @property
@@ -46,7 +47,7 @@ class GetUserAccessUseCase(UseCase[GetUserAccessRequest, UserAccessDTO]):
 
         client = await self.client_repo.get_by_tg_id(command.tg_id)
         client_trainer_available = False
-        if client is not None:
+        if client is not None and not client.is_archived:
             client_trainer = await self.trainer_repo.get_by_id(client.trainer_id)
             client_trainer_available = (
                 client_trainer is not None

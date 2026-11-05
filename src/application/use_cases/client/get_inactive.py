@@ -62,6 +62,7 @@ class GetInactiveClientsUseCase(UseCase[GetInactiveClientsRequest, list[Inactive
             InactiveClientDTO(client=c, last_visit=last_visit[c.id])
             for c in await self.client_repo.get_by_trainer_id(command.trainer_id)
             if c.is_active
+            and not c.is_archived
             and c.id in last_visit
             and last_visit[c.id] < threshold
             and c.id not in busy

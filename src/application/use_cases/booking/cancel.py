@@ -25,6 +25,9 @@ class CancelBookingRequest(UseCaseRequest):
     initiated_by: CancelInitiator = CancelInitiator.TRAINER
     # свой текст клиенту вместо стандартного (например, «тренер в отпуске»)
     client_message: str | None = None
+    # False — отмена без сообщений (клиента убрали в архив: он получает одно
+    # общее сообщение, а не по одному на каждую тренировку)
+    notify: bool = True
 
 
 @dataclass(kw_only=True)
@@ -54,6 +57,9 @@ class CancelBookingUseCase(UseCase[CancelBookingRequest, Booking]):
         if booking.completion_job_id:
             await self.booking_scheduler.cancel_booking_completion(booking_id=booking.id)
         await self.transaction_manager.commit()
+
+        if not command.notify:
+            return saved
 
         if command.initiated_by == CancelInitiator.TRAINER:
             trainer = await self.trainer_repo.get_by_id(booking.trainer_id)

@@ -47,7 +47,11 @@ from src.domain.exception.trainer import TrainerNotFoundException
 from src.presentation.telegram.features.client.register.states import ClientRegisterSG
 from src.presentation.telegram.features.trainer.register.states import TrainerOnboardingSG
 from src.presentation.telegram.features.client.menu.states import ClientMenuSG
-from src.presentation.telegram.middlewares.access import TRAINER_UNAVAILABLE_TEXT
+from src.application.use_cases.client.archive import RestoreClientRequest
+from src.presentation.telegram.middlewares.access import (
+    CLIENT_ARCHIVED_TEXT,
+    TRAINER_UNAVAILABLE_TEXT,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +65,17 @@ INVALID_CLIENT_INVITE_TEXT = (
 
 class ClaimClientCD(CallbackData, prefix="claim_client"):
     token: str
+
+
+async def _open_existing_client_menu(
+    message: Message, dialog_manager: DialogManager, client: Client
+) -> None:
+    """Уже зарегистрированный клиент пришёл по чужой/реферальной ссылке."""
+    if client.is_archived:
+        await message.answer(CLIENT_ARCHIVED_TEXT)
+        return
+    await message.answer("ℹ️ Вы уже зарегистрированы — открываю ваше меню.")
+    await _open_client_menu(dialog_manager, client.trainer_id)
 
 
 async def _open_client_menu(dialog_manager: DialogManager, trainer_id: int) -> None:
@@ -160,8 +175,7 @@ async def _start_by_referral(
     except ClientNotFoundException:
         existing = None
     if existing is not None:
-        await message.answer("ℹ️ Вы уже зарегистрированы — открываю ваше меню.")
-        await _open_client_menu(dialog_manager, existing.trainer_id)
+        await _open_existing_client_menu(message, dialog_manager, existing)
         return
 
     try:
@@ -209,8 +223,7 @@ async def process_start_with_token(
         except ClientNotFoundException:
             await _offer_client_claim(message, token.removeprefix(CLIENT_INVITE_PREFIX), mediator)
             return
-        await message.answer("ℹ️ Вы уже зарегистрированы — открываю ваше меню.")
-        await _open_client_menu(dialog_manager, existing.trainer_id)
+        await _open_existing_client_menu(message, dialog_manager, existing)
         return
 
     try:
@@ -242,12 +255,25 @@ async def process_start_with_token(
     # клиент уже привязан к тренеру — чужая ссылка его не перепривязывает,
     # он возвращается в меню своего тренера
     if client.trainer_id != link.trainer_id:
+        if client.is_archived:
+            await message.answer(CLIENT_ARCHIVED_TEXT)
+            return
         await message.answer(
             "ℹ️ Вы уже зарегистрированы у другого тренера — открываю ваше меню."
         )
     if not await mediator.handle(IsTrainerAvailableRequest(trainer_id=client.trainer_id)):
         await message.answer(TRAINER_UNAVAILABLE_TEXT)
         return
+
+    # тренер убирал клиента в архив, а тот снова открыл ссылку того же
+    # тренера — возвращаем со всей историей (тренеру придёт сообщение)
+    if client.is_archived:
+        await mediator.handle(
+            RestoreClientRequest(
+                trainer_id=client.trainer_id, client_id=client.id, by_client=True
+            )
+        )
+        await message.answer("👋 С возвращением! Запись к тренеру снова открыта.")
 
     await dialog_manager.start(
         state=ClientMenuSG.main,
@@ -272,6 +298,10 @@ async def process_start_plain(
             "🚫 Доступ к боту возможен только по персональной ссылке от тренера.\n"
             "Попроси тренера отправить тебе ссылку для регистрации."
         )
+        return
+
+    if client.is_archived:
+        await message.answer(CLIENT_ARCHIVED_TEXT)
         return
 
     if not await mediator.handle(IsTrainerAvailableRequest(trainer_id=client.trainer_id)):

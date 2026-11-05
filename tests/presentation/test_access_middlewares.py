@@ -62,10 +62,14 @@ async def test_trainer_guard_blocks_pending_even_with_subscription() -> None:
 
 
 async def test_client_guard() -> None:
-    client = SimpleNamespace(is_active=True)
+    client = SimpleNamespace(is_active=True, is_archived=False)
     _, called, _ = await _call(ClientTrainerGuard(), {USER_ACCESS_KEY: _access(client=client, client_trainer_available=True)})
     assert called
     _, called, _ = await _call(ClientTrainerGuard(), {USER_ACCESS_KEY: _access(client=client)})
+    assert not called
+    # тренер убрал клиента в архив — запись закрыта
+    archived = SimpleNamespace(is_active=True, is_archived=True)
+    _, called, _ = await _call(ClientTrainerGuard(), {USER_ACCESS_KEY: _access(client=archived)})
     assert not called
 
 

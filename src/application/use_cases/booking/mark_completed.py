@@ -72,6 +72,7 @@ class MarkBookingCompletedUseCase(UseCase[MarkBookingCompletedRequest, None]):
             client is None
             or not client.has_telegram
             or not client.is_active
+            or client.is_archived
             or trainer is None
             or slot is None
         ):

@@ -31,6 +31,11 @@ TRAINER_UNAVAILABLE_TEXT = (
     "⛔ Запись к тренеру сейчас недоступна.\n"
     "Свяжитесь с тренером напрямую или попробуйте позже."
 )
+CLIENT_ARCHIVED_TEXT = (
+    "ℹ️ Тренер завершил с вами работу в боте, запись к нему закрыта.\n"
+    "Если снова захотите заниматься у этого тренера, откройте его ссылку "
+    "для записи ещё раз."
+)
 SUBSCRIPTION_EXPIRED_TEXT = (
     "⛔ <b>Подписка закончилась</b>\n\n"
     "Кабинет тренера и запись ваших клиентов приостановлены до продления."
@@ -122,14 +127,15 @@ class TrainerSubscriptionGuard(BaseMiddleware):
 
 
 class ClientTrainerGuard(BaseMiddleware):
-    """Inner-middleware на клиентских диалогах: если тренер клиента заблокирован
-    или его подписка закончилась — клиент не может записываться и слать заявки."""
+    """Inner-middleware на клиентских диалогах: если тренер клиента заблокирован,
+    его подписка закончилась или тренер убрал клиента в архив — клиент не может
+    записываться и слать заявки."""
 
     async def __call__(self, handler: Handler, event: TelegramObject, data: dict[str, Any]) -> Any:
         access: UserAccessDTO | None = data.get(USER_ACCESS_KEY)
         if access is None or access.client is None or access.client_trainer_available:
             return await handler(event, data)
-        await _reply(event, TRAINER_UNAVAILABLE_TEXT)
+        await _reply(event, CLIENT_ARCHIVED_TEXT if access.client.is_archived else TRAINER_UNAVAILABLE_TEXT)
         return None
 
 

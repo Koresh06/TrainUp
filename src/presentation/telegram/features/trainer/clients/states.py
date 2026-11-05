@@ -13,6 +13,9 @@ class TrainerClientsSG(StatesGroup):
     edit_value = State()
     invite = State()
     delete_confirm = State()
+    # тренер убрал клиента (ушёл) и архив таких клиентов
+    archive_confirm = State()
+    archived = State()
     # запись клиента тренером
     book_day = State()
     book_time = State()

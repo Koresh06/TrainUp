@@ -8,6 +8,7 @@ from src.domain.exception.client import (
     AssigningClientToAnotherTrainerError,
     ClientAlreadyHasTelegramException,
 )
+from src.utils.get_datetime_utc_now import get_datetime_utc_now
 
 
 @dataclass(kw_only=True)
@@ -34,10 +35,18 @@ class Client(Entity):
     referral_code: str | None = None
     referred_by_client_id: int | None = None
     referral_rewarded_at: datetime | None = None
+    # тренер убрал клиента («ушёл, больше не занимается»). Это не блокировка
+    # админом (is_active): человек остаётся в боте и в статистике, но тренер
+    # его в списках не видит, а записаться к тренеру он не может
+    archived_at: datetime | None = None
 
     @property
     def has_telegram(self) -> bool:
         return self.tg_id is not None
+
+    @property
+    def is_archived(self) -> bool:
+        return self.archived_at is not None
 
     @property
     def full_name(self) -> str:
@@ -63,4 +72,16 @@ class Client(Entity):
         self.tg_id = tg_id
         self.username = username
         self.invite_token = None
+        self.touch()
+
+    def archive(self) -> None:
+        if self.is_archived:
+            return
+        self.archived_at = get_datetime_utc_now()
+        self.touch()
+
+    def restore(self) -> None:
+        if not self.is_archived:
+            return
+        self.archived_at = None
         self.touch()

@@ -19,6 +19,11 @@ from src.application.use_cases.package.manage import (
     ManageClientPackageRequest,
     PackageAction,
 )
+from src.application.use_cases.client.archive import (
+    ArchiveClientRequest,
+    ArchiveClientResultDTO,
+    RestoreClientRequest,
+)
 from src.application.use_cases.client.create_offline import CreateOfflineClientRequest
 from src.application.use_cases.client.delete_offline import DeleteOfflineClientRequest
 from src.application.use_cases.client.invite_back import InviteClientBackRequest
@@ -211,6 +216,49 @@ async def on_delete_confirm(
         return
     await callback.answer("Карточка удалена")
     await dialog_manager.switch_to(TrainerClientsSG.list)
+
+
+@inject
+async def on_archive_confirm(
+    callback: CallbackQuery,
+    button: Button,
+    dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+) -> None:
+    result: ArchiveClientResultDTO = await mediator.handle(
+        ArchiveClientRequest(
+            trainer_id=dialog_manager.start_data["trainer_id"],
+            client_id=dialog_manager.dialog_data["viewing_client_id"],
+        )
+    )
+    await callback.answer(
+        f"🗄 {result.client.full_name} в архиве"
+        + (f", отменено записей: {result.cancelled_bookings}" if result.cancelled_bookings else ""),
+        show_alert=bool(result.cancelled_bookings),
+    )
+    # карточку открыли из расписания — возвращаемся туда же, в список
+    # клиента уже нет
+    if dialog_manager.dialog_data.get("from_outside"):
+        await dialog_manager.done()
+        return
+    await dialog_manager.switch_to(TrainerClientsSG.list)
+
+
+@inject
+async def on_restore_client(
+    callback: CallbackQuery,
+    button: Button,
+    dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+) -> None:
+    client: Client = await mediator.handle(
+        RestoreClientRequest(
+            trainer_id=dialog_manager.start_data["trainer_id"],
+            client_id=dialog_manager.dialog_data["viewing_client_id"],
+        )
+    )
+    await callback.answer(f"↩️ {client.full_name} снова в списке клиентов")
+    await dialog_manager.switch_to(TrainerClientsSG.detail)
 
 
 # --- запись клиента тренером ---

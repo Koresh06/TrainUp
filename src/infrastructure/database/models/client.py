@@ -74,6 +74,9 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     referral_rewarded_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    archived_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     trainer: Mapped["TrainerModel"] = relationship(
         "TrainerModel",
@@ -114,6 +117,7 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             referral_code=entity.referral_code,
             referred_by_client_id=entity.referred_by_client_id,
             referral_rewarded_at=entity.referral_rewarded_at,
+            archived_at=entity.archived_at,
         )
 
     def to_entity(self) -> "Client":
@@ -134,6 +138,7 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             referral_code=self.referral_code,
             referred_by_client_id=self.referred_by_client_id,
             referral_rewarded_at=self.referral_rewarded_at,
+            archived_at=self.archived_at,
             created_at=self.created_at,
         )
 
@@ -153,3 +158,4 @@ class ClientModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.referral_code = entity.referral_code
         self.referred_by_client_id = entity.referred_by_client_id
         self.referral_rewarded_at = entity.referral_rewarded_at
+        self.archived_at = entity.archived_at

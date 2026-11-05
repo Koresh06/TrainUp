@@ -88,5 +88,8 @@ class ExecuteMailingUseCase(UseCase[ExecuteMailingRequest, int]):
             if command.trainer_id is None:
                 raise ValueError("trainer_id required")
             clients = await self.client_repo.get_by_trainer_id(command.trainer_id)
-            chat_ids += [c.tg_id for c in clients if c.is_active and c.has_telegram]
+            # ушедшие от тренера (архив) — уже не его клиенты
+            chat_ids += [
+                c.tg_id for c in clients if c.is_active and not c.is_archived and c.has_telegram
+            ]
         return list(dict.fromkeys(chat_ids))  # без дублей, порядок сохраняем

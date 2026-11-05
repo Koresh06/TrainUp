@@ -462,6 +462,12 @@ from src.application.use_cases.trainer.referral import GetTrainerReferralInfoReq
 from src.application.use_cases.trainer.referral import ResolveTrainerReferralCodeRequest, ResolveTrainerReferralCodeUseCase
 
 
+from src.application.use_cases.client.archive import (
+    ArchiveClientRequest,
+    ArchiveClientUseCase,
+    RestoreClientRequest,
+    RestoreClientUseCase,
+)
 from src.application.use_cases.subscription.price_plans import (
     GetAllPricePlansRequest,
     GetAllPricePlansUseCase,
@@ -613,6 +619,8 @@ class MediatorProvider(Provider):
         resolve_trainer_referral_code_use_case: ResolveTrainerReferralCodeUseCase,
         get_all_price_plans_use_case: GetAllPricePlansUseCase,
         update_price_plan_price_use_case: UpdatePricePlanPriceUseCase,
+        archive_client_use_case: ArchiveClientUseCase,
+        restore_client_use_case: RestoreClientUseCase,
     ) -> Mediator:
         mediator = Mediator()
 
@@ -813,4 +821,6 @@ class MediatorProvider(Provider):
         mediator.register(ResolveTrainerReferralCodeRequest, resolve_trainer_referral_code_use_case)
         mediator.register(GetAllPricePlansRequest, get_all_price_plans_use_case)
         mediator.register(UpdatePricePlanPriceRequest, update_price_plan_price_use_case)
+        mediator.register(ArchiveClientRequest, archive_client_use_case)
+        mediator.register(RestoreClientRequest, restore_client_use_case)
         return mediator

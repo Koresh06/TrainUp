@@ -1,4 +1,3 @@
-from aiogram import F
 from aiogram.enums import ButtonStyle
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.input import TextInput
@@ -20,6 +19,8 @@ from src.presentation.telegram.features.error_handler import on_input_error
 from src.presentation.telegram.widgets.booking_calendar import BookingCalendar
 
 from .getters import (
+    archive_confirm_getter,
+    archived_list_getter,
     debtors_getter,
     inactive_getter,
     package_detail_getter,
@@ -39,6 +40,8 @@ from .getters import (
 )
 from .handlers import (
     on_all_paid,
+    on_archive_confirm,
+    on_restore_client,
     on_debtor_selected,
     on_invite_back,
     on_open_progress,
@@ -112,6 +115,12 @@ clients_trainer_dialog = Dialog(
             id="add_client",
             state=TrainerClientsSG.add_name,
         ),
+        SwitchTo(
+            Format("🗄 Архив ({archived_count})"),
+            id="archived",
+            state=TrainerClientsSG.archived,
+            when="has_archived",
+        ),
         Cancel(Const("⬅️ Назад")),
         state=TrainerClientsSG.list,
         getter=clients_list_getter,
@@ -122,6 +131,7 @@ clients_trainer_dialog = Dialog(
             Const("📅 Записать на тренировку"),
             id="book",
             state=TrainerClientsSG.book_day,
+            when="is_current",
         ),
         Button(
             Const("📣 Позвать на тренировку"),
@@ -142,17 +152,38 @@ clients_trainer_dialog = Dialog(
                 Const("🔗 Пригласить в бота"),
                 id="invite",
                 state=TrainerClientsSG.invite,
+                when="is_offline_current",
+            ),
+        ),
+        Row(
+            SwitchTo(
+                Const("🗄 Убрать в архив"),
+                id="archive",
+                state=TrainerClientsSG.archive_confirm,
+                when="is_current",
+            ),
+            SwitchTo(
+                Const("🗑 Удалить карточку"),
+                id="delete",
+                state=TrainerClientsSG.delete_confirm,
                 when="is_offline",
             ),
         ),
-        SwitchTo(
-            Const("🗑 Удалить карточку"),
-            id="delete",
-            state=TrainerClientsSG.delete_confirm,
-            when="is_offline",
+        Button(
+            Const("↩️ Вернуть из архива"),
+            id="restore",
+            on_click=on_restore_client,
+            when="is_archived",
+            style=Style(style=ButtonStyle.SUCCESS),
         ),
         SwitchTo(
-            Const("⬅️ К списку"), id="to_list", state=TrainerClientsSG.list, when=~F["from_outside"]
+            Const("⬅️ К списку"), id="to_list", state=TrainerClientsSG.list, when="back_to_list"
+        ),
+        SwitchTo(
+            Const("⬅️ К архиву"),
+            id="to_archive",
+            state=TrainerClientsSG.archived,
+            when="back_to_archive",
         ),
         Cancel(Const("⬅️ Назад"), when="from_outside"),
         LinkPreview(is_disabled=True),
@@ -275,6 +306,46 @@ clients_trainer_dialog = Dialog(
         ),
         to_card,
         state=TrainerClientsSG.delete_confirm,
+    ),
+    Window(
+        Format(
+            "🗄 <b>Убрать {full_name} в архив?</b>\n\n"
+            "Так делают, когда клиент ушёл и больше не занимается. Он пропадёт "
+            "из ваших списков, а в боте останется:\n\n"
+            "{consequences}"
+        ),
+        Button(
+            Const("🗄 Да, убрать в архив"),
+            id="archive_confirm",
+            on_click=on_archive_confirm,
+            style=Style(style=ButtonStyle.DANGER),
+        ),
+        to_card,
+        state=TrainerClientsSG.archive_confirm,
+        getter=archive_confirm_getter,
+    ),
+    Window(
+        Const(
+            "🗄 <b>Архив клиентов</b>\n\n"
+            "Клиенты, с которыми вы больше не работаете. Их тренировки и оплаты "
+            "остаются в статистике. Откройте карточку, чтобы вернуть клиента."
+        ),
+        ScrollingGroup(
+            Select(
+                Format("{item[label]}"),
+                id="archived_select",
+                item_id_getter=lambda item: item["id"],
+                items="clients",
+                on_click=on_client_item_selected,
+            ),
+            id="archived_scroll",
+            width=1,
+            height=8,
+            hide_on_single_page=True,
+        ),
+        SwitchTo(Const("⬅️ К списку"), id="archived_back", state=TrainerClientsSG.list),
+        state=TrainerClientsSG.archived,
+        getter=archived_list_getter,
     ),
     # --- запись клиента ---
     Window(

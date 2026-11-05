@@ -102,9 +102,14 @@ async def clients_list_getter(
     balances: dict[int, ClientBalanceDTO] = await mediator.handle(
         GetClientBalancesRequest(trainer_id=trainer_id)
     )
-    debtors = sum(1 for b in balances.values() if b.debt > 0)
+    # долг ушедшего клиента виден в его карточке в архиве, а не в «Должниках»
+    current_ids = {c.id for c in clients}
+    debtors = sum(1 for b in balances.values() if b.debt > 0 and b.client_id in current_ids)
     inactive: list[InactiveClientDTO] = await mediator.handle(
         GetInactiveClientsRequest(trainer_id=trainer_id)
+    )
+    archived: list[Client] = await mediator.handle(
+        GetClientsByTrainerIdRequest(trainer_id=trainer_id, archived=True)
     )
 
     offline = sum(1 for c in clients if not c.has_telegram)
@@ -118,6 +123,75 @@ async def clients_list_getter(
         "has_debtors": debtors > 0,
         "inactive_count": len(inactive),
         "has_inactive": bool(inactive),
+        "archived_count": len(archived),
+        "has_archived": bool(archived),
+    }
+
+
+@inject
+async def archived_list_getter(
+    dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+    **kwargs,
+) -> dict:
+    clients: list[Client] = await mediator.handle(
+        GetClientsByTrainerIdRequest(
+            trainer_id=dialog_manager.start_data["trainer_id"], archived=True
+        )
+    )
+    clients.sort(key=lambda c: c.archived_at, reverse=True)
+    return {
+        "clients": [
+            {
+                "id": str(c.id),
+                "label": (
+                    f"{'📵 ' if not c.has_telegram else ''}{c.full_name}"
+                    f" — с {to_moscow(c.archived_at).strftime('%d.%m.%Y')}"
+                ),
+            }
+            for c in clients
+        ],
+    }
+
+
+@inject
+async def archive_confirm_getter(
+    dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+    **kwargs,
+) -> dict:
+    trainer_id: int = dialog_manager.start_data["trainer_id"]
+    client_id: int = dialog_manager.dialog_data["viewing_client_id"]
+    client: Client = await mediator.handle(GetClientByIdRequest(client_id=client_id))
+    views: list[BookingView] = await mediator.handle(
+        GetBookingViewsRequest(trainer_id=trainer_id, client_id=client_id)
+    )
+    today = get_project_today()
+    upcoming = sum(
+        1 for v in views if v.booking.status in ACTIVE_BOOKING_STATUSES and v.slot_date >= today
+    )
+    recurring: list[RecurringBooking] = await mediator.handle(
+        GetActiveRecurringBookingsByTrainerRequest(trainer_id=trainer_id)
+    )
+    has_recurring = any(r.client_id == client_id for r in recurring)
+
+    consequences = []
+    if upcoming:
+        consequences.append(f"• будущие записи ({upcoming}) отменятся, время освободится")
+    if has_recurring:
+        consequences.append("• постоянное расписание остановится")
+    if client.has_telegram:
+        consequences.append(
+            "• клиент получит одно сообщение, что вы завершили работу, и не сможет "
+            "записываться. Если он снова откроет вашу ссылку, то вернётся в список"
+        )
+    consequences.append(
+        "• история тренировок, оплаты и статистика сохранятся, вернуть клиента "
+        "можно из «🗄 Архива»"
+    )
+    return {
+        "full_name": escape(client.full_name),
+        "consequences": "\n".join(consequences),
     }
 
 
@@ -257,6 +331,10 @@ async def client_detail_getter(
     )
 
     lines = [f"👤 <b>{escape(client.full_name)}</b>", _contacts(client)]
+    if client.is_archived:
+        lines.insert(
+            1, f"🗄 <i>В архиве с {to_moscow(client.archived_at).strftime('%d.%m.%Y')}</i>"
+        )
     profile = []
     if client.age:
         profile.append(f"🎂 {client.age} лет")
@@ -301,13 +379,22 @@ async def client_detail_getter(
     if answers_lines:
         lines.append("\n📋 <b>Анкета:</b>\n" + "\n".join(answers_lines))
 
+    from_outside = dialog_manager.dialog_data.get("from_outside", False)
+    current = not client.is_archived
     return {
         "card": "\n".join(lines),
         "is_offline": not client.has_telegram,
-        "from_outside": dialog_manager.dialog_data.get("from_outside", False),
+        "is_current": current,
+        "is_archived": client.is_archived,
+        "is_offline_current": not client.has_telegram and current,
+        "from_outside": from_outside,
+        "back_to_list": not from_outside and current,
+        "back_to_archive": not from_outside and client.is_archived,
         "has_unpaid": bool(balance.unpaid_bookings),
         # позвать на тренировку можно того, кто в Telegram и никуда не записан
-        "can_invite_back": client.has_telegram and not has_upcoming and not client_recurring,
+        "can_invite_back": (
+            current and client.has_telegram and not has_upcoming and not client_recurring
+        ),
     }
 
 

@@ -265,6 +265,10 @@ from src.application.use_cases.trainer.referral import GetTrainerReferralInfoUse
 
 from src.application.use_cases.trainer.referral import ResolveTrainerReferralCodeUseCase
 
+from src.application.use_cases.client.archive import (
+    ArchiveClientUseCase,
+    RestoreClientUseCase,
+)
 from src.application.use_cases.subscription.price_plans import (
     GetAllPricePlansUseCase,
     UpdatePricePlanPriceUseCase,
@@ -2056,5 +2060,41 @@ class UseCasesProvider(Provider):
     ) -> UpdatePricePlanPriceUseCase:
         return UpdatePricePlanPriceUseCase(
             price_plan_repo=price_plan_repo,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def archive_client_use_case(
+        self,
+        client_repo: ClientRepository,
+        trainer_repo: TrainerRepository,
+        booking_repo: BookingRepository,
+        recurring_repo: RecurringBookingRepository,
+        cancel_use_case: CancelBookingUseCase,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> ArchiveClientUseCase:
+        return ArchiveClientUseCase(
+            client_repo=client_repo,
+            trainer_repo=trainer_repo,
+            booking_repo=booking_repo,
+            recurring_repo=recurring_repo,
+            cancel_use_case=cancel_use_case,
+            notification_service=notification_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def restore_client_use_case(
+        self,
+        client_repo: ClientRepository,
+        trainer_repo: TrainerRepository,
+        notification_service: NotificationService,
+        transaction_manager: TransactionManager,
+    ) -> RestoreClientUseCase:
+        return RestoreClientUseCase(
+            client_repo=client_repo,
+            trainer_repo=trainer_repo,
+            notification_service=notification_service,
             transaction_manager=transaction_manager,
         )

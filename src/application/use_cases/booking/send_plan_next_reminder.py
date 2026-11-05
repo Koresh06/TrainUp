@@ -45,7 +45,13 @@ class SendPlanNextTrainingReminderUseCase(
 
     async def __call__(self, command: SendPlanNextTrainingReminderRequest) -> None:
         client = await self.client_repo.get_by_id(command.client_id)
-        if client is None or not client.is_active or not client.has_telegram:
+        # в архиве — тренер с ним больше не работает, звать на запись нельзя
+        if (
+            client is None
+            or not client.is_active
+            or client.is_archived
+            or not client.has_telegram
+        ):
             return
 
         upcoming = await self.booking_repo.get_upcoming_by_client(client.id)
