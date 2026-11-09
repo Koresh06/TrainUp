@@ -12,9 +12,7 @@ from src.application.mediator import Mediator
 from src.application.use_cases.booking.create_by_trainer import (
     CreateBookingByTrainerRequest,
 )
-from src.application.use_cases.booking.mark_paid import MarkBookingsPaidRequest
 from src.application.use_cases.package.create import CreateClientPackageRequest
-from src.application.use_cases.package.get_balances import GetClientBalancesRequest
 from src.application.use_cases.package.manage import (
     ManageClientPackageRequest,
     PackageAction,
@@ -367,10 +365,14 @@ async def on_package_valid_selected(
     callback: CallbackQuery, widget: Select, dialog_manager: DialogManager, item_id: str
 ) -> None:
     dialog_manager.dialog_data["new_package"]["valid_days"] = int(item_id) or None
-    await dialog_manager.switch_to(TrainerClientsSG.package_paid)
+    await dialog_manager.switch_to(TrainerClientsSG.package_confirm)
 
 
-async def _create_package(dialog_manager: DialogManager, mediator: Mediator, paid: bool) -> None:
+@inject
+async def on_package_create(
+    callback: CallbackQuery, button: Button, dialog_manager: DialogManager,
+    mediator: FromDishka[Mediator],
+) -> None:
     data = dialog_manager.dialog_data.pop("new_package")
     await mediator.handle(
         CreateClientPackageRequest(
@@ -379,49 +381,10 @@ async def _create_package(dialog_manager: DialogManager, mediator: Mediator, pai
             sessions_total=data["sessions"],
             price=Decimal(data["price"]) if data.get("price") else None,
             valid_days=data.get("valid_days"),
-            paid=paid,
         )
     )
+    await callback.answer("🎫 Абонемент оформлен")
     await dialog_manager.switch_to(TrainerClientsSG.packages)
-
-
-@inject
-async def on_package_create_paid(
-    callback: CallbackQuery, button: Button, dialog_manager: DialogManager,
-    mediator: FromDishka[Mediator],
-) -> None:
-    await _create_package(dialog_manager, mediator, paid=True)
-    await callback.answer("🎫 Абонемент оформлен")
-
-
-@inject
-async def on_package_create_unpaid(
-    callback: CallbackQuery, button: Button, dialog_manager: DialogManager,
-    mediator: FromDishka[Mediator],
-) -> None:
-    await _create_package(dialog_manager, mediator, paid=False)
-    await callback.answer("🎫 Абонемент оформлен")
-
-
-async def _manage_package(
-    dialog_manager: DialogManager, mediator: Mediator, action: PackageAction
-) -> None:
-    await mediator.handle(
-        ManageClientPackageRequest(
-            trainer_id=dialog_manager.start_data["trainer_id"],
-            package_id=dialog_manager.dialog_data["package_id"],
-            action=action,
-        )
-    )
-
-
-@inject
-async def on_package_mark_paid(
-    callback: CallbackQuery, button: Button, dialog_manager: DialogManager,
-    mediator: FromDishka[Mediator],
-) -> None:
-    await _manage_package(dialog_manager, mediator, PackageAction.MARK_PAID)
-    await callback.answer("✅ Оплата отмечена")
 
 
 @inject
@@ -429,52 +392,15 @@ async def on_package_close(
     callback: CallbackQuery, button: Button, dialog_manager: DialogManager,
     mediator: FromDishka[Mediator],
 ) -> None:
-    await _manage_package(dialog_manager, mediator, PackageAction.CANCEL)
-    await callback.answer("Абонемент закрыт")
-    await dialog_manager.switch_to(TrainerClientsSG.packages)
-
-
-# --- оплаты разовых тренировок ---
-
-
-async def _mark_paid(dialog_manager: DialogManager, mediator: Mediator, booking_ids: list[int]) -> None:
     await mediator.handle(
-        MarkBookingsPaidRequest(
+        ManageClientPackageRequest(
             trainer_id=dialog_manager.start_data["trainer_id"],
-            booking_ids=tuple(booking_ids),
+            package_id=dialog_manager.dialog_data["package_id"],
+            action=PackageAction.CANCEL,
         )
     )
-
-
-@inject
-async def on_unpaid_booking_selected(
-    callback: CallbackQuery, widget: Select, dialog_manager: DialogManager, item_id: str,
-    mediator: FromDishka[Mediator],
-) -> None:
-    await _mark_paid(dialog_manager, mediator, [int(item_id)])
-    await callback.answer("✅ Оплачено")
-
-
-@inject
-async def on_all_paid(
-    callback: CallbackQuery, button: Button, dialog_manager: DialogManager,
-    mediator: FromDishka[Mediator],
-) -> None:
-    trainer_id: int = dialog_manager.start_data["trainer_id"]
-    client_id: int = dialog_manager.dialog_data["viewing_client_id"]
-    balance = (
-        await mediator.handle(GetClientBalancesRequest(trainer_id=trainer_id, client_id=client_id))
-    )[client_id]
-    await _mark_paid(dialog_manager, mediator, [v.booking.id for v in balance.unpaid_bookings])
-    await callback.answer("✅ Всё оплачено")
-    await dialog_manager.switch_to(TrainerClientsSG.detail)
-
-
-async def on_debtor_selected(
-    callback: CallbackQuery, widget: Select, dialog_manager: DialogManager, item_id: str
-) -> None:
-    dialog_manager.dialog_data["viewing_client_id"] = int(item_id)
-    await dialog_manager.switch_to(TrainerClientsSG.detail)
+    await callback.answer("Абонемент закрыт")
+    await dialog_manager.switch_to(TrainerClientsSG.packages)
 
 
 @inject

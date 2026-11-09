@@ -1,4 +1,4 @@
-"""Кабинет тренера: абонемент клиенту, оплата, должники."""
+"""Кабинет тренера: абонемент клиенту."""
 
 from decimal import Decimal
 
@@ -24,17 +24,17 @@ async def test_trainer_sells_package(ui, run, trainer_setup) -> None:
     await ui.send(TRAINER_TG, "120,5")
     await ui.click(TRAINER_TG, "30 дней")
     assert "6 занятий" in ui.text and "120.50 BYN" in ui.text
-    await ui.click(TRAINER_TG, "⏳ Оплатит позже")
+    await ui.click(TRAINER_TG, "✅ Оформить")
 
     [package] = await run(GetClientPackagesRequest(client_id=client.id))
-    assert package.sessions_total == 6 and package.price == Decimal("120.50") and not package.is_paid
+    assert package.sessions_total == 6 and package.price == Decimal("120.50")
 
     await ui.click(TRAINER_TG, "⬅️ К карточке")
-    assert "осталось <b>6</b> из 6" in ui.text and "не оплачен" in ui.text
-    await ui.click(TRAINER_TG, "⬅️ К списку")
-    assert "💵 Должники (1)" in ui.buttons
-    await ui.click(TRAINER_TG, "💵 Должники (1)")
-    await ui.click(TRAINER_TG, "Олег — 120.50 BYN")
+    assert "осталось <b>6</b> из 6" in ui.text and "не оплачен" not in ui.text
     await ui.click(TRAINER_TG, "🎫 Абонементы")
-    await ui.click(TRAINER_TG, "🎫 6 занятий · 0/6 💵")
-    assert "✅ оплачен" in await ui.click(TRAINER_TG, "💵 Отметить оплату")
+    card = await ui.click(TRAINER_TG, "🎫 6 занятий · 0/6")
+    assert "120.50 BYN" in card and "оплач" not in card
+    await ui.click(TRAINER_TG, "⬅️ К абонементам")
+    await ui.click(TRAINER_TG, "⬅️ К карточке")
+    await ui.click(TRAINER_TG, "⬅️ К списку")
+    assert not any("Должники" in b for b in ui.buttons)

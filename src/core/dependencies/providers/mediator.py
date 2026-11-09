@@ -425,9 +425,7 @@ from src.application.use_cases.package.manage import ManageClientPackageRequest,
 
 from src.application.use_cases.package.get_by_client import GetClientPackagesRequest, GetClientPackagesUseCase
 
-from src.application.use_cases.package.get_balances import GetClientBalancesRequest, GetClientBalancesUseCase
 
-from src.application.use_cases.booking.mark_paid import MarkBookingsPaidRequest, MarkBookingsPaidUseCase
 
 from src.application.use_cases.booking.attendance import SendAttendanceRequestsRequest, SendAttendanceRequestsUseCase
 
@@ -599,8 +597,6 @@ class MediatorProvider(Provider):
         create_client_package_use_case: CreateClientPackageUseCase,
         manage_client_package_use_case: ManageClientPackageUseCase,
         get_client_packages_use_case: GetClientPackagesUseCase,
-        get_client_balances_use_case: GetClientBalancesUseCase,
-        mark_bookings_paid_use_case: MarkBookingsPaidUseCase,
         send_attendance_requests_use_case: SendAttendanceRequestsUseCase,
         confirm_attendance_use_case: ConfirmAttendanceUseCase,
         get_inactive_clients_use_case: GetInactiveClientsUseCase,
@@ -801,8 +797,6 @@ class MediatorProvider(Provider):
         mediator.register(CreateClientPackageRequest, create_client_package_use_case)
         mediator.register(ManageClientPackageRequest, manage_client_package_use_case)
         mediator.register(GetClientPackagesRequest, get_client_packages_use_case)
-        mediator.register(GetClientBalancesRequest, get_client_balances_use_case)
-        mediator.register(MarkBookingsPaidRequest, mark_bookings_paid_use_case)
         mediator.register(SendAttendanceRequestsRequest, send_attendance_requests_use_case)
         mediator.register(ConfirmAttendanceRequest, confirm_attendance_use_case)
         mediator.register(GetInactiveClientsRequest, get_inactive_clients_use_case)

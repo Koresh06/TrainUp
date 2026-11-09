@@ -61,7 +61,6 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     package_id: Mapped[int | None] = mapped_column(
         ForeignKey("client_packages.id", ondelete="SET NULL"), nullable=True, index=True
     )
-    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     client_confirmed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -101,7 +100,6 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             cancelled_by=entity.cancelled_by,
             cancelled_at=entity.cancelled_at,
             package_id=entity.package_id,
-            paid_at=entity.paid_at,
             client_confirmed_at=entity.client_confirmed_at,
             attendance_requested_at=entity.attendance_requested_at,
             rating=entity.rating,
@@ -121,7 +119,6 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             cancelled_by=self.cancelled_by,
             cancelled_at=self.cancelled_at,
             package_id=self.package_id,
-            paid_at=self.paid_at,
             client_confirmed_at=self.client_confirmed_at,
             attendance_requested_at=self.attendance_requested_at,
             rating=self.rating,
@@ -140,7 +137,6 @@ class BookingModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.cancelled_by = entity.cancelled_by
         self.cancelled_at = entity.cancelled_at
         self.package_id = entity.package_id
-        self.paid_at = entity.paid_at
         self.client_confirmed_at = entity.client_confirmed_at
         self.attendance_requested_at = entity.attendance_requested_at
         self.rating = entity.rating

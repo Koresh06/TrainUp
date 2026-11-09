@@ -1,11 +1,10 @@
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import (
     VARCHAR,
     Boolean,
     Date,
-    DateTime,
     Enum as SqlEnum,
     ForeignKey,
     Integer,
@@ -33,7 +32,6 @@ class ClientPackageModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
     sessions_total: Mapped[int] = mapped_column(Integer)
     sessions_used: Mapped[int] = mapped_column(Integer, default=0)
     price: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
-    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     valid_until: Mapped[date | None] = mapped_column(Date, nullable=True)
     status: Mapped[PackageStatus] = mapped_column(SqlEnum(PackageStatus, name="packagestatus"))
     is_bonus: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
@@ -53,7 +51,6 @@ class ClientPackageModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
             sessions_total=self.sessions_total,
             sessions_used=self.sessions_used,
             price=self.price,
-            paid_at=self.paid_at,
             valid_until=self.valid_until,
             status=self.status,
             is_bonus=self.is_bonus,
@@ -68,7 +65,6 @@ class ClientPackageModel(BaseModel, CreatedAtMixin, UpdatedAtMixin):
         self.sessions_total = entity.sessions_total
         self.sessions_used = entity.sessions_used
         self.price = entity.price
-        self.paid_at = entity.paid_at
         self.valid_until = entity.valid_until
         self.status = entity.status
         self.is_bonus = entity.is_bonus

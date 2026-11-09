@@ -49,7 +49,7 @@ async def client_profile_getter(
         GetClientPackagesRequest(client_id=client.id)
     )
     package_lines = [
-        package_line(p, today, for_trainer=False)
+        package_line(p, today)
         for p in packages
         if p.status == PackageStatus.ACTIVE and not p.is_expired(today)
     ]

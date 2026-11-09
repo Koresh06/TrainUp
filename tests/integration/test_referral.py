@@ -62,7 +62,7 @@ async def test_referral_bonus_once(run, notifications) -> None:
         await run(MarkBookingCompletedRequest(booking_id=booking.id))
 
     [bonus] = await run(GetClientPackagesRequest(client_id=petr.id))
-    assert bonus.is_bonus and bonus.sessions_total == 2 and bonus.is_paid
+    assert bonus.is_bonus and bonus.sessions_total == 2
     assert any("начислено бесплатных занятий: <b>2</b>" in t for c, t in notifications.of("send") if c == petr.tg_id)
 
     info = await run(GetReferralInfoRequest(client_id=petr.id))

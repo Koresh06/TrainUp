@@ -1,4 +1,4 @@
-"""Абонементы: списание при завершении/неявке, уведомления об остатке, долги и оплаты."""
+"""Абонементы: списание при завершении/неявке, уведомления об остатке."""
 
 from datetime import time, timedelta, timezone
 from decimal import Decimal
@@ -9,11 +9,9 @@ from src.application.use_cases.booking.create_by_trainer import CreateBookingByT
 from src.application.use_cases.booking.get_by_id import GetBookingByIdRequest
 from src.application.use_cases.booking.mark_attendance import MarkBookingAttendanceRequest
 from src.application.use_cases.booking.mark_completed import MarkBookingCompletedRequest
-from src.application.use_cases.booking.mark_paid import MarkBookingsPaidRequest
 from src.application.use_cases.calendar.get_day_slots import GetDaySlotsRequest
 from src.application.use_cases.client.register import RegisterClientRequest
 from src.application.use_cases.package.create import CreateClientPackageRequest
-from src.application.use_cases.package.get_balances import GetClientBalancesRequest
 from src.application.use_cases.package.get_by_client import GetClientPackagesRequest
 from src.application.use_cases.package.manage import ManageClientPackageRequest, PackageAction
 from src.application.use_cases.slot_template.sync_weekday import SyncWeekdaySlotTemplatesRequest
@@ -63,7 +61,7 @@ async def test_package_charging_and_notifications(run, world, notifications) -> 
     package = await run(
         CreateClientPackageRequest(
             trainer_id=trainer.id, client_id=client.id, sessions_total=2,
-            price=Decimal("70"), valid_days=30, paid=False,
+            price=Decimal("70"), valid_days=30,
         )
     )
     assert package.title == "2 занятия" and package.valid_until is not None
@@ -78,16 +76,10 @@ async def test_package_charging_and_notifications(run, world, notifications) -> 
     assert stored.status == PackageStatus.FINISHED and stored.remaining == 0
     assert any("закончился абонемент" in t for c, t in notifications.of("send") if c == trainer.notification_chat_id)
 
-    # абонемент кончился — следующая тренировка разовая и не оплачена
+    # абонемент кончился — следующая тренировка разовая, с абонемента не списывается
     await run(MarkBookingCompletedRequest(booking_id=bookings[2].id))
-    balance = (await run(GetClientBalancesRequest(trainer_id=trainer.id, client_id=client.id)))[client.id]
-    assert [v.booking.id for v in balance.unpaid_bookings] == [bookings[2].id]
-    assert balance.debt == Decimal("40") + Decimal("70")  # разовая + неоплаченный абонемент
-
-    await run(MarkBookingsPaidRequest(trainer_id=trainer.id, booking_ids=(bookings[2].id,)))
-    await run(ManageClientPackageRequest(trainer_id=trainer.id, package_id=package.id, action=PackageAction.MARK_PAID))
-    balance = (await run(GetClientBalancesRequest(trainer_id=trainer.id, client_id=client.id)))[client.id]
-    assert balance.debt == 0
+    single = await run(GetBookingByIdRequest(booking_id=bookings[2].id))
+    assert single.status == BookingStatus.COMPLETED and single.package_id is None
 
 
 async def test_no_show_charging_setting(run, world, session) -> None:
@@ -95,7 +87,7 @@ async def test_no_show_charging_setting(run, world, session) -> None:
 
     trainer, client = world["trainer"], world["client"]
     package = await run(
-        CreateClientPackageRequest(trainer_id=trainer.id, client_id=client.id, sessions_total=5, paid=True)
+        CreateClientPackageRequest(trainer_id=trainer.id, client_id=client.id, sessions_total=5)
     )
     past_slot = await make_slot(session, trainer.id, get_project_today(), time(0, 0))
     past = await make_booking(session, client, past_slot, BookingStatus.CONFIRMED)
@@ -123,7 +115,7 @@ async def test_no_show_charging_setting(run, world, session) -> None:
 async def test_cancelled_package_is_not_charged(run, world) -> None:
     trainer, client, bookings = world["trainer"], world["client"], world["bookings"]
     package = await run(
-        CreateClientPackageRequest(trainer_id=trainer.id, client_id=client.id, sessions_total=4, paid=True)
+        CreateClientPackageRequest(trainer_id=trainer.id, client_id=client.id, sessions_total=4)
     )
     await run(ManageClientPackageRequest(trainer_id=trainer.id, package_id=package.id, action=PackageAction.CANCEL))
     await run(MarkBookingCompletedRequest(booking_id=bookings[0].id))

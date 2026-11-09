@@ -23,8 +23,6 @@ from src.application.use_cases.client.get_clients_by_trainer import (
 from src.application.use_cases.recurring_booking.get_all_active_by_trainer import (
     GetActiveRecurringBookingsByTrainerRequest,
 )
-from src.application.use_cases.package._shared import ClientBalanceDTO
-from src.application.use_cases.package.get_balances import GetClientBalancesRequest
 from src.application.use_cases.package.get_by_client import GetClientPackagesRequest
 from src.application.use_cases.registration_questions.get_all import (
     GetAllRegistrationQuestionsRequest,
@@ -99,12 +97,6 @@ async def clients_list_getter(
             label = f"📵 {label}"
         items.append({"id": str(c.id), "label": label})
 
-    balances: dict[int, ClientBalanceDTO] = await mediator.handle(
-        GetClientBalancesRequest(trainer_id=trainer_id)
-    )
-    # долг ушедшего клиента виден в его карточке в архиве, а не в «Должниках»
-    current_ids = {c.id for c in clients}
-    debtors = sum(1 for b in balances.values() if b.debt > 0 and b.client_id in current_ids)
     inactive: list[InactiveClientDTO] = await mediator.handle(
         GetInactiveClientsRequest(trainer_id=trainer_id)
     )
@@ -119,8 +111,6 @@ async def clients_list_getter(
     return {
         "clients": items,
         "summary": summary if clients else "Клиентов пока нет — пригласите по ссылке или добавьте вручную.",
-        "debtors_count": debtors,
-        "has_debtors": debtors > 0,
         "inactive_count": len(inactive),
         "has_inactive": bool(inactive),
         "archived_count": len(archived),
@@ -216,35 +206,6 @@ async def inactive_getter(
             }
             for dto in inactive
         ],
-    }
-
-
-@inject
-async def debtors_getter(
-    dialog_manager: DialogManager,
-    mediator: FromDishka[Mediator],
-    **kwargs,
-) -> dict:
-    trainer_id: int = dialog_manager.start_data["trainer_id"]
-    clients = {
-        c.id: c
-        for c in await mediator.handle(GetClientsByTrainerIdRequest(trainer_id=trainer_id))
-    }
-    balances: dict[int, ClientBalanceDTO] = await mediator.handle(
-        GetClientBalancesRequest(trainer_id=trainer_id)
-    )
-    debtors = sorted(
-        (b for b in balances.values() if b.debt > 0 and b.client_id in clients),
-        key=lambda b: b.debt,
-        reverse=True,
-    )
-    total = sum((b.debt for b in debtors), Decimal("0"))
-    return {
-        "clients": [
-            {"id": str(b.client_id), "label": f"{clients[b.client_id].full_name} — {byn(b.debt)}"}
-            for b in debtors
-        ],
-        "total": byn(total),
     }
 
 
@@ -361,18 +322,14 @@ async def client_detail_getter(
             )
         )
     lines.append("")
-    balance: ClientBalanceDTO = (
-        await mediator.handle(GetClientBalancesRequest(trainer_id=trainer_id, client_id=client_id))
-    )[client_id]
     today = get_project_today()
-    for package in balance.active_packages:
+    active_packages = [
+        p for p in await mediator.handle(GetClientPackagesRequest(client_id=client_id))
+        if p.can_charge(today)
+    ]
+    for package in active_packages:
         lines.append(package_line(package, today))
-    if balance.unpaid_bookings:
-        unpaid_sum = sum((v.booking.price or Decimal("0") for v in balance.unpaid_bookings), Decimal("0"))
-        lines.append(
-            f"💵 Не оплачено разовых: {len(balance.unpaid_bookings)} на {byn(unpaid_sum)}"
-        )
-    if balance.active_packages or balance.unpaid_bookings:
+    if active_packages:
         lines.append("")
     card_lines, has_upcoming = await _client_card_lines(mediator, trainer_id, client)
     lines.extend(card_lines)
@@ -390,7 +347,6 @@ async def client_detail_getter(
         "from_outside": from_outside,
         "back_to_list": not from_outside and current,
         "back_to_archive": not from_outside and client.is_archived,
-        "has_unpaid": bool(balance.unpaid_bookings),
         # позвать на тренировку можно того, кто в Telegram и никуда не записан
         "can_invite_back": (
             current and client.has_telegram and not has_upcoming and not client_recurring
@@ -558,16 +514,10 @@ async def package_detail_getter(
     if package.is_bonus:
         lines.append("🎁 Бонусные занятия")
     elif package.price:
-        paid = (
-            f"✅ оплачен {to_moscow(package.paid_at).strftime('%d.%m.%Y')}"
-            if package.paid_at
-            else "💵 не оплачен"
-        )
-        lines.append(f"💰 {byn(package.price)} · {paid}")
+        lines.append(f"💰 {byn(package.price)}")
     lines.append(f"🗓 Оформлен {to_moscow(package.created_at).strftime('%d.%m.%Y')}")
     return {
         "card": "\n".join(lines),
-        "can_pay": not package.is_paid,
         "can_close": package.status == PackageStatus.ACTIVE,
     }
 
@@ -582,7 +532,7 @@ async def package_valid_getter(**kwargs) -> dict:
     return {"options": [{"id": str(days), "label": label} for days, label in PACKAGE_VALID_OPTIONS]}
 
 
-async def package_paid_getter(dialog_manager: DialogManager, **kwargs) -> dict:
+async def package_confirm_getter(dialog_manager: DialogManager, **kwargs) -> dict:
     data = dialog_manager.dialog_data["new_package"]
     price = Decimal(data["price"]) if data.get("price") else None
     valid = f"на {data['valid_days']} дней" if data.get("valid_days") else "без срока"
@@ -591,33 +541,4 @@ async def package_paid_getter(dialog_manager: DialogManager, **kwargs) -> dict:
             f"🎫 {data['sessions']} занятий · {valid}"
             + (f" · {byn(price)}" if price else "")
         ),
-        "has_price": price is not None,
-    }
-
-
-@inject
-async def unpaid_getter(
-    dialog_manager: DialogManager,
-    mediator: FromDishka[Mediator],
-    **kwargs,
-) -> dict:
-    trainer_id: int = dialog_manager.start_data["trainer_id"]
-    client_id: int = dialog_manager.dialog_data["viewing_client_id"]
-    balance: ClientBalanceDTO = (
-        await mediator.handle(GetClientBalancesRequest(trainer_id=trainer_id, client_id=client_id))
-    )[client_id]
-    total = sum((v.booking.price or Decimal("0") for v in balance.unpaid_bookings), Decimal("0"))
-    return {
-        "bookings": [
-            {
-                "id": str(v.booking.id),
-                "label": (
-                    f"✅ {short_day(v.slot_date)} {v.start_time.strftime('%H:%M')} · "
-                    f"{byn(v.booking.price or 0)}"
-                ),
-            }
-            for v in balance.unpaid_bookings
-        ],
-        "total": byn(total),
-        "has_unpaid": bool(balance.unpaid_bookings),
     }

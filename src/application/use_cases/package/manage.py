@@ -9,7 +9,6 @@ from src.infrastructure.database.transaction_manager.base import TransactionMana
 
 
 class PackageAction(str, Enum):
-    MARK_PAID = "mark_paid"
     CANCEL = "cancel"
 
 
@@ -22,7 +21,7 @@ class ManageClientPackageRequest(UseCaseRequest):
 
 @dataclass(kw_only=True)
 class ManageClientPackageUseCase(UseCase[ManageClientPackageRequest, ClientPackage]):
-    """Тренер отмечает оплату абонемента или закрывает его (возврат, ошибка)."""
+    """Тренер закрывает абонемент (возврат, ошибка)."""
 
     package_repo: ClientPackageRepository
     transaction_manager: TransactionManager
@@ -32,9 +31,7 @@ class ManageClientPackageUseCase(UseCase[ManageClientPackageRequest, ClientPacka
         if package is None or package.trainer_id != command.trainer_id:
             raise PackageNotFoundException(package_id=command.package_id)
 
-        if command.action == PackageAction.MARK_PAID:
-            package.mark_paid()
-        else:
+        if command.action == PackageAction.CANCEL:
             package.cancel()
         saved = await self.package_repo.save(package)
         await self.transaction_manager.commit()

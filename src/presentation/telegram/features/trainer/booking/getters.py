@@ -371,12 +371,6 @@ async def booking_detail_getter(
         lines.append("❔ Клиент ещё не ответил, придёт ли")
     if booking.package_id is not None:
         lines.append("🎫 Списано с абонемента")
-    elif booking.price and status in PAST_BOOKING_STATUSES:
-        lines.append(
-            f"💵 Оплачено {to_moscow(booking.paid_at).strftime('%d.%m')}"
-            if booking.paid_at
-            else "💵 Не оплачено"
-        )
     if status == BookingStatus.CANCELLED and booking.cancelled_by is not None:
         when = (
             f" · {to_moscow(booking.cancelled_at).strftime('%d.%m %H:%M')}"
@@ -392,12 +386,6 @@ async def booking_detail_getter(
         "can_change": is_active and not started,
         "can_no_show": started and status in (BookingStatus.CONFIRMED, BookingStatus.COMPLETED),
         "can_attended": status == BookingStatus.NO_SHOW,
-        "can_mark_paid": (
-            status in PAST_BOOKING_STATUSES
-            and booking.package_id is None
-            and bool(booking.price)
-            and booking.paid_at is None
-        ),
     }
 
 

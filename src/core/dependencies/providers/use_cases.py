@@ -219,9 +219,7 @@ from src.application.use_cases.package.manage import ManageClientPackageUseCase
 
 from src.application.use_cases.package.get_by_client import GetClientPackagesUseCase
 
-from src.application.use_cases.package.get_balances import GetClientBalancesUseCase
 
-from src.application.use_cases.booking.mark_paid import MarkBookingsPaidUseCase
 
 from src.application.services.package_charge import PackageChargeService
 
@@ -1693,30 +1691,6 @@ class UseCasesProvider(Provider):
     ) -> GetClientPackagesUseCase:
         return GetClientPackagesUseCase(
             package_repo=package_repo,
-        )
-
-    @provide
-    def get_client_balances_use_case(
-        self,
-        booking_repo: BookingRepository,
-        package_repo: ClientPackageRepository,
-        booking_settings_repo: TrainerBookingSettingsRepository,
-    ) -> GetClientBalancesUseCase:
-        return GetClientBalancesUseCase(
-            booking_repo=booking_repo,
-            package_repo=package_repo,
-            booking_settings_repo=booking_settings_repo,
-        )
-
-    @provide
-    def mark_bookings_paid_use_case(
-        self,
-        booking_repo: BookingRepository,
-        transaction_manager: TransactionManager,
-    ) -> MarkBookingsPaidUseCase:
-        return MarkBookingsPaidUseCase(
-            booking_repo=booking_repo,
-            transaction_manager=transaction_manager,
         )
 
     @provide

@@ -22,18 +22,12 @@ class Booking(Entity):
     cancelled_at: datetime | None = None
     # с какого абонемента списано занятие (None — разовая оплата)
     package_id: int | None = None
-    # разовая тренировка оплачена (отмечает тренер)
-    paid_at: datetime | None = None
     # клиент ответил «приду» (на запрос накануне или на напоминание)
     client_confirmed_at: datetime | None = None
     # запрос «придёте?» уже отправлен — повторно не спрашиваем
     attendance_requested_at: datetime | None = None
     # оценка клиента после тренировки, 1..5
     rating: int | None = None
-
-    @property
-    def is_paid(self) -> bool:
-        return self.package_id is not None or self.paid_at is not None or not self.price
 
     def is_active(self) -> bool:
         return self.status in ACTIVE_BOOKING_STATUSES
