@@ -12,6 +12,7 @@ from aiogram_dialog import setup_dialogs
 
 from src.core.config import settings
 from src.presentation.telegram.features import get_all_dialogs, get_all_routers
+from src.presentation.telegram.message_manager import SafeMessageManager
 
 
 class TelegramProvider(Provider):
@@ -42,6 +43,6 @@ class TelegramProvider(Provider):
         dp.include_routers(*get_all_routers())
         dp.include_routers(*get_all_dialogs())
 
-        setup_dialogs(dp) 
+        setup_dialogs(dp, message_manager=SafeMessageManager())
 
         return dp
