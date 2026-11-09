@@ -47,10 +47,15 @@ docker compose logs bot webhook | grep Payments   # какие способы о
 
 ## Откат
 
+Перед `make update` запомните, куда откатываться: `make version` — образ и
+текущая миграция.
+
 ```bash
 docker compose stop bot worker scheduler webhook
-# в docker-compose.yml: image: ghcr.io/koresh06/trainup:<sha прошлой версии>
+# сначала миграции — ещё НОВЫМ образом: в старом нет файлов новых миграций
 docker compose run --rm bot alembic downgrade <ревизия прошлой версии>
+# потом образ — в docker-compose.yml во всех 4 сервисах:
+# image: ghcr.io/koresh06/trainup:<sha прошлой версии>
 docker compose up -d
 ```
 Миграции с переносом данных схему откатывают, данные — нет; для полного отката
