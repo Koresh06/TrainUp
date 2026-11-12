@@ -6,7 +6,9 @@ from src.application.use_cases.base import UseCase, UseCaseRequest
 
 from src.application.use_cases.recurring_booking._shared import _create_recurring_occurrence
 from src.domain.entities.booking import Booking
+from src.domain.entities.calendar_slot import CalendarSlot
 from src.domain.entities.recurring_booking import RecurringBooking
+from src.domain.exception.base import DomainError
 from src.domain.exception.calendar_slot import (
     CalendarSlotNotFoundException,
     SlotInPastException,
@@ -52,41 +54,64 @@ class AddRecurringBookingUseCase(UseCase[AddRecurringBookingRequest, Booking]):
         # проверяем до сохранения шаблона, чтобы не осталось постоянки без тренировки
         if is_slot_in_past(slot):
             raise SlotInPastException(command.slot_id)
-    
-        already_exists = await self.recurring_repo.exists_active(
-            trainer_id=command.trainer_id,
-            client_id=command.client_id,
-            weekday=slot.slot_date.weekday(),
-            start_time=slot.start_time,
+
+        weekday = slot.slot_date.weekday()
+        existing = next(
+            (
+                r
+                for r in await self.recurring_repo.get_active_by_trainer_and_client(
+                    trainer_id=command.trainer_id, client_id=command.client_id
+                )
+                if r.weekday == weekday and r.start_time == slot.start_time
+            ),
+            None,
         )
-        if already_exists:
-            raise RecurringBookingAlreadyExistsException(
-                trainer_id=command.trainer_id,
-                client_id=command.client_id,
-                weekday=slot.slot_date.weekday(),
-                start_time=slot.start_time,
+        if existing is not None:
+            # постоянка уже есть, но её ближайшая тренировка отменена (или не
+            # создалась) — возвращаем тренировку в расписание, а не заставляем
+            # тренера останавливать постоянку и заводить её заново
+            upcoming = await self.booking_repo.get_upcoming_by_recurring_booking_id(
+                existing.id
             )
-    
+            if upcoming:
+                raise RecurringBookingAlreadyExistsException(
+                    trainer_id=command.trainer_id,
+                    client_id=command.client_id,
+                    weekday=weekday,
+                    start_time=slot.start_time,
+                )
+            return await self._create_occurrence(existing, slot)
+
         recurring = RecurringBooking(
             trainer_id=command.trainer_id,
             client_id=command.client_id,
-            weekday=slot.slot_date.weekday(),
+            weekday=weekday,
             start_time=slot.start_time,
             is_active=True,
         )
+        # без отдельного commit: шаблон и первая тренировка сохраняются вместе.
+        # Иначе при недоступном слоте оставалась постоянка без тренировки, а
+        # повторное добавление упиралось в «уже есть постоянная запись»
         saved_recurring: RecurringBooking = await self.recurring_repo.save(recurring)
-        await self.transaction_manager.commit()
+        return await self._create_occurrence(saved_recurring, slot)
 
-        return await _create_recurring_occurrence(
-            recurring=saved_recurring,
-            slot=slot,
-            booking_repo=self.booking_repo,
-            calendar_service=self.calendar_service,
-            pricing_rule_repo=self.pricing_rule_repo,
-            client_repo=self.client_repo,
-            trainer_repo=self.trainer_repo,
-            reminder_settings_repo=self.reminder_settings_repo,
-            notification_service=self.notification_service,
-            booking_scheduler=self.booking_scheduler,
-            transaction_manager=self.transaction_manager,
-        )
+    async def _create_occurrence(
+        self, recurring: RecurringBooking, slot: CalendarSlot
+    ) -> Booking:
+        try:
+            return await _create_recurring_occurrence(
+                recurring=recurring,
+                slot=slot,
+                booking_repo=self.booking_repo,
+                calendar_service=self.calendar_service,
+                pricing_rule_repo=self.pricing_rule_repo,
+                client_repo=self.client_repo,
+                trainer_repo=self.trainer_repo,
+                reminder_settings_repo=self.reminder_settings_repo,
+                notification_service=self.notification_service,
+                booking_scheduler=self.booking_scheduler,
+                transaction_manager=self.transaction_manager,
+            )
+        except DomainError:
+            await self.transaction_manager.rollback()
+            raise

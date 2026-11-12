@@ -1,4 +1,6 @@
 from datetime import time, timedelta, timezone
+
+import pytest
 from decimal import Decimal
 
 from src.application.use_cases.access.get_user_access import GetUserAccessRequest
@@ -23,6 +25,14 @@ from src.application.use_cases.client_request.update_status import (
 )
 from src.application.use_cases.faq.get_active import GetActiveFaqItemsRequest
 from src.application.use_cases.recurring_booking.add import AddRecurringBookingRequest
+from src.application.use_cases.booking.cancel import CancelBookingRequest
+from src.application.use_cases.calendar.set_slot_blocked import SetSlotBlockedRequest
+from src.application.use_cases.recurring_booking.change import (
+    ChangeRecurringBookingScheduleRequest,
+)
+from src.application.use_cases.recurring_booking.get_active_by_client import (
+    GetActiveRecurringBookingsByClientRequest,
+)
 from src.application.use_cases.recurring_booking.deactivate import (
     DeactivateRecurringBookingRequest,
 )
@@ -39,7 +49,10 @@ from src.application.use_cases.subscription.check_expiring import (
 from src.application.use_cases.subscription.grant import GrantSubscriptionRequest
 from src.application.use_cases.trainer.register import RegisterTrainerRequest
 from src.application.use_cases.trainer.set_blocked import SetTrainerBlockedRequest
+from src.domain.enums.booking import BookingStatus
 from src.domain.enums.faq import FaqAudience
+from src.domain.exception.booking import SlotAlreadyBookedException
+from src.domain.exception.recurring_booking import RecurringBookingAlreadyExistsException
 from src.domain.enums.program import ProgramType
 from src.domain.enums.request import ClientRequestKind, RequestStatus
 from src.domain.enums.subscription import SubscriptionSource
@@ -82,6 +95,66 @@ async def test_stop_recurring_cancels_future_trainings(run, notifications) -> No
 
     await run(MaintainRecurringBookingsRequest())
     assert await run(GetUpcomingBookingsByClientRequest(client_id=client.id)) == []
+
+
+async def _recurring_slots(run, trainer, *days: int):
+    """Слот на 10:00 в каждый из дней (смещение от сегодня)."""
+    slots = []
+    for offset in days:
+        day = get_project_today() + timedelta(days=offset)
+        await run(SyncWeekdaySlotTemplatesRequest(trainer_id=trainer.id, weekday=day.weekday(), time_capacities={T10: 1}))
+        [slot] = await run(GetDaySlotsRequest(trainer_id=trainer.id, slot_date=day))
+        slots.append(slot)
+    return slots
+
+
+async def test_cancelled_recurring_occurrence_can_be_restored(run) -> None:
+    trainer, client = await _trainer_and_client(run)
+    [slot] = await _recurring_slots(run, trainer, 2)
+    add = AddRecurringBookingRequest(trainer_id=trainer.id, client_id=client.id, slot_id=slot.id)
+    occurrence = await run(add)
+    await run(CancelBookingRequest(booking_id=occurrence.id))
+
+    # раньше — «уже есть постоянная запись», и помогал только стоп + заново
+    restored = await run(add)
+    assert restored.recurring_booking_id == occurrence.recurring_booking_id
+    assert restored.status == BookingStatus.CONFIRMED
+    [upcoming] = await run(GetUpcomingBookingsByClientRequest(client_id=client.id))
+    assert upcoming.id == restored.id
+
+    # тренировка уже стоит — второй раз «вернуть» нечего
+    with pytest.raises(RecurringBookingAlreadyExistsException):
+        await run(add)
+
+
+async def test_change_after_cancel_creates_training_on_new_day(run) -> None:
+    trainer, client = await _trainer_and_client(run)
+    old_slot, new_slot = await _recurring_slots(run, trainer, 2, 3)
+    occurrence = await run(AddRecurringBookingRequest(trainer_id=trainer.id, client_id=client.id, slot_id=old_slot.id))
+    await run(CancelBookingRequest(booking_id=occurrence.id))
+
+    await run(ChangeRecurringBookingScheduleRequest(recurring_booking_id=occurrence.recurring_booking_id, new_slot_id=new_slot.id))
+
+    [upcoming] = await run(GetUpcomingBookingsByClientRequest(client_id=client.id))
+    assert upcoming.slot_id == new_slot.id
+    assert upcoming.recurring_booking_id == occurrence.recurring_booking_id
+    await run(MaintainRecurringBookingsRequest())  # ещё не прошла — дубля нет
+    assert len(await run(GetUpcomingBookingsByClientRequest(client_id=client.id))) == 1
+
+
+async def test_failed_recurring_add_leaves_no_template(run) -> None:
+    trainer, client = await _trainer_and_client(run)
+    [slot] = await _recurring_slots(run, trainer, 2)
+    await run(SetSlotBlockedRequest(slot_id=slot.id, blocked=True))
+    add = AddRecurringBookingRequest(trainer_id=trainer.id, client_id=client.id, slot_id=slot.id)
+
+    with pytest.raises(SlotAlreadyBookedException):
+        await run(add)
+    assert await run(GetActiveRecurringBookingsByClientRequest(trainer_id=trainer.id, client_id=client.id)) == []
+
+    # слот открыли — добавление проходит, без «уже есть постоянная запись»
+    await run(SetSlotBlockedRequest(slot_id=slot.id, blocked=False))
+    assert (await run(add)).status == BookingStatus.CONFIRMED
 
 
 async def test_client_requests_flow(run, notifications) -> None:

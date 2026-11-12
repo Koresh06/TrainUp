@@ -840,12 +840,26 @@ class UseCasesProvider(Provider):
         recurring_repo: RecurringBookingRepository,
         booking_repo: BookingRepository,
         reschedule_use_case: RescheduleBookingUseCase,
+        calendar_service: CalendarService,
+        pricing_rule_repo: TrainerPricingRuleRepository,
+        reminder_settings_repo: TrainerReminderSettingsRepository,
+        client_repo: ClientRepository,
+        trainer_repo: TrainerRepository,
+        notification_service: NotificationService,
+        booking_scheduler: BookingScheduler,
         transaction_manager: TransactionManager,
     ) -> ChangeRecurringBookingScheduleUseCase:
         return ChangeRecurringBookingScheduleUseCase(
             recurring_repo=recurring_repo,
             booking_repo=booking_repo,
             reschedule_use_case=reschedule_use_case,
+            calendar_service=calendar_service,
+            pricing_rule_repo=pricing_rule_repo,
+            reminder_settings_repo=reminder_settings_repo,
+            client_repo=client_repo,
+            trainer_repo=trainer_repo,
+            notification_service=notification_service,
+            booking_scheduler=booking_scheduler,
             transaction_manager=transaction_manager,
         )
 

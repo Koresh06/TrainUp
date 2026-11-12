@@ -1,10 +1,14 @@
 from dataclasses import dataclass
 
-
+from src.application.interfaces.booking_scheduler import BookingScheduler
+from src.application.interfaces.notification_service import NotificationService
 from src.application.use_cases.base import UseCase, UseCaseRequest
 from src.application.use_cases.booking.reschedule import (
     RescheduleBookingRequest,
     RescheduleBookingUseCase,
+)
+from src.application.use_cases.recurring_booking._shared import (
+    _create_recurring_occurrence,
 )
 from src.domain.entities.recurring_booking import RecurringBooking
 from src.domain.exception.calendar_slot import CalendarSlotNotFoundException
@@ -13,7 +17,14 @@ from src.domain.exception.recurring_booking import (
     RecurringBookingNotFoundException,
 )
 from src.domain.repositories.booking import BookingRepository
+from src.domain.repositories.client import ClientRepository
 from src.domain.repositories.recurring_booking import RecurringBookingRepository
+from src.domain.repositories.trainer import TrainerRepository
+from src.domain.repositories.trainer_pricing_rule import TrainerPricingRuleRepository
+from src.domain.repositories.trainer_reminder_settings import (
+    TrainerReminderSettingsRepository,
+)
+from src.domain.services.calendar_service import CalendarService
 from src.domain.utils import is_slot_in_past
 from src.infrastructure.database.transaction_manager.base import TransactionManager
 
@@ -31,6 +42,13 @@ class ChangeRecurringBookingScheduleUseCase(
     recurring_repo: RecurringBookingRepository
     booking_repo: BookingRepository
     reschedule_use_case: RescheduleBookingUseCase
+    calendar_service: CalendarService
+    pricing_rule_repo: TrainerPricingRuleRepository
+    reminder_settings_repo: TrainerReminderSettingsRepository
+    client_repo: ClientRepository
+    trainer_repo: TrainerRepository
+    notification_service: NotificationService
+    booking_scheduler: BookingScheduler
     transaction_manager: TransactionManager
 
     async def __call__(
@@ -70,18 +88,41 @@ class ChangeRecurringBookingScheduleUseCase(
         latest = await self.booking_repo.get_latest_by_recurring_booking_id(
             recurring.id
         )
-        if latest is not None and latest.is_active():
-            latest_slot = await self.reschedule_use_case.slot_repo.get_by_id(
-                latest.slot_id
-            )
-            if latest_slot is not None and not is_slot_in_past(latest_slot):
-                await self.reschedule_use_case(
-                    RescheduleBookingRequest(
-                        booking_id=latest.id,
-                        new_slot_id=command.new_slot_id,
-                        force=True,
-                    )
+        latest_slot = (
+            await self.reschedule_use_case.slot_repo.get_by_id(latest.slot_id)
+            if latest is not None
+            else None
+        )
+        if (
+            latest is not None
+            and latest.is_active()
+            and latest_slot is not None
+            and not is_slot_in_past(latest_slot)
+        ):
+            await self.reschedule_use_case(
+                RescheduleBookingRequest(
+                    booking_id=latest.id,
+                    new_slot_id=command.new_slot_id,
+                    force=True,
                 )
+            )
+        else:
+            # переносить нечего (ближайшая отменена или уже прошла) — создаём
+            # тренировку на выбранный слот сразу. Иначе автосоздание ждало бы,
+            # пока пройдёт дата отменённой, и выбранный день оставался пустым
+            await _create_recurring_occurrence(
+                recurring=recurring,
+                slot=new_slot,
+                booking_repo=self.booking_repo,
+                calendar_service=self.calendar_service,
+                pricing_rule_repo=self.pricing_rule_repo,
+                reminder_settings_repo=self.reminder_settings_repo,
+                client_repo=self.client_repo,
+                trainer_repo=self.trainer_repo,
+                notification_service=self.notification_service,
+                booking_scheduler=self.booking_scheduler,
+                transaction_manager=self.transaction_manager,
+            )
 
         # обновляем сам паттерн — будущие недели пойдут по новому графику
         recurring.weekday = new_weekday
